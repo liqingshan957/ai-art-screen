@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>后台管理 · 作品投屏系统</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="admin-container">
+    <!-- 顶部导航 -->
+    <header class="admin-header">
+      <div class="header-left">
+        <h1>🎪 投屏管理后台</h1>
+        <span class="header-sub">敦煌AIGC艺术展览</span>
+      </div>
+      <div class="header-right">
+        <a href="/dashboard" class="btn btn-outline">📊 数据看板</a>
+        <a href="/display" target="_blank" class="btn btn-outline">📺 打开展示页</a>
+        <span id="connection-status" class="status-dot connected">● 已连接</span>
+      </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <div class="admin-body">
+      <!-- 左栏：背景图管理 + 视频管理 -->
+      <section class="panel bg-panel">
+        <h2 class="panel-title">🖼️ 背景图管理</h2>
+
+        <div class="bg-preview-wrap">
+          <div id="bg-preview" class="bg-preview">
+            <div class="bg-placeholder">暂无背景图</div>
+          </div>
+        </div>
+
+        <div class="bg-controls">
+          <label class="btn btn-primary btn-upload">
+            📁 上传背景图
+            <input type="file" id="bg-upload" accept="image/*" hidden>
+          </label>
+
+          <div class="bg-adjust">
+            <label>填充方式</label>
+            <div class="btn-group">
+              <button class="btn btn-sm active" data-scale="cover" onclick="updateBgScale('cover')">铺满</button>
+              <button class="btn btn-sm" data-scale="contain" onclick="updateBgScale('contain')">完整显示</button>
+            </div>
+          </div>
+
+          <div class="bg-adjust">
+            <label>位置</label>
+            <div class="btn-group">
+              <button class="btn btn-sm active" data-pos="center" onclick="updateBgPosition('center')">居中</button>
+              <button class="btn btn-sm" data-pos="top" onclick="updateBgPosition('top')">顶部</button>
+              <button class="btn btn-sm" data-pos="bottom" onclick="updateBgPosition('bottom')">底部</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="bg-upload-progress" class="upload-progress hidden"></div>
+
+        <!-- 视频管理 -->
+        <h2 class="panel-title" style="margin-top:28px;padding-top:20px;border-top:1px solid #eee;">🎬 视频插播管理</h2>
+
+        <div class="video-list" id="video-list">
+          <div class="grid-empty">还没有视频</div>
+        </div>
+
+        <div class="bg-controls" style="margin-top:12px;">
+          <label class="btn btn-primary btn-upload">
+            📁 上传视频
+            <input type="file" id="video-upload" accept="video/*" hidden>
+          </label>
+
+          <div class="bg-adjust">
+            <label>插播间隔（秒）</label>
+            <input type="number" id="video-interval" value="300" min="30" step="30"
+                   style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"
+                   onchange="updateVideoConfig()">
+          </div>
+          <div class="bg-adjust">
+            <label>重复次数</label>
+            <input type="number" id="video-repeat" value="2" min="1" max="10"
+                   style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;"
+                   onchange="updateVideoConfig()">
+          </div>
+        </div>
+
+        <div id="video-upload-progress" class="upload-progress hidden"></div>
+      </section>
+
+      <!-- 右栏：作品管理 -->
+      <section class="panel artwork-panel">
+        <h2 class="panel-title">🎨 作品管理</h2>
+
+        <!-- 统计看板 -->
+        <div class="stats-bar">
+          <div class="stat-card" id="stat-total">
+            <div class="stat-value">0</div>
+            <div class="stat-label">作品总数</div>
+          </div>
+          <div class="stat-card active-card" id="stat-active">
+            <div class="stat-value">0</div>
+            <div class="stat-label">📺 在展中</div>
+          </div>
+          <div class="stat-card archived-card" id="stat-archived">
+            <div class="stat-value">0</div>
+            <div class="stat-label">📦 已归档</div>
+          </div>
+        </div>
+
+        <!-- Tab 切换 -->
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab('active')">📺 在展中 <span id="tab-active-count">0</span></button>
+          <button class="tab-btn" onclick="switchTab('archived')">📦 历史归档 <span id="tab-archived-count">0</span></button>
+        </div>
+
+        <!-- 外部访问地址配置 -->
+        <div class="external-url-bar" id="external-url-bar">
+          <span class="ext-label">🔗 外部访问地址：</span>
+          <input type="text" id="external-base-url" placeholder="https://gzart-o8114r7d.pagefire.openhkt.com" class="ext-url-input">
+          <button id="ext-url-save" class="ext-url-btn">保存</button>
+          <span id="pagefire-badge" class="pf-badge done">✅ 已同步</span>
+          <span id="ext-url-status" class="ext-url-status hidden"></span>
+        </div>
+
+        <!-- 上传区（仅在"在展中"tab显示） -->
+        <div id="upload-section">
+          <div class="upload-zone" id="upload-zone">
+            <div class="upload-zone-inner">
+              <div class="upload-icon">📸</div>
+              <p>点击或拖拽图片到此处上传</p>
+              <p class="upload-hint">支持批量上传 · JPG/PNG/WebP</p>
+            </div>
+            <input type="file" id="artwork-upload" accept="image/*" multiple hidden>
+          </div>
+
+          <!-- 上传中的作品信息填写 -->
+          <div id="upload-form" class="upload-form hidden">
+            <div class="form-header">
+              <span>为 <strong id="pending-count">0</strong> 张作品填写信息</span>
+              <button class="btn btn-sm" onclick="useDefaultInfo()">全部用默认</button>
+            </div>
+            <div id="pending-list" class="pending-list"></div>
+            <div class="form-actions">
+              <button class="btn btn-primary" onclick="submitBatchUpload()">✓ 确认上传</button>
+              <button class="btn btn-cancel" onclick="cancelBatchUpload()">取消</button>
+            </div>
+          </div>
+
+          <!-- 上传进度 -->
+          <div id="artwork-upload-progress" class="upload-progress hidden"></div>
+        </div>
+
+        <!-- 作品列表 -->
+        <div class="artwork-list-header">
+          <span id="list-header-title">已上架作品</span>
+          <div>
+            <button id="btn-batch-archive" class="btn btn-sm btn-danger-outline" onclick="archiveAll()">📦 全部下架</button>
+          </div>
+        </div>
+        <div id="artwork-grid" class="artwork-grid">
+          <div class="grid-empty">还没有作品，上传第一张吧！</div>
+        </div>
+
+        <!-- 归档操作区 -->
+        <div id="archived-section" class="artwork-list-header hidden" style="margin-top:0;">
+          <span id="archived-header-title">已归档作品</span>
+          <button class="btn btn-sm btn-danger-outline" onclick="purgeAllArchived()">🗑️ 清空归档</button>
+        </div>
+        <div id="archived-grid" class="artwork-grid hidden"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 预览弹窗 -->
+  <div id="preview-modal" class="modal hidden" onclick="closePreview(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <img id="preview-img" src="" alt="预览">
+      <div class="modal-info">
+        <span id="preview-name"></span>
+        <span id="preview-date"></span>
+      </div>
+      <button class="modal-close" onclick="closePreview()">✕</button>
+    </div>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="confirm-dialog">
+      <div class="confirm-icon">⚠️</div>
+      <p id="confirm-msg"></p>
+      <div class="confirm-actions">
+        <button class="btn btn-cancel" onclick="closeConfirm()">取消</button>
+        <button class="btn btn-danger" id="confirm-ok">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

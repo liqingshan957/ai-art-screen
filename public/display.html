@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>一念敦煌 · AIGC创作体验</title>
+  <link rel="stylesheet" href="/css/display.css">
+</head>
+<body>
+  <!-- 背景层 -->
+  <div id="background-layer"></div>
+  <div id="background-overlay"></div>
+
+  <!-- 浮动作品画布 -->
+  <div id="canvas"></div>
+
+  <!-- 顶部标题 -->
+  <div id="title-bar">
+    <div class="title-text">一念敦煌 · AIGC创作体验</div>
+    <div class="title-sub">广州艺术博物馆 X 大象智绘AI科创</div>
+  </div>
+
+  <!-- 空状态提示 -->
+  <div id="empty-hint">
+    <div class="hint-icon">🎨</div>
+    <div class="hint-text">等待小画家们的作品上传...</div>
+  </div>
+
+  <!-- 全屏视频插播层 -->
+  <div id="video-overlay" class="video-overlay hidden">
+    <video id="showcase-video" muted playsinline></video>
+  </div>
+
+  <!-- Socket.io -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/display.js"></script>
+</body>
+</html>

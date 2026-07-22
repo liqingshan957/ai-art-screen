@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Uploads (user-generated content, not versioned)
+uploads/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+build/
+
+# WorkBuddy internal
+.workbuddy/
+
+# Tools / models
+tools/
+
+# Image files - not versioned, generated on deploy
+*.webp
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.ico
+
+# Deploy outputs (generated, not source)
+deploy-pagefire/
+deploy-test/
