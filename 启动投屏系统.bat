@@ -1,28 +1,46 @@
 @echo off
 cd /d "%~dp0"
 
+echo ==============================================
+echo    Dunhuang AIGC Exhibition - Screen System
+echo    (Dunhuang AIGC Art Exhibition - Screen Cast)
+echo ==============================================
 echo.
-echo ==========================================
-echo   敦煌AIGC艺术展览 - 投屏展示系统
-echo ==========================================
-echo.
-echo   展示页(电视大屏): http://localhost:3000/display
-echo   管理页(后台操作): http://localhost:3000/admin
-echo   数据看板:         http://localhost:3000/dashboard
-echo.
-echo --- 系统运行中，请勿关闭此窗口 ---
-echo --- 最小化即可，不影响使用 ---
-echo.
-
-echo [1/2] 清理旧进程...
+echo [1/5] Cleaning existing processes...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING"') do taskkill /F /PID %%a 2>nul
-timeout /t 1 /nobreak >nul
-
-echo [2/2] 正在启动服务...
-REM [已暂停] 飞书自动同步功能暂时关闭
-REM start /min "飞书同步" D:\Git\node\node.exe feishu_sync.js
-D:\Git\node\node.exe server.js
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":7000" ^| findstr "LISTENING"') do taskkill /F /PID %%a 2>nul
+timeout /t 2 /nobreak >nul
 
 echo.
-echo 服务已停止。按任意键关闭窗口...
-pause >nul
+echo [2/5] Starting Rembg (port 7000) - Background Removal...
+start "Rembg (7000)" /min "%~dp0start-rembg.bat"
+timeout /t 12 /nobreak >nul
+
+echo.
+echo [3/5] Starting Screen System (port 3000) - Main Server...
+start "Screen (3000)" /min "%~dp0start-screen.bat"
+timeout /t 3 /nobreak >nul
+
+echo.
+echo [4/5] Starting Inbox Watcher - B Computer Image Monitor...
+start "Inbox Watcher" /min "%~dp0start-inbox.bat"
+timeout /t 2 /nobreak >nul
+
+echo.
+echo ==============================================
+echo    All 3 services started successfully!
+echo ==============================================
+echo.
+echo    Admin Panel:  http://localhost:3000/admin
+echo    Display:      http://localhost:3000/display
+echo    Dashboard:    http://localhost:3000/dashboard
+echo.
+echo    Rembg:       Running (port 7000)
+echo    Inbox Watch: Running (B computer)
+echo.
+echo    3 minimized windows are running in background.
+echo    Close this window anytime (services keep running).
+echo.
+echo ==============================================
+echo.
+pause

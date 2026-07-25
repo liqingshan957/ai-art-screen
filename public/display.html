@@ -11,6 +11,12 @@
   <div id="background-layer"></div>
   <div id="background-overlay"></div>
 
+  <!-- 极光背景（spotlight 时激活） -->
+  <div id="aurora"></div>
+
+  <!-- 粒子画布 -->
+  <canvas id="particle-canvas"></canvas>
+
   <!-- 浮动作品画布 -->
   <div id="canvas"></div>
 
@@ -24,6 +30,29 @@
   <div id="empty-hint">
     <div class="hint-icon">🎨</div>
     <div class="hint-text">等待小画家们的作品上传...</div>
+  </div>
+
+  <!-- 高光特写层 -->
+  <div id="spotlight-layer">
+    <div id="spotlight-bg"></div>
+    <div id="light-rays"></div>
+    <div id="light-ring"></div>
+    <div id="spotlight-image-wrap">
+      <div id="original-layer"><img id="original-img" src="" alt=""></div>
+      <div id="matted-layer"><img id="matted-img" src="" alt=""></div>
+      <div id="flash-overlay"></div>
+    </div>
+    <div id="spotlight-info">
+      <div class="info-name" id="spot-name"></div>
+      <div class="info-date" id="spot-date"></div>
+    </div>
+    <div id="announce-text">新作品上屏</div>
+  </div>
+
+  <!-- 排队指示器 -->
+  <div id="queue-indicator">
+    <span class="qi-icon">⏳</span>
+    <span class="qi-text">作品已就绪，等待视频结束...</span>
   </div>
 
   <!-- 全屏视频插播层 -->
