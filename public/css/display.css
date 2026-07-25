@@ -15,7 +15,7 @@ html, body {
   cursor: none;
 }
 
-/* ===== 背景层 ===== */
+/* ===== 背景�?===== */
 #background-layer {
   position: fixed;
   top: 0;
@@ -62,7 +62,7 @@ html, body {
   pointer-events: none;
 }
 
-/* ===== 图片区 ===== */
+/* ===== 图片�?===== */
 .card-image {
   width: 100%;
   height: 100%;
@@ -164,7 +164,7 @@ html, body {
     1px 1px 0 rgba(150, 90, 10, 0.5);
 }
 
-/* ===== 空状态 ===== */
+/* ===== 空状�?===== */
 #empty-hint {
   position: fixed;
   top: 50%;
@@ -235,7 +235,325 @@ html, body {
   object-fit: contain;
 }
 
-/* ===== 隐藏工具类 ===== */
+/* ===== 隐藏工具�?===== */
 .hidden {
   display: none !important;
+}
+
+/* ===== 极光背景（spotlight 时激活） ===== */
+#aurora {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 1s;
+  pointer-events: none;
+}
+#aurora.active { opacity: 1; }
+#aurora::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: conic-gradient(from 0deg at 50% 50%,
+    rgba(255,180,40,0.05), rgba(255,215,0,0.08), rgba(200,100,40,0.04),
+    rgba(255,180,40,0.06), rgba(255,215,0,0.10), rgba(200,100,40,0.03),
+    rgba(255,180,40,0.05));
+  filter: blur(60px);
+  animation: auroraSpin 30s linear infinite;
+}
+@keyframes auroraSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ===== 粒子画布 ===== */
+#particle-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 48;
+  pointer-events: none;
+}
+
+/* ===== 画廊卡片变暗 ===== */
+#canvas.dimmed .floating-card {
+  opacity: 0.12 !important;
+  filter: blur(3px) brightness(0.5);
+  transition: opacity 0.5s, filter 0.5s;
+}
+
+/* ===== Spotlight �?===== */
+#spotlight-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+#spotlight-layer.active { opacity: 1; }
+#spotlight-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+}
+
+/* ===== 旋转光束 ===== */
+#light-rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 900px;
+  height: 900px;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: opacity 0.6s, transform 0.8s;
+}
+#light-rays.active {
+  opacity: 0.4;
+  transform: translate(-50%, -50%) scale(1);
+  animation: rayRotate 20s linear infinite;
+}
+#light-rays::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    transparent 0deg, rgba(255,200,80,0.15) 5deg, transparent 10deg,
+    transparent 30deg, rgba(255,215,0,0.12) 35deg, transparent 40deg,
+    transparent 60deg, rgba(255,180,40,0.18) 65deg, transparent 70deg,
+    transparent 90deg, rgba(255,215,0,0.10) 95deg, transparent 100deg,
+    transparent 120deg, rgba(255,200,80,0.15) 125deg, transparent 130deg,
+    transparent 150deg, rgba(255,215,0,0.13) 155deg, transparent 160deg,
+    transparent 180deg, rgba(255,180,40,0.16) 185deg, transparent 190deg,
+    transparent 210deg, rgba(255,215,0,0.11) 215deg, transparent 220deg,
+    transparent 240deg, rgba(255,200,80,0.14) 245deg, transparent 250deg,
+    transparent 270deg, rgba(255,215,0,0.12) 275deg, transparent 280deg,
+    transparent 300deg, rgba(255,180,40,0.15) 305deg, transparent 310deg,
+    transparent 330deg, rgba(255,215,0,0.13) 335deg, transparent 340deg,
+    transparent 360deg);
+  mask: radial-gradient(circle, transparent 15%, black 30%, transparent 80%);
+  -webkit-mask: radial-gradient(circle, transparent 15%, black 30%, transparent 80%);
+}
+@keyframes rayRotate {
+  from { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  to { transform: translate(-50%, -50%) scale(1) rotate(360deg); }
+}
+
+/* ===== 冲击波环 ===== */
+.shockwave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 2px solid rgba(255,215,0,0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+@keyframes shockExpand {
+  0% { width: 100px; height: 100px; opacity: 0.8; border-width: 3px; border-color: rgba(255,230,120,0.9); }
+  100% { width: 900px; height: 900px; opacity: 0; border-width: 1px; border-color: rgba(255,215,0,0); }
+}
+
+/* ===== 旋转能量�?===== */
+#light-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 560px;
+  height: 560px;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  transition: opacity 0.5s, transform 0.6s;
+  border-radius: 50%;
+}
+#light-ring.active {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+#light-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    transparent 0%, rgba(255,215,0,0.3) 8%, transparent 16%,
+    transparent 25%, rgba(255,180,40,0.25) 33%, transparent 41%,
+    transparent 50%, rgba(255,215,0,0.2) 58%, transparent 66%,
+    transparent 75%, rgba(255,180,40,0.28) 83%, transparent 91%,
+    transparent 100%);
+  mask: radial-gradient(circle, transparent 44%, black 46%, black 50%, transparent 52%);
+  -webkit-mask: radial-gradient(circle, transparent 44%, black 46%, black 50%, transparent 52%);
+  animation: ringSpin 8s linear infinite;
+}
+#light-ring::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,215,0,0.2);
+  box-shadow: 0 0 30px rgba(255,180,40,0.15), inset 0 0 30px rgba(255,180,40,0.1);
+}
+@keyframes ringSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ===== 脉冲光晕 ===== */
+.glow-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  opacity: 0;
+}
+@keyframes glowPulse {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+  50% { opacity: 0.5; }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+
+/* ===== 作品容器 ===== */
+#spotlight-image-wrap {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 500px;
+  height: 500px;
+}
+
+/* 原图层（白纸效果�?*/
+#original-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f0e8;
+  border-radius: 4px;
+  padding: 20px;
+  box-shadow: 0 0 60px rgba(255,215,0,0.4), 0 0 120px rgba(255,180,40,0.2), 0 0 200px rgba(255,150,40,0.1);
+  opacity: 1;
+  transition: opacity 0.8s;
+}
+#original-layer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 抠图层（透明发光�?*/
+#matted-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.8s;
+}
+#matted-layer img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 25px rgba(255,215,0,0.7)) drop-shadow(0 0 50px rgba(255,180,40,0.4));
+}
+
+/* ===== 闪光爆发 ===== */
+#flash-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 700px;
+  height: 700px;
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255,255,240,0.95) 0%, rgba(255,230,150,0.6) 30%, rgba(255,200,80,0.2) 60%, transparent 80%);
+}
+@keyframes flashBurst {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  15% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+  40% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+/* ===== 信息文本 ===== */
+#spotlight-info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, 280px);
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.5s, transform 0.5s;
+}
+#spotlight-info.show { opacity: 1; }
+.info-name {
+  font-size: 36px;
+  font-weight: 700;
+  font-family: "STKaiti","KaiTi","楷体","华文楷体",serif;
+  color: #ffd700;
+  text-shadow: 0 0 12px rgba(255,180,40,0.9), 0 0 24px rgba(255,180,40,0.5), 0 2px 6px rgba(0,0,0,0.95);
+  letter-spacing: 6px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s 0.2s, transform 0.6s 0.2s;
+}
+#spotlight-info.show .info-name { opacity: 1; transform: translateY(0); }
+.info-date {
+  font-size: 18px;
+  color: #f5c842;
+  margin-top: 8px;
+  letter-spacing: 4px;
+  text-shadow: 0 0 8px rgba(220,150,30,0.7), 0 1px 3px rgba(0,0,0,0.9);
+  opacity: 0;
+  transition: opacity 0.5s 0.5s;
+}
+#spotlight-info.show .info-date { opacity: 0.8; }
+
+/* ===== "新作品上�? 提示 ===== */
+#announce-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -350px);
+  font-size: 22px;
+  font-family: "STKaiti","KaiTi","楷体",serif;
+  color: rgba(255,215,0,0.7);
+  letter-spacing: 10px;
+  opacity: 0;
+  transition: opacity 0.5s;
+  text-shadow: 0 0 10px rgba(255,180,40,0.5);
+}
+#announce-text.show { opacity: 1; }
+
+/* ===== 排队指示�?===== */
+#queue-indicator {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.5s;
+  background: rgba(20,15,10,0.9);
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,180,40,0.4);
+}
+#queue-indicator.show { opacity: 1; }
+#queue-indicator .qi-icon {
+  font-size: 24px;
+  display: inline-block;
+  animation: spin 2s linear infinite;
+}
+#queue-indicator .qi-text {
+  font-size: 14px;
+  color: #ffd700;
+  margin-left: 8px;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

@@ -1,9 +1,9 @@
 /**
- * 展示页浮动气泡引擎 v3
+ * 展示页浮动气泡引擎 v4
  * - 固定6张卡片始终在屏幕上，均匀分布
  * - 每张卡片展示10~20秒后淡出，立即换下一张
- * - 帧级碰撞检测，互不遮盖
- * - 全屏视频定时插播（重复2次后回到画廊）
+ * - 新作品到达时触发高光特写流程
+ * - 全屏视频定时插播（不打断，新作品排队等待）
  */
 
 // ===== 全局状态 =====
@@ -26,12 +26,167 @@ let videoTimer = null;
 let videoPlayCount = 0;
 let videoPlayTarget = 2;
 
+// ===== Spotlight 状态 =====
+let spotlightQueue = [];
+let isSpotlightRunning = false;
+let videoEndCallback = null;
+let sparkleInterval = null;
+let spotlightSize = 500;      // 动态设置：60%屏幕高度
+let isPostVideoProcessing = false; // 视频结束后集中处理spotlight
+
 // ===== DOM =====
 const canvas = document.getElementById('canvas');
 const bgLayer = document.getElementById('background-layer');
 const emptyHint = document.getElementById('empty-hint');
 const videoOverlay = document.getElementById('video-overlay');
 const showcaseVideo = document.getElementById('showcase-video');
+
+const spotlightLayer = document.getElementById('spotlight-layer');
+const spotlightWrap = document.getElementById('spotlight-image-wrap');
+const originalLayer = document.getElementById('original-layer');
+const mattedLayer = document.getElementById('matted-layer');
+const originalImg = document.getElementById('original-img');
+const mattedImg = document.getElementById('matted-img');
+const lightRays = document.getElementById('light-rays');
+const lightRing = document.getElementById('light-ring');
+const flashOverlay = document.getElementById('flash-overlay');
+const spotlightInfo = document.getElementById('spotlight-info');
+const spotName = document.getElementById('spot-name');
+const spotDate = document.getElementById('spot-date');
+const aurora = document.getElementById('aurora');
+const announceText = document.getElementById('announce-text');
+const queueIndicator = document.getElementById('queue-indicator');
+
+// ===== 粒子系统 =====
+const pCanvas = document.getElementById('particle-canvas');
+const pCtx = pCanvas.getContext('2d');
+let particles = [];
+
+function resizeParticleCanvas() {
+  pCanvas.width = window.innerWidth;
+  pCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeParticleCanvas);
+resizeParticleCanvas();
+
+class Particle {
+  constructor(x, y, opts = {}) {
+    this.x = x; this.y = y;
+    this.vx = opts.vx ?? (Math.random() - 0.5) * 8;
+    this.vy = opts.vy ?? (Math.random() - 0.5) * 8;
+    this.size = opts.size ?? (2 + Math.random() * 4);
+    this.life = opts.life ?? 1.0;
+    this.decay = opts.decay ?? 0.008;
+    this.color = opts.color ?? '255,215,0';
+    this.gravity = opts.gravity ?? 0;
+    this.shrink = opts.shrink ?? 0.99;
+    this.twinkle = opts.twinkle ?? false;
+    this.twinklePhase = Math.random() * Math.PI * 2;
+    this.twinkleSpeed = 0.05 + Math.random() * 0.1;
+  }
+  update(dt) {
+    this.x += this.vx * dt * 0.06;
+    this.y += this.vy * dt * 0.06;
+    this.vy += this.gravity * dt * 0.06;
+    this.vx *= 0.985;
+    this.vy *= 0.985;
+    this.size *= this.shrink;
+    this.life -= this.decay * dt * 0.06;
+    if (this.twinkle) this.twinklePhase += this.twinkleSpeed * dt * 0.06;
+  }
+  draw(ctx) {
+    if (this.life <= 0 || this.size < 0.5) return;
+    const alpha = this.twinkle ? this.life * (0.5 + 0.5 * Math.sin(this.twinklePhase)) : this.life;
+    const r = Math.max(0.5, this.size);
+    const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, r * 3);
+    grad.addColorStop(0, `rgba(${this.color},${alpha})`);
+    grad.addColorStop(0.3, `rgba(${this.color},${alpha * 0.5})`);
+    grad.addColorStop(1, `rgba(${this.color},0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r * 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = `rgba(255,255,240,${alpha * 0.9})`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, r * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function burstParticles(x, y, count, opts = {}) {
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + Math.random() * 0.3;
+    const speed = (opts.minSpeed ?? 3) + Math.random() * (opts.maxSpeed ?? 8);
+    particles.push(new Particle(x, y, {
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: (opts.minSize ?? 2) + Math.random() * (opts.maxSize ?? 5),
+      life: 1.0,
+      decay: opts.decay ?? 0.01,
+      color: opts.color ?? '255,215,0',
+      gravity: opts.gravity ?? 0.05,
+      shrink: 0.995,
+      twinkle: true,
+    }));
+  }
+}
+
+function spawnFloatingSparkles(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 150 + Math.random() * 200;
+    particles.push(new Particle(
+      x + Math.cos(angle) * dist,
+      y + Math.sin(angle) * dist,
+      {
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -0.2 - Math.random() * 0.5,
+        size: 1.5 + Math.random() * 2.5,
+        life: 1.0,
+        decay: 0.004,
+        color: Math.random() > 0.3 ? '255,215,0' : '255,180,40',
+        gravity: -0.02,
+        shrink: 0.998,
+        twinkle: true,
+      }
+    ));
+  }
+}
+
+function trailParticles(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    particles.push(new Particle(
+      x + (Math.random() - 0.5) * 40,
+      y + (Math.random() - 0.5) * 40,
+      {
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: (Math.random() - 0.5) * 1.5 - 0.5,
+        size: 2 + Math.random() * 3,
+        life: 0.8,
+        decay: 0.015,
+        color: '255,215,0',
+        gravity: 0.02,
+        shrink: 0.99,
+        twinkle: true,
+      }
+    ));
+  }
+}
+
+let pLastFrame = 0;
+function particleLoop(t) {
+  if (!pLastFrame) pLastFrame = t;
+  const dt = Math.min(t - pLastFrame, 50);
+  pLastFrame = t;
+  pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+  for (let i = particles.length - 1; i >= 0; i--) {
+    particles[i].update(dt);
+    particles[i].draw(pCtx);
+    if (particles[i].life <= 0 || particles[i].size < 0.5) particles.splice(i, 1);
+  }
+  requestAnimationFrame(particleLoop);
+}
+requestAnimationFrame(particleLoop);
 
 // ===== Socket.io =====
 const socket = io();
@@ -49,10 +204,18 @@ socket.on('sync', (data) => {
   restartVideoSchedule();
 });
 
+// 新作品到达 → 触发 spotlight
 socket.on('artwork:new', (artwork) => {
   allArtworks.push(artwork);
   emptyHint.classList.add('hidden');
-  fillCards();
+
+  // 有 originalUrl 才走 spotlight，否则直接补卡片
+  if (artwork.originalUrl && artwork.originalUrl !== artwork.url) {
+    spotlightQueue.push(artwork);
+    processSpotlightQueue();
+  } else {
+    fillCards();
+  }
 });
 
 socket.on('artworks:batch', (artworks) => {
@@ -61,12 +224,29 @@ socket.on('artworks:batch', (artworks) => {
   fillCards();
 });
 
-socket.on('artwork:delete', ({ id }) => {
+// 下架(归档)
+socket.on('artwork:archive', ({ id }) => {
   allArtworks = allArtworks.filter(a => a.id !== id);
   activeCards.forEach(c => {
     if (c.artwork.id === id) c.startFadeOut();
   });
   if (allArtworks.length === 0) emptyHint.classList.remove('hidden');
+});
+
+socket.on('artwork:purge', ({ id }) => {
+  allArtworks = allArtworks.filter(a => a.id !== id);
+  activeCards.forEach(c => {
+    if (c.artwork.id === id) c.startFadeOut();
+  });
+  if (allArtworks.length === 0) emptyHint.classList.remove('hidden');
+});
+
+socket.on('artwork:restore', ({ id, artwork }) => {
+  if (!allArtworks.find(a => a.id === id)) {
+    allArtworks.push(artwork);
+    emptyHint.classList.add('hidden');
+    fillCards();
+  }
 });
 
 socket.on('background:update', (bg) => applyBackground(bg));
@@ -89,9 +269,7 @@ socket.on('videos:config', (cfg) => {
 function restartVideoSchedule() {
   clearTimeout(videoTimer);
   videoTimer = null;
-
   if (videos.length === 0) return;
-
   fetch('/api/videos/config').then(r => r.json()).then(cfg => {
     videoConfig = cfg;
     scheduleNextVideo();
@@ -108,18 +286,16 @@ function scheduleNextVideo() {
 
 function playShowcaseVideo() {
   if (videos.length === 0) return;
-  if (galleryPaused) return; // 已经在播视频
+  if (galleryPaused) return;
 
-  const video = videos[0]; // 目前只播第一个
+  const video = videos[0];
   videoPlayCount = 0;
   videoPlayTarget = videoConfig.repeat || 2;
   galleryPaused = true;
 
-  // 隐藏画廊元素
   document.getElementById('title-bar').style.opacity = '0';
   canvas.style.opacity = '0';
 
-  // 显示视频覆盖层
   showcaseVideo.src = video.url;
   showcaseVideo.muted = true;
   showcaseVideo.playsInline = true;
@@ -132,11 +308,9 @@ function playShowcaseVideo() {
   showcaseVideo.onended = () => {
     videoPlayCount++;
     if (videoPlayCount < videoPlayTarget) {
-      // 再播一次
       showcaseVideo.currentTime = 0;
       showcaseVideo.play().catch(() => {});
     } else {
-      // 播完了，回到画廊
       endVideoShowcase();
     }
   };
@@ -151,13 +325,330 @@ function endVideoShowcase() {
     showcaseVideo.load();
     galleryPaused = false;
 
-    // 恢复画廊
     document.getElementById('title-bar').style.opacity = '';
     canvas.style.opacity = '';
 
-    // 安排下一次插播
+    // 处理 spotlight 队列
+    if (videoEndCallback) {
+      const cb = videoEndCallback;
+      videoEndCallback = null;
+      setTimeout(cb, 600);
+    } else if (spotlightQueue.length > 0) {
+      // 期望B: 视频结束后处理排队中的特写
+      queueIndicator.classList.remove('show');
+      isPostVideoProcessing = true;
+      setTimeout(processSpotlightQueue, 600);
+    }
+
     scheduleNextVideo();
   }, 800);
+}
+
+// ===== Spotlight 流程 =====
+function processSpotlightQueue() {
+  if (isSpotlightRunning) return;
+  if (spotlightQueue.length === 0) {
+    isPostVideoProcessing = false; // 队列清空，结束集中处理
+    return;
+  }
+
+  const art = spotlightQueue.shift();
+
+  if (galleryPaused) {
+    // 视频正在播放，排队等待
+    queueIndicator.classList.add('show');
+    videoEndCallback = () => {
+      queueIndicator.classList.remove('show');
+      startSpotlight(art);
+    };
+    return;
+  }
+
+  // 期望B: 有视频时，等视频结束后再呈现（isPostVideoProcessing为true时不等待）
+  if (videos.length > 0 && !isPostVideoProcessing) {
+    queueIndicator.classList.add('show');
+    spotlightQueue.unshift(art); // 放回队列
+    return;
+  }
+
+  // 立即开始
+  queueIndicator.classList.remove('show');
+  startSpotlight(art);
+}
+
+function createShockwave(delay) {
+  setTimeout(() => {
+    const ring = document.createElement('div');
+    ring.className = 'shockwave';
+    ring.style.animation = 'shockExpand 1.2s cubic-bezier(0.2, 0.6, 0.3, 1) forwards';
+    spotlightLayer.appendChild(ring);
+    setTimeout(() => ring.remove(), 1300);
+  }, delay);
+}
+
+function createGlowPulse(delay) {
+  setTimeout(() => {
+    const pulse = document.createElement('div');
+    pulse.className = 'glow-pulse';
+    pulse.style.width = '400px';
+    pulse.style.height = '400px';
+    pulse.style.background = 'radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%)';
+    pulse.style.animation = 'glowPulse 2s ease-out forwards';
+    spotlightLayer.appendChild(pulse);
+    setTimeout(() => pulse.remove(), 2100);
+  }, delay);
+}
+
+function startSparkles() {
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight / 2;
+  spawnFloatingSparkles(cx, cy, 8);
+  sparkleInterval = setInterval(() => {
+    spawnFloatingSparkles(cx, cy, 3);
+  }, 600);
+}
+
+function stopSparkles() {
+  if (sparkleInterval) { clearInterval(sparkleInterval); sparkleInterval = null; }
+}
+
+// 自动裁掉图片四周白边/浅色背景，返回裁剪后的 dataURL
+function cropWhiteBorders(imgUrl) {
+  return new Promise((resolve) => {
+    const probe = new Image();
+    probe.crossOrigin = 'anonymous';
+    probe.onload = () => {
+      const sw = probe.naturalWidth;
+      const sh = probe.naturalHeight;
+      // 限制最大处理尺寸（大图也只用缩小版来扫描，够精确）
+      const maxDim = 1200;
+      const scale = Math.min(1, maxDim / Math.max(sw, sh));
+      const cw = Math.round(sw * scale);
+      const ch = Math.round(sh * scale);
+
+      const c = document.createElement('canvas');
+      c.width = cw;
+      c.height = ch;
+      const cx = c.getContext('2d');
+      cx.drawImage(probe, 0, 0, cw, ch);
+      const imgData = cx.getImageData(0, 0, cw, ch);
+      const d = imgData.data;
+
+      const threshold = 238; // RGB 全部 > 此值 → 视为白
+      const step = 3;
+      let minX = cw, minY = ch, maxX = -1, maxY = -1;
+      let hasContent = false;
+
+      for (let y = 0; y < ch; y += step) {
+        for (let x = 0; x < cw; x += step) {
+          const i = (y * cw + x) * 4;
+          const a = d[i + 3];
+          if (a < 10) continue; // 透明像素跳过
+          if (d[i] < threshold || d[i + 1] < threshold || d[i + 2] < threshold) {
+            hasContent = true;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      if (!hasContent) { resolve(imgUrl); return; }
+
+      const pad = Math.round(15 * scale);
+      minX = Math.max(0, (minX - pad) / scale);
+      minY = Math.max(0, (minY - pad) / scale);
+      maxX = Math.min(sw, (maxX + pad + step) / scale);
+      maxY = Math.min(sh, (maxY + pad + step) / scale);
+
+      // 如果裁剪面积和原图差异 <5%，不裁
+      if ((maxX - minX) > sw * 0.95 && (maxY - minY) > sh * 0.95) {
+        resolve(imgUrl);
+        return;
+      }
+
+      const cropCanvas = document.createElement('canvas');
+      cropCanvas.width = Math.round(maxX - minX);
+      cropCanvas.height = Math.round(maxY - minY);
+      cropCanvas.getContext('2d').drawImage(probe, minX, minY, maxX - minX, maxY - minY, 0, 0, cropCanvas.width, cropCanvas.height);
+      resolve(cropCanvas.toDataURL('image/jpeg', 0.92));
+    };
+    probe.onerror = () => resolve(imgUrl);
+    probe.src = imgUrl;
+  });
+}
+
+function startSpotlight(art) {
+  isSpotlightRunning = true;
+  galleryPaused = true;
+
+  aurora.classList.add('active');
+  canvas.classList.add('dimmed');
+
+  // 预加载抠图
+  mattedImg.src = art.url;
+  spotName.textContent = art.name;
+  spotDate.textContent = art.date;
+
+  // 原图先裁白边再展示
+  cropWhiteBorders(art.originalUrl).then(croppedUrl => {
+    originalImg.src = croppedUrl;
+
+    // 重置图层
+    originalLayer.style.opacity = '1';
+    mattedLayer.style.opacity = '0';
+    spotlightInfo.classList.remove('show');
+    lightRays.classList.remove('active');
+    lightRing.classList.remove('active');
+
+    // 计算特写尺寸：占屏幕高度60%
+    spotlightSize = Math.round(window.innerHeight * 0.6);
+    const offsetX = Math.round((window.innerWidth - spotlightSize) / 2);
+    const offsetY = Math.round((window.innerHeight - spotlightSize) / 2);
+
+    // 设置容器尺寸
+    spotlightWrap.style.width = spotlightSize + 'px';
+    spotlightWrap.style.height = spotlightSize + 'px';
+
+    // 定位到屏幕中心（像素坐标）
+    spotlightWrap.style.transition = 'none';
+    spotlightWrap.style.transform = 'translate(' + offsetX + 'px, ' + offsetY + 'px) scale(0.3)';
+    spotlightLayer.classList.add('active');
+
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+
+    // === Phase 0: 入场爆发 ===
+    createShockwave(0);
+    createShockwave(150);
+    createShockwave(350);
+
+    burstParticles(cx, cy, 50, { minSpeed: 4, maxSpeed: 12, minSize: 3, maxSize: 7, decay: 0.01, gravity: 0.03 });
+    burstParticles(cx, cy, 25, { minSpeed: 2, maxSpeed: 6, minSize: 2, maxSize: 4, decay: 0.012, color: '255,200,80', gravity: 0.02 });
+
+    setTimeout(() => announceText.classList.add('show'), 200);
+
+    // 作品弹跳放大
+    setTimeout(() => {
+      spotlightWrap.style.transition = 'transform 0.9s cubic-bezier(0.34, 1.5, 0.64, 1)';
+      spotlightWrap.style.transform = 'translate(' + offsetX + 'px, ' + offsetY + 'px) scale(1)';
+    }, 50);
+
+    // === Phase 1: 展示原图 + 光效 ===
+    setTimeout(() => {
+      lightRays.classList.add('active');
+      lightRing.classList.add('active');
+      createGlowPulse(0);
+      createGlowPulse(600);
+      createGlowPulse(1200);
+      createGlowPulse(1800);
+      startSparkles();
+      spotlightInfo.classList.add('show');
+      announceText.classList.remove('show');
+
+      burstParticles(cx, cy, 20, { minSpeed: 2, maxSpeed: 5, minSize: 2, maxSize: 4, decay: 0.015, gravity: -0.01 });
+    }, 900);
+
+    // === Phase 2: 缩小原图到画廊位置（延长3秒）===
+    const originalDuration = 5500;
+    setTimeout(() => {
+      shrinkAndFloat(art);
+    }, originalDuration + 900);
+  });
+}
+
+function shrinkAndFloat(art) {
+  // 关闭装饰光效，但保持原图可见
+  stopSparkles();
+  lightRays.classList.remove('active');
+  lightRing.classList.remove('active');
+
+  const targetSize = 200 + Math.random() * 120;
+  const pos = findPosition(targetSize, targetSize);
+
+  spotlightInfo.classList.remove('show');
+
+  // 缩小原图到目标位置
+  spotlightWrap.style.transition = 'transform 1.3s cubic-bezier(0.4, 0, 0.6, 1)';
+  spotlightWrap.style.transform = `translate(${pos.x + targetSize/2 - window.innerWidth/2}px, ${pos.y + targetSize/2 - window.innerHeight/2}px) scale(${targetSize / 500})`;
+
+  // 粒子尾迹
+  let trailCount = 0;
+  const trailInterval = setInterval(() => {
+    const rect = spotlightWrap.getBoundingClientRect();
+    trailParticles(rect.left + rect.width/2, rect.top + rect.height/2, 3);
+    trailCount++;
+    if (trailCount > 8) clearInterval(trailInterval);
+  }, 150);
+
+  // 缩小到位后 → 闪光替换为抠图
+  setTimeout(() => {
+    const destX = pos.x + targetSize / 2;
+    const destY = pos.y + targetSize / 2;
+
+    // 闪光爆发
+    flashOverlay.style.animation = 'none';
+    void flashOverlay.offsetWidth;
+    flashOverlay.style.animation = 'flashBurst 0.9s ease-out forwards';
+
+    // 粒子爆发
+    burstParticles(destX, destY, 40, { minSpeed: 3, maxSpeed: 10, minSize: 2, maxSize: 5, decay: 0.012, gravity: 0.02 });
+    burstParticles(destX, destY, 20, { minSpeed: 1, maxSpeed: 4, minSize: 1, maxSize: 3, decay: 0.018, color: '255,255,240' });
+
+    // Crossfade：原图 → 抠图
+    originalLayer.style.opacity = '0';
+    mattedLayer.style.opacity = '1';
+
+    createGlowPulse(0);
+
+    // 替换完成后，成为浮动卡片
+    setTimeout(() => {
+      finishSpotlight(art, pos, targetSize);
+    }, 700);
+  }, 1350);
+}
+
+function finishSpotlight(art, pos, targetSize) {
+  const destX = pos.x + targetSize / 2;
+  const destY = pos.y + targetSize / 2;
+  burstParticles(destX, destY, 10, { minSpeed: 1, maxSpeed: 3, minSize: 2, maxSize: 3, decay: 0.025, gravity: 0.03 });
+
+  // 在缩小终点创建浮动卡片（而不是随机位置）
+  const card = new FloatingCard(art);
+  card.x = pos.x;
+  card.y = pos.y;
+  card.width = targetSize;
+  card.height = targetSize;
+  card.opacity = 1;
+  card.state = 'visible';
+  card.el.style.width = targetSize + 'px';
+  card.el.style.height = targetSize + 'px';
+  card.el.style.transform = 'translate(' + pos.x + 'px, ' + pos.y + 'px)';
+  card.el.style.opacity = '1';
+
+  // 图片加载后保持位置，不触发碰撞重定位
+  const img = card.el.querySelector('img');
+  img.addEventListener('load', function() {
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    if (nw > 0 && nh > 0) {
+      card.height = card.width * (nh / nw);
+      card.el.style.height = card.height + 'px';
+    }
+  });
+
+  activeCards.push(card);
+
+  spotlightLayer.classList.remove('active');
+  aurora.classList.remove('active');
+  canvas.classList.remove('dimmed');
+  galleryPaused = false;
+
+  isSpotlightRunning = false;
+
+  // 处理队列中的下一个
+  setTimeout(processSpotlightQueue, 500);
 }
 
 // ===== 背景 =====
@@ -292,7 +783,6 @@ class FloatingCard {
     this.el.className = 'floating-card';
     this.el.style.width = this.width + 'px';
     this.el.style.height = this.height + 'px';
-    // 立即设置初始透明和位置，防止首帧闪烁
     this.el.style.opacity = '0';
     this.el.style.transform = `translate(${this.x}px, ${this.y}px)`;
     this.el.innerHTML = `
@@ -323,7 +813,7 @@ class FloatingCard {
 
   update(dt) {
     if (this._removed) return false;
-    if (galleryPaused) return true; // 视频播放时冻结
+    if (galleryPaused) return true;
     this.age += dt;
 
     this.x += this.vx * (dt / 16);

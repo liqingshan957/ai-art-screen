@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const multer = require('multer');
@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { exec } = require('child_process');
+const sharp = require('sharp');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,9 +14,15 @@ const io = new Server(server);
 
 const PORT = 3000;
 
+// ===== Rembg 自动抠图配置 =====
+const REMBG_HOST = 'localhost';
+const REMBG_PORT = 7000;
+const REMBG_TIMEOUT = 15000;
+
 // ===== 目录准备 =====
 const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
 const ARTWORKS_DIR = path.join(UPLOADS_DIR, 'artworks');
+const ORIGINALS_DIR = path.join(UPLOADS_DIR, 'originals');
 const BG_DIR = path.join(UPLOADS_DIR, 'background');
 const VIDEOS_DIR = path.join(UPLOADS_DIR, 'videos');
 const WORKS_DIR = path.join(__dirname, 'public', 'works');
@@ -27,7 +34,7 @@ const PAGEFIRE_WORKS_DIR = path.join(PAGEFIRE_DIR, 'works');
 const PAGEFIRE_ARTWORKS_DIR = path.join(PAGEFIRE_DIR, 'artworks');
 const PAGEFIRE_BASE_URL = 'https://gzart-o8114r7d.pagefire.openhkt.com';
 
-[UPLOADS_DIR, ARTWORKS_DIR, BG_DIR, VIDEOS_DIR, WORKS_DIR, DATA_DIR, PAGEFIRE_DIR, PAGEFIRE_WORKS_DIR, PAGEFIRE_ARTWORKS_DIR].forEach(dir => {
+[UPLOADS_DIR, ARTWORKS_DIR, ORIGINALS_DIR, BG_DIR, VIDEOS_DIR, WORKS_DIR, DATA_DIR, PAGEFIRE_DIR, PAGEFIRE_WORKS_DIR, PAGEFIRE_ARTWORKS_DIR].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -755,6 +762,40 @@ function compressForPagefire(artwork) {
 
 // 延迟部署 PageFire(防重复触发,15秒内多次调用只部署一次)
 let pagefireDeployTimer = null;
+// ===== Rembg HTTP 调用 =====
+
+const recentAutoMatting = new Map();
+const DEDUP_WINDOW = 30000;
+async function callRembg(imagePath) {
+  const imageData = fs.readFileSync(imagePath);
+  const filename = path.basename(imagePath);
+  const boundary = '----Rembg' + crypto.randomBytes(8).toString('hex');
+  const header = Buffer.from(
+    `--${boundary}\r
+` +
+    `Content-Disposition: form-data; name="file"; filename="${filename}"\r
+` +
+    `Content-Type: application/octet-stream\r
+\r
+`
+  );
+  const footer = Buffer.from(`\r
+--${boundary}--\r
+`);
+  const body = Buffer.concat([header, imageData, footer]);
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { req.destroy(); reject(new Error(`Rembg timeout (${REMBG_TIMEOUT/1000}s)`)); }, REMBG_TIMEOUT);
+    const req = http.request({ hostname: REMBG_HOST, port: REMBG_PORT, path: '/api/remove', method: 'POST',
+      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}`, 'Content-Length': body.length }
+    }, (res) => {
+      clearTimeout(timer);
+      if (res.statusCode !== 200) { reject(new Error(`Rembg HTTP ${res.statusCode}`)); return; }
+      const chunks = []; res.on('data', chunk => chunks.push(chunk)); res.on('end', () => resolve(Buffer.concat(chunks)));
+    });
+    req.on('error', (err) => { clearTimeout(timer); reject(err); });
+    req.write(body); req.end();
+  });
+}
 function schedulePagefireDeploy() {
   if (pagefireDeployTimer) clearTimeout(pagefireDeployTimer);
   pagefireDeployTimer = setTimeout(() => {
@@ -846,6 +887,66 @@ app.post('/api/dashboard/today', express.json(), (req, res) => {
   dashboardData[key].updatedAt = Date.now();
   saveData(DASHBOARD_FILE, dashboardData);
   res.json({ success: true, data: dashboardData[key] });
+});
+
+// 自动抠图上传
+app.post('/api/auto-matting', uploadArtwork.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No image' });
+  const { name, date } = req.body;
+  const artworkName = name || '匿名小画家';
+  const lastTime = recentAutoMatting.get(artworkName);
+  if (lastTime && Date.now() - lastTime < DEDUP_WINDOW) {
+    try { fs.unlinkSync(req.file.path); } catch(e) {}
+    return res.json({ success: false, duplicate: true });
+  }
+  recentAutoMatting.set(artworkName, Date.now());
+  const id = path.basename(req.file.filename, path.extname(req.file.filename));
+  const originalPath = req.file.path;
+  const originalExt = path.extname(req.file.filename).toLowerCase();
+  try {
+    const originalFilename = id + originalExt;
+    const originalSavePath = path.join(ORIGINALS_DIR, originalFilename);
+    fs.copyFileSync(originalPath, originalSavePath);
+    const mattedData = await callRembg(originalPath);
+    let saveBuffer = mattedData;
+    try {
+      const meta = await sharp(mattedData).metadata();
+      const crop = {
+        left: Math.round(meta.width * 8 / 102),
+        top: Math.round(meta.height * 8 / 152),
+        width: Math.round(meta.width * (102 - 8 - 8) / 102),
+        height: Math.round(meta.height * (152 - 8 - 32) / 152)
+      };
+      console.log('[AutoMatting] Crop: ' + crop.left + ',' + crop.top + ' ' + crop.width + 'x' + crop.height);
+      saveBuffer = await sharp(mattedData).extract(crop).png().toBuffer();
+    } catch (cropErr) {
+      console.error('[AutoMatting] Crop FAILED: ' + cropErr.message + ' - saving uncropped');
+      saveBuffer = mattedData;
+    }
+    const mattedFilename = id + '.png';
+    const mattedPath = path.join(ARTWORKS_DIR, mattedFilename);
+    fs.writeFileSync(mattedPath, saveBuffer);
+    if (originalPath !== mattedPath) { try { fs.unlinkSync(originalPath); } catch(e) {} }
+    const artwork = {
+      id, name: artworkName,
+      date: date || new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+      filename: mattedFilename,
+      url: '/uploads/artworks/' + mattedFilename,
+      originalUrl: '/uploads/originals/' + originalFilename,
+      status: 'active', createdAt: Date.now(), autoMatting: true
+    };
+    artworks.push(artwork);
+    saveData(ARTWORKS_FILE, artworks);
+    trackNewArtwork(1);
+    generateWorkPage(artwork);
+    compressForPagefire(artwork);
+    schedulePagefireDeploy();
+    io.emit('artwork:new', artwork);
+    res.json({ success: true, matted: true, artwork });
+  } catch (err) {
+    try { fs.unlinkSync(originalPath); } catch(e) {}
+    res.json({ success: false, matted: false, error: err.message });
+  }
 });
 
 // 上传作品
