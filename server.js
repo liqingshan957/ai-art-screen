@@ -904,35 +904,40 @@ app.post('/api/auto-matting', uploadArtwork.single('image'), async (req, res) =>
   const originalPath = req.file.path;
   const originalExt = path.extname(req.file.filename).toLowerCase();
   try {
-    const originalFilename = id + originalExt;
-    const originalSavePath = path.join(ORIGINALS_DIR, originalFilename);
-    fs.copyFileSync(originalPath, originalSavePath);
-    const mattedData = await callRembg(originalPath);
-    let saveBuffer = mattedData;
-    try {
-      const meta = await sharp(mattedData).metadata();
-      const crop = {
-        left: Math.round(meta.width * 8 / 102),
-        top: Math.round(meta.height * 8 / 152),
-        width: Math.round(meta.width * (102 - 8 - 8) / 102),
-        height: Math.round(meta.height * (152 - 8 - 32) / 152)
-      };
-      console.log('[AutoMatting] Crop: ' + crop.left + ',' + crop.top + ' ' + crop.width + 'x' + crop.height);
-      saveBuffer = await sharp(mattedData).extract(crop).png().toBuffer();
-    } catch (cropErr) {
-      console.error('[AutoMatting] Crop FAILED: ' + cropErr.message + ' - saving uncropped');
-      saveBuffer = mattedData;
-    }
+        const originalFilename = id + originalExt;
+    const fullOriginalPath = path.join(ORIGINALS_DIR, originalFilename);
+    fs.copyFileSync(originalPath, fullOriginalPath);
+
+    // 先裁剪原图（按设计卡规格去边距）
+    const cropMeta = await sharp(fullOriginalPath).metadata();
+    const origCrop = {
+      left: Math.round(cropMeta.width * 8 / 102),
+      top: Math.round(cropMeta.height * 8 / 152),
+      width: Math.round(cropMeta.width * (102 - 8 - 8) / 102),
+      height: Math.round(cropMeta.height * (152 - 8 - 32) / 152)
+    };
+    console.log('[AutoMatting] Crop original: ' + origCrop.left + ',' + origCrop.top + ' ' + origCrop.width + 'x' + origCrop.height);
+    const croppedOriginalPath = path.join(ORIGINALS_DIR, id + '_c' + originalExt);
+    await sharp(fullOriginalPath).extract(origCrop).toFile(croppedOriginalPath);
+
+    // 再对裁剪后的原图抠图
+    const mattedData = await callRembg(croppedOriginalPath);
+    console.log('[AutoMatting] Matted OK: ' + mattedData.length + ' bytes');
+
+    // 保存抠图结果（尺寸与裁剪后的原图一致）
     const mattedFilename = id + '.png';
     const mattedPath = path.join(ARTWORKS_DIR, mattedFilename);
-    fs.writeFileSync(mattedPath, saveBuffer);
+    fs.writeFileSync(mattedPath, mattedData);
+
+    // 清理 multer 临时文件
     if (originalPath !== mattedPath) { try { fs.unlinkSync(originalPath); } catch(e) {} }
-    const artwork = {
+
+const artwork = {
       id, name: artworkName,
       date: date || new Date().toISOString().slice(0, 10).replace(/-/g, ''),
       filename: mattedFilename,
       url: '/uploads/artworks/' + mattedFilename,
-      originalUrl: '/uploads/originals/' + originalFilename,
+      originalUrl: '/uploads/originals/' + id + '_c' + originalExt,
       status: 'active', createdAt: Date.now(), autoMatting: true
     };
     artworks.push(artwork);
