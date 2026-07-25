@@ -76,7 +76,8 @@
     "filename": "595e002ef67b5ad8.png",
     "url": "/uploads/artworks/595e002ef67b5ad8.png",
     "createdAt": 1784600856379,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784777483599
   },
   {
     "id": "04d62494f49def16",
@@ -95,7 +96,8 @@
     "filename": "5560aedb7195e9c4.png",
     "url": "/uploads/artworks/5560aedb7195e9c4.png",
     "createdAt": 1784603864099,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775402748
   },
   {
     "id": "a01eea05e3467431",
@@ -114,7 +116,8 @@
     "filename": "0b563e6d9c8a3d2b.png",
     "url": "/uploads/artworks/0b563e6d9c8a3d2b.png",
     "createdAt": 1784609914875,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784859787851
   },
   {
     "id": "9682ab7b319f64bc",
@@ -133,7 +136,8 @@
     "filename": "dcb8eaf810388f3b.png",
     "url": "/uploads/artworks/dcb8eaf810388f3b.png",
     "createdAt": 1784609939600,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775456673
   },
   {
     "id": "c99603f5a1d61ec9",
@@ -192,7 +196,8 @@
     "filename": "8b5b447b23d22807.png",
     "url": "/uploads/artworks/8b5b447b23d22807.png",
     "createdAt": 1784609975858,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775404715
   },
   {
     "id": "5e507d9e6675f2e7",
@@ -201,7 +206,8 @@
     "filename": "5e507d9e6675f2e7.png",
     "url": "/uploads/artworks/5e507d9e6675f2e7.png",
     "createdAt": 1784609978391,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775405605
   },
   {
     "id": "d8f6bac88adff18a",
@@ -220,7 +226,8 @@
     "filename": "7b757107ae16aebe.png",
     "url": "/uploads/artworks/7b757107ae16aebe.png",
     "createdAt": 1784609983600,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775407854
   },
   {
     "id": "9c8e18c80d8aa479",
@@ -229,7 +236,8 @@
     "filename": "9c8e18c80d8aa479.png",
     "url": "/uploads/artworks/9c8e18c80d8aa479.png",
     "createdAt": 1784609986625,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775418657
   },
   {
     "id": "ebc2b9a592df52d4",
@@ -247,7 +255,8 @@
     "filename": "535ff6fea43de15f.png",
     "url": "/uploads/artworks/535ff6fea43de15f.png",
     "createdAt": 1784614636786,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775422192
   },
   {
     "id": "114c770a9e54fabd",
@@ -256,7 +265,8 @@
     "filename": "114c770a9e54fabd.png",
     "url": "/uploads/artworks/114c770a9e54fabd.png",
     "createdAt": 1784615945661,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784777473787
   },
   {
     "id": "752a55cbbdb077d2",
@@ -265,7 +275,8 @@
     "filename": "752a55cbbdb077d2.png",
     "url": "/uploads/artworks/752a55cbbdb077d2.png",
     "createdAt": 1784615964704,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775424323
   },
   {
     "id": "29857583e96e828c",
@@ -284,7 +295,8 @@
     "filename": "9f0c19a51874231a.png",
     "url": "/uploads/artworks/9f0c19a51874231a.png",
     "createdAt": 1784616471023,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775426174
   },
   {
     "id": "3c26f5a5d973c812",
@@ -293,7 +305,8 @@
     "filename": "3c26f5a5d973c812.png",
     "url": "/uploads/artworks/3c26f5a5d973c812.png",
     "createdAt": 1784617173576,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784776029549
   },
   {
     "id": "6a187b6d5609705f",
@@ -302,7 +315,8 @@
     "filename": "6a187b6d5609705f.png",
     "url": "/uploads/artworks/6a187b6d5609705f.png",
     "createdAt": 1784617199066,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784777475978
   },
   {
     "id": "8244c9b11e8ba30a",
@@ -331,7 +345,8 @@
     "filename": "76c2040960760315.png",
     "url": "/uploads/artworks/76c2040960760315.png",
     "createdAt": 1784619322297,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775428009
   },
   {
     "id": "9cee2a9db61af420",
@@ -350,7 +365,8 @@
     "filename": "e37d32c89faf3244.png",
     "url": "/uploads/artworks/e37d32c89faf3244.png",
     "createdAt": 1784620343592,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784777500680
   },
   {
     "id": "f010d161aea5bd91",
@@ -359,7 +375,8 @@
     "filename": "f010d161aea5bd91.png",
     "url": "/uploads/artworks/f010d161aea5bd91.png",
     "createdAt": 1784621089073,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784946317909
   },
   {
     "id": "4a04f719c7d69d31",
@@ -378,7 +395,8 @@
     "filename": "fc57b7ca83574dbd.png",
     "url": "/uploads/artworks/fc57b7ca83574dbd.png",
     "createdAt": 1784622155761,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784776026818
   },
   {
     "id": "6d1c324178df84ad",
@@ -387,7 +405,8 @@
     "filename": "6d1c324178df84ad.png",
     "url": "/uploads/artworks/6d1c324178df84ad.png",
     "createdAt": 1784626213600,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784777247167
   },
   {
     "id": "87b67c6d89c08104",
@@ -396,7 +415,8 @@
     "filename": "87b67c6d89c08104.png",
     "url": "/uploads/artworks/87b67c6d89c08104.png",
     "createdAt": 1784627587625,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784775434087
   },
   {
     "id": "b5c5d81f70166727",
@@ -405,7 +425,8 @@
     "filename": "b5c5d81f70166727.png",
     "url": "/uploads/artworks/b5c5d81f70166727.png",
     "createdAt": 1784627616913,
-    "status": "active"
+    "status": "archived",
+    "archivedAt": 1784777491418
   },
   {
     "id": "07509c1c4f963c98",
@@ -413,8 +434,9 @@
     "date": "20260722",
     "filename": "07509c1c4f963c98.png",
     "url": "/uploads/artworks/07509c1c4f963c98.png",
-    "status": "active",
-    "createdAt": 1784690622312
+    "status": "archived",
+    "createdAt": 1784690622312,
+    "archivedAt": 1784859784136
   },
   {
     "id": "cc9969cdc0649e2c",
@@ -441,8 +463,9 @@
     "date": "20260722",
     "filename": "376d35072b8ba4f3.png",
     "url": "/uploads/artworks/376d35072b8ba4f3.png",
-    "status": "active",
-    "createdAt": 1784705678295
+    "status": "archived",
+    "createdAt": 1784705678295,
+    "archivedAt": 1784946323195
   },
   {
     "id": "495360af7b9db26a",
@@ -450,8 +473,9 @@
     "date": "20260722",
     "filename": "495360af7b9db26a.png",
     "url": "/uploads/artworks/495360af7b9db26a.png",
-    "status": "active",
-    "createdAt": 1784705819850
+    "status": "archived",
+    "createdAt": 1784705819850,
+    "archivedAt": 1784948774887
   },
   {
     "id": "9ec9b72bd40ccda2",
@@ -459,7 +483,1297 @@
     "date": "20260722",
     "filename": "9ec9b72bd40ccda2.png",
     "url": "/uploads/artworks/9ec9b72bd40ccda2.png",
+    "status": "archived",
+    "createdAt": 1784705839961,
+    "archivedAt": 1784951315588
+  },
+  {
+    "id": "f8d3d91259215874",
+    "name": "萧月",
+    "date": "20260723",
+    "filename": "f8d3d91259215874.png",
+    "url": "/uploads/artworks/f8d3d91259215874.png",
+    "status": "archived",
+    "createdAt": 1784774665616,
+    "archivedAt": 1784946327562
+  },
+  {
+    "id": "ba1b1b20606a1a7f",
+    "name": "林家玉",
+    "date": "20260723",
+    "filename": "ba1b1b20606a1a7f.png",
+    "url": "/uploads/artworks/ba1b1b20606a1a7f.png",
     "status": "active",
-    "createdAt": 1784705839961
+    "createdAt": 1784775238293
+  },
+  {
+    "id": "26b2679f751d73a7",
+    "name": "飞天",
+    "date": "20260723",
+    "filename": "26b2679f751d73a7.png",
+    "url": "/uploads/artworks/26b2679f751d73a7.png",
+    "status": "archived",
+    "createdAt": 1784775644162,
+    "archivedAt": 1784951279082
+  },
+  {
+    "id": "f34194cfd25f8989",
+    "name": "猴犀利",
+    "date": "20260723",
+    "filename": "f34194cfd25f8989.png",
+    "url": "/uploads/artworks/f34194cfd25f8989.png",
+    "status": "archived",
+    "createdAt": 1784776001878,
+    "archivedAt": 1784862832096
+  },
+  {
+    "id": "50f167fadd1f2618",
+    "name": "小飞天",
+    "date": "20260723",
+    "filename": "50f167fadd1f2618.png",
+    "url": "/uploads/artworks/50f167fadd1f2618.png",
+    "status": "archived",
+    "createdAt": 1784776498864,
+    "archivedAt": 1784859765167
+  },
+  {
+    "id": "c19de9ceec6daad0",
+    "name": "猪猪",
+    "date": "20260723",
+    "filename": "c19de9ceec6daad0.png",
+    "url": "/uploads/artworks/c19de9ceec6daad0.png",
+    "status": "archived",
+    "createdAt": 1784776971319,
+    "archivedAt": 1784862825882
+  },
+  {
+    "id": "edc215900ebec936",
+    "name": "何仙姑",
+    "date": "20260723",
+    "filename": "edc215900ebec936.png",
+    "url": "/uploads/artworks/edc215900ebec936.png",
+    "status": "archived",
+    "createdAt": 1784777757503,
+    "archivedAt": 1784862836544
+  },
+  {
+    "id": "5997eac420f224a9",
+    "name": "羽龙",
+    "date": "20260723",
+    "filename": "5997eac420f224a9.png",
+    "url": "/uploads/artworks/5997eac420f224a9.png",
+    "status": "archived",
+    "createdAt": 1784778283764,
+    "archivedAt": 1784951270444
+  },
+  {
+    "id": "de86ee97a7769b67",
+    "name": "天女",
+    "date": "20260723",
+    "filename": "de86ee97a7769b67.png",
+    "url": "/uploads/artworks/de86ee97a7769b67.png",
+    "status": "archived",
+    "createdAt": 1784778780510,
+    "archivedAt": 1784859761876
+  },
+  {
+    "id": "e5170b826a9f04c2",
+    "name": "仙女丸子",
+    "date": "20260723",
+    "filename": "e5170b826a9f04c2.png",
+    "url": "/uploads/artworks/e5170b826a9f04c2.png",
+    "status": "archived",
+    "createdAt": 1784779072556,
+    "archivedAt": 1784859768697
+  },
+  {
+    "id": "ad5316e3f6465e48",
+    "name": "孙悟空",
+    "date": "20260723",
+    "filename": "ad5316e3f6465e48.png",
+    "url": "/uploads/artworks/ad5316e3f6465e48.png",
+    "status": "archived",
+    "createdAt": 1784779443591,
+    "archivedAt": 1784948794257
+  },
+  {
+    "id": "a5ad82541fb5155d",
+    "name": "匿名小画家",
+    "date": "20260723",
+    "filename": "a5ad82541fb5155d.png",
+    "url": "/uploads/artworks/a5ad82541fb5155d.png",
+    "status": "archived",
+    "createdAt": 1784780080485,
+    "autoMatting": true,
+    "archivedAt": 1784780365057
+  },
+  {
+    "id": "36c696d64f50f817",
+    "name": "小粉",
+    "date": "20260723",
+    "filename": "36c696d64f50f817.png",
+    "url": "/uploads/artworks/36c696d64f50f817.png",
+    "status": "archived",
+    "createdAt": 1784780356705,
+    "archivedAt": 1784951268525
+  },
+  {
+    "id": "2cee151ef65ce076",
+    "name": "肃月菩萨",
+    "date": "20260723",
+    "filename": "2cee151ef65ce076.png",
+    "url": "/uploads/artworks/2cee151ef65ce076.png",
+    "status": "archived",
+    "createdAt": 1784780441870,
+    "archivedAt": 1784862828914
+  },
+  {
+    "id": "391a9dc13a6bbf63",
+    "name": "hhh",
+    "url": "/uploads/artworks/391a9dc13a6bbf63.png",
+    "status": "archived",
+    "createdAt": 1784782307564,
+    "autoMatting": true,
+    "archivedAt": 1784787528223
+  },
+  {
+    "id": "34b5a2f6745a7fdb",
+    "name": "kkk",
+    "url": "/uploads/artworks/34b5a2f6745a7fdb.png",
+    "status": "archived",
+    "createdAt": 1784782524524,
+    "autoMatting": true,
+    "archivedAt": 1784787529609
+  },
+  {
+    "id": "dc45bdb50dd26e54",
+    "name": "天蓬",
+    "date": "20260723",
+    "filename": "dc45bdb50dd26e54.png",
+    "url": "/uploads/artworks/dc45bdb50dd26e54.png",
+    "status": "archived",
+    "createdAt": 1784787891818,
+    "autoMatting": true,
+    "archivedAt": 1784865867632
+  },
+  {
+    "id": "d2e46e748c327687",
+    "name": "翼马",
+    "date": "20260723",
+    "filename": "d2e46e748c327687.png",
+    "url": "/uploads/artworks/d2e46e748c327687.png",
+    "status": "archived",
+    "createdAt": 1784788464995,
+    "autoMatting": true,
+    "archivedAt": 1784951251492
+  },
+  {
+    "id": "1df97d8f85eb0093",
+    "name": "敦煌瑞克",
+    "date": "20260723",
+    "filename": "1df97d8f85eb0093.png",
+    "url": "/uploads/artworks/1df97d8f85eb0093.png",
+    "status": "active",
+    "createdAt": 1784791490427,
+    "autoMatting": true
+  },
+  {
+    "id": "14460bc2fc2c3686",
+    "name": "西土瓦",
+    "date": "20260723",
+    "filename": "14460bc2fc2c3686.png",
+    "url": "/uploads/artworks/14460bc2fc2c3686.png",
+    "status": "archived",
+    "createdAt": 1784792154889,
+    "autoMatting": true,
+    "archivedAt": 1784951274007
+  },
+  {
+    "id": "f2569183db66799f",
+    "name": "天女莲花图",
+    "date": "20260723",
+    "filename": "f2569183db66799f.png",
+    "url": "/uploads/artworks/f2569183db66799f.png",
+    "status": "archived",
+    "createdAt": 1784794771867,
+    "autoMatting": true,
+    "archivedAt": 1784951277057
+  },
+  {
+    "id": "aceb4fc32a97dbdc",
+    "name": "双齿小象",
+    "date": "20260723",
+    "filename": "aceb4fc32a97dbdc.png",
+    "url": "/uploads/artworks/aceb4fc32a97dbdc.png",
+    "status": "active",
+    "createdAt": 1784795124774,
+    "autoMatting": true
+  },
+  {
+    "id": "8a3fb56b8d00ff2a",
+    "name": "飞舞",
+    "date": "20260723",
+    "filename": "8a3fb56b8d00ff2a.png",
+    "url": "/uploads/artworks/8a3fb56b8d00ff2a.png",
+    "status": "archived",
+    "createdAt": 1784795157420,
+    "autoMatting": true,
+    "archivedAt": 1784796054767
+  },
+  {
+    "id": "c7c39fae87ca924c",
+    "name": "小龙王",
+    "date": "20260723",
+    "filename": "c7c39fae87ca924c.png",
+    "url": "/uploads/artworks/c7c39fae87ca924c.png",
+    "status": "archived",
+    "createdAt": 1784795517405,
+    "autoMatting": true,
+    "archivedAt": 1784955516762
+  },
+  {
+    "id": "672b2041a5fd109a",
+    "name": "猴王",
+    "date": "20260723",
+    "filename": "672b2041a5fd109a.png",
+    "url": "/uploads/artworks/672b2041a5fd109a.png",
+    "status": "archived",
+    "createdAt": 1784795776743,
+    "autoMatting": true,
+    "archivedAt": 1784948792362
+  },
+  {
+    "id": "64156d1b24dd49ba",
+    "name": "林中奔跑九色鹿",
+    "date": "20260723",
+    "filename": "64156d1b24dd49ba.png",
+    "url": "/uploads/artworks/64156d1b24dd49ba.png",
+    "status": "archived",
+    "createdAt": 1784796181349,
+    "autoMatting": true,
+    "archivedAt": 1784797598848
+  },
+  {
+    "id": "a28a834d5c69afcf",
+    "name": "荷花天女",
+    "date": "20260723",
+    "filename": "a28a834d5c69afcf.png",
+    "url": "/uploads/artworks/a28a834d5c69afcf.png",
+    "status": "archived",
+    "createdAt": 1784796983403,
+    "autoMatting": true,
+    "archivedAt": 1784858267440
+  },
+  {
+    "id": "5e6bb969e237632f",
+    "name": "飞天马",
+    "date": "20260723",
+    "filename": "5e6bb969e237632f.png",
+    "url": "/uploads/artworks/5e6bb969e237632f.png",
+    "status": "archived",
+    "createdAt": 1784797332670,
+    "autoMatting": true,
+    "archivedAt": 1784955519304
+  },
+  {
+    "id": "59c83766b6ee41f9",
+    "name": "悟空空",
+    "date": "20260723",
+    "filename": "59c83766b6ee41f9.png",
+    "url": "/uploads/artworks/59c83766b6ee41f9.png",
+    "status": "archived",
+    "createdAt": 1784798749459,
+    "autoMatting": true,
+    "archivedAt": 1784948811963
+  },
+  {
+    "id": "922ca1268a620e1d",
+    "name": "金青",
+    "date": "20260723",
+    "filename": "922ca1268a620e1d.png",
+    "url": "/uploads/artworks/922ca1268a620e1d.png",
+    "status": "active",
+    "createdAt": 1784799838890,
+    "autoMatting": true
+  },
+  {
+    "id": "200e1cbb7e148ec4",
+    "name": "菩萨",
+    "date": "20260723",
+    "filename": "200e1cbb7e148ec4.png",
+    "url": "/uploads/artworks/200e1cbb7e148ec4.png",
+    "status": "archived",
+    "createdAt": 1784800017068,
+    "autoMatting": true,
+    "archivedAt": 1784858261569
+  },
+  {
+    "id": "07f056e9990c7632",
+    "name": "铠叶",
+    "date": "20260723",
+    "filename": "07f056e9990c7632.png",
+    "url": "/uploads/artworks/07f056e9990c7632.png",
+    "status": "archived",
+    "createdAt": 1784800205090,
+    "autoMatting": true,
+    "archivedAt": 1784858259929
+  },
+  {
+    "id": "1e0c9e52b00c0fab",
+    "name": "女将军",
+    "date": "20260723",
+    "filename": "1e0c9e52b00c0fab.png",
+    "url": "/uploads/artworks/1e0c9e52b00c0fab.png",
+    "status": "archived",
+    "createdAt": 1784800578665,
+    "autoMatting": true,
+    "archivedAt": 1784865863275
+  },
+  {
+    "id": "9b4de69d89883ff1",
+    "name": "红天女",
+    "date": "20260723",
+    "filename": "9b4de69d89883ff1.png",
+    "url": "/uploads/artworks/9b4de69d89883ff1.png",
+    "status": "archived",
+    "createdAt": 1784800849302,
+    "autoMatting": true,
+    "archivedAt": 1784948806065
+  },
+  {
+    "id": "34e3ff31e48dcccb",
+    "name": "青袂弹音",
+    "date": "20260724",
+    "filename": "34e3ff31e48dcccb.jpg",
+    "url": "/uploads/artworks/34e3ff31e48dcccb.jpg",
+    "status": "archived",
+    "createdAt": 1784858255823,
+    "archivedAt": 1784859533647
+  },
+  {
+    "id": "405b17f8b1987dac",
+    "name": "齐天大圣",
+    "date": "20260724",
+    "filename": "405b17f8b1987dac.png",
+    "url": "/uploads/artworks/405b17f8b1987dac.png",
+    "status": "archived",
+    "createdAt": 1784860708875,
+    "archivedAt": 1784951312263
+  },
+  {
+    "id": "d3866d967c1ded4b",
+    "name": "哮天犬",
+    "date": "20260724",
+    "filename": "d3866d967c1ded4b.png",
+    "url": "/uploads/artworks/d3866d967c1ded4b.png",
+    "status": "active",
+    "createdAt": 1784860717887
+  },
+  {
+    "id": "1fcf37731152808f",
+    "name": "糯米",
+    "date": "20260724",
+    "filename": "1fcf37731152808f.png",
+    "url": "/uploads/artworks/1fcf37731152808f.png",
+    "status": "archived",
+    "createdAt": 1784861296461,
+    "autoMatting": true,
+    "archivedAt": 1784867938679
+  },
+  {
+    "id": "b1bc17d8aa67819b",
+    "name": "仙女公主",
+    "date": "20260724",
+    "filename": "b1bc17d8aa67819b.png",
+    "url": "/uploads/artworks/b1bc17d8aa67819b.png",
+    "status": "archived",
+    "createdAt": 1784861522019,
+    "autoMatting": true,
+    "archivedAt": 1784955523278
+  },
+  {
+    "id": "537fad915e199a3b",
+    "name": "孙悟空",
+    "date": "20260724",
+    "filename": "537fad915e199a3b.png",
+    "url": "/uploads/artworks/537fad915e199a3b.png",
+    "status": "archived",
+    "createdAt": 1784862068985,
+    "autoMatting": true,
+    "archivedAt": 1784974049382
+  },
+  {
+    "id": "c32bad7a0f28d383",
+    "name": "笑笑",
+    "date": "20260724",
+    "filename": "c32bad7a0f28d383.png",
+    "url": "/uploads/artworks/c32bad7a0f28d383.png",
+    "status": "archived",
+    "createdAt": 1784862211678,
+    "autoMatting": true,
+    "archivedAt": 1784955525920
+  },
+  {
+    "id": "5db395f7f25f700d",
+    "name": "飞翔的狮子",
+    "date": "20260724",
+    "filename": "5db395f7f25f700d.png",
+    "url": "/uploads/artworks/5db395f7f25f700d.png",
+    "status": "active",
+    "createdAt": 1784863797776,
+    "autoMatting": true
+  },
+  {
+    "id": "5cfe81af5de15d7a",
+    "name": "文神",
+    "date": "20260724",
+    "filename": "5cfe81af5de15d7a.png",
+    "url": "/uploads/artworks/5cfe81af5de15d7a.png",
+    "status": "archived",
+    "createdAt": 1784864310379,
+    "autoMatting": true,
+    "archivedAt": 1784964164154
+  },
+  {
+    "id": "e7bd74dcb8989f22",
+    "name": "芷凌",
+    "date": "20260724",
+    "filename": "e7bd74dcb8989f22.png",
+    "url": "/uploads/artworks/e7bd74dcb8989f22.png",
+    "status": "archived",
+    "createdAt": 1784864688578,
+    "autoMatting": true,
+    "archivedAt": 1784951263138
+  },
+  {
+    "id": "87431db58d3489ba",
+    "name": "霞",
+    "date": "20260724",
+    "filename": "87431db58d3489ba.png",
+    "url": "/uploads/artworks/87431db58d3489ba.png",
+    "status": "archived",
+    "createdAt": 1784865902880,
+    "autoMatting": true,
+    "archivedAt": 1784866917066
+  },
+  {
+    "id": "2529ef3d3bfaf123",
+    "name": "凤凰",
+    "date": "20260724",
+    "filename": "2529ef3d3bfaf123.png",
+    "url": "/uploads/artworks/2529ef3d3bfaf123.png",
+    "status": "archived",
+    "createdAt": 1784866228136,
+    "autoMatting": true,
+    "archivedAt": 1784866582969
+  },
+  {
+    "id": "c6ec60f2e0ceecee",
+    "name": "无欲",
+    "date": "20260724",
+    "filename": "c6ec60f2e0ceecee.png",
+    "url": "/uploads/artworks/c6ec60f2e0ceecee.png",
+    "status": "archived",
+    "createdAt": 1784866428722,
+    "autoMatting": true,
+    "archivedAt": 1784951259830
+  },
+  {
+    "id": "9893c85dd6780463",
+    "name": "貂蝉",
+    "date": "20260724",
+    "filename": "9893c85dd6780463.png",
+    "url": "/uploads/artworks/9893c85dd6780463.png",
+    "status": "archived",
+    "createdAt": 1784867609253,
+    "autoMatting": true,
+    "archivedAt": 1784964166654
+  },
+  {
+    "id": "9a8be753262069ec",
+    "name": "青竹",
+    "date": "20260724",
+    "filename": "9a8be753262069ec.png",
+    "url": "/uploads/artworks/9a8be753262069ec.png",
+    "status": "archived",
+    "createdAt": 1784867819819,
+    "autoMatting": true,
+    "archivedAt": 1784974058129
+  },
+  {
+    "id": "03c30937a0517ec2",
+    "name": "敦煌飞天",
+    "date": "20260724",
+    "filename": "03c30937a0517ec2.png",
+    "url": "/uploads/artworks/03c30937a0517ec2.png",
+    "status": "archived",
+    "createdAt": 1784868062537,
+    "autoMatting": true,
+    "archivedAt": 1784882420169
+  },
+  {
+    "id": "94f0bd440d074321",
+    "name": "九色鹿",
+    "date": "20260724",
+    "filename": "94f0bd440d074321.png",
+    "url": "/uploads/artworks/94f0bd440d074321.png",
+    "status": "active",
+    "createdAt": 1784868964006,
+    "autoMatting": true
+  },
+  {
+    "id": "8d927168ec42134c",
+    "name": "飞天",
+    "date": "20260724",
+    "filename": "8d927168ec42134c.png",
+    "url": "/uploads/artworks/8d927168ec42134c.png",
+    "status": "archived",
+    "createdAt": 1784870507047,
+    "autoMatting": true,
+    "archivedAt": 1784870594552
+  },
+  {
+    "id": "2871f7d562a9ab47",
+    "name": "小青狮",
+    "date": "20260724",
+    "filename": "2871f7d562a9ab47.png",
+    "url": "/uploads/artworks/2871f7d562a9ab47.png",
+    "status": "archived",
+    "createdAt": 1784873647798,
+    "autoMatting": true,
+    "archivedAt": 1784974068708
+  },
+  {
+    "id": "878ab1dc821d7523",
+    "name": "小羽",
+    "date": "20260724",
+    "filename": "878ab1dc821d7523.png",
+    "url": "/uploads/artworks/878ab1dc821d7523.png",
+    "status": "archived",
+    "createdAt": 1784874786608,
+    "autoMatting": true,
+    "archivedAt": 1784951296951
+  },
+  {
+    "id": "64b90b9d935322fd",
+    "name": "飞天公主",
+    "date": "20260724",
+    "filename": "64b90b9d935322fd.png",
+    "url": "/uploads/artworks/64b90b9d935322fd.png",
+    "status": "archived",
+    "createdAt": 1784879371529,
+    "autoMatting": true,
+    "archivedAt": 1784951294660
+  },
+  {
+    "id": "cd11091c9e305ef4",
+    "name": "龙元",
+    "date": "20260724",
+    "filename": "cd11091c9e305ef4.png",
+    "url": "/uploads/artworks/cd11091c9e305ef4.png",
+    "status": "archived",
+    "createdAt": 1784880689434,
+    "autoMatting": true,
+    "archivedAt": 1784974062890
+  },
+  {
+    "id": "66ce99ff010cec05",
+    "name": "明贤",
+    "date": "20260724",
+    "filename": "66ce99ff010cec05.png",
+    "url": "/uploads/artworks/66ce99ff010cec05.png",
+    "status": "archived",
+    "createdAt": 1784880995547,
+    "autoMatting": true,
+    "archivedAt": 1784882360684
+  },
+  {
+    "id": "9d8d88643134e5e4",
+    "name": "承恩",
+    "date": "20260724",
+    "filename": "9d8d88643134e5e4.png",
+    "url": "/uploads/artworks/9d8d88643134e5e4.png",
+    "status": "archived",
+    "createdAt": 1784881312409,
+    "autoMatting": true,
+    "archivedAt": 1784951290721
+  },
+  {
+    "id": "b15ae038703308bc",
+    "name": "紫孖",
+    "date": "20260724",
+    "filename": "b15ae038703308bc.png",
+    "url": "/uploads/artworks/b15ae038703308bc.png",
+    "status": "archived",
+    "createdAt": 1784881645243,
+    "autoMatting": true,
+    "archivedAt": 1784955510680
+  },
+  {
+    "id": "f2d3112f613373ab",
+    "name": "珍珍",
+    "date": "20260725",
+    "filename": "f2d3112f613373ab.png",
+    "url": "/uploads/artworks/f2d3112f613373ab.png",
+    "status": "archived",
+    "createdAt": 1784944329793,
+    "autoMatting": true,
+    "archivedAt": 1784974071066
+  },
+  {
+    "id": "fb13429c17c6781c",
+    "name": "小仙女",
+    "date": "20260725",
+    "filename": "fb13429c17c6781c.png",
+    "url": "/uploads/artworks/fb13429c17c6781c.png",
+    "status": "archived",
+    "createdAt": 1784945173595,
+    "autoMatting": true,
+    "archivedAt": 1784955505419
+  },
+  {
+    "id": "d0c4f6c0fed40689",
+    "name": "赛罗",
+    "date": "20260725",
+    "filename": "d0c4f6c0fed40689.png",
+    "url": "/uploads/artworks/d0c4f6c0fed40689.png",
+    "status": "active",
+    "createdAt": 1784945559442,
+    "autoMatting": true
+  },
+  {
+    "id": "b837b1ffad7c9dd1",
+    "name": "天天",
+    "date": "20260725",
+    "filename": "b837b1ffad7c9dd1.png",
+    "url": "/uploads/artworks/b837b1ffad7c9dd1.png",
+    "status": "archived",
+    "createdAt": 1784946432390,
+    "autoMatting": true,
+    "archivedAt": 1784974080158
+  },
+  {
+    "id": "d7e6fa22ecf2cb9b",
+    "name": "眠眠",
+    "date": "20260725",
+    "filename": "d7e6fa22ecf2cb9b.png",
+    "url": "/uploads/artworks/d7e6fa22ecf2cb9b.png",
+    "originalUrl": "/uploads/originals/d7e6fa22ecf2cb9b.png",
+    "status": "archived",
+    "createdAt": 1784946852632,
+    "autoMatting": true,
+    "archivedAt": 1784947691182
+  },
+  {
+    "id": "bedd7da4b8cb0d7e",
+    "name": "天女",
+    "date": "20260725",
+    "filename": "bedd7da4b8cb0d7e.png",
+    "url": "/uploads/artworks/bedd7da4b8cb0d7e.png",
+    "originalUrl": "/uploads/originals/bedd7da4b8cb0d7e.png",
+    "status": "archived",
+    "createdAt": 1784947015975,
+    "autoMatting": true,
+    "archivedAt": 1784947691906
+  },
+  {
+    "id": "d02f2351fe04002d",
+    "name": "芝士",
+    "date": "20260725",
+    "filename": "d02f2351fe04002d.png",
+    "url": "/uploads/artworks/d02f2351fe04002d.png",
+    "originalUrl": "/uploads/originals/d02f2351fe04002d.jpg",
+    "status": "archived",
+    "createdAt": 1784947585872,
+    "autoMatting": true,
+    "archivedAt": 1784947709687
+  },
+  {
+    "id": "31d7b048eb945e3b",
+    "name": "royiyiyi",
+    "date": "20260725",
+    "filename": "31d7b048eb945e3b.png",
+    "url": "/uploads/artworks/31d7b048eb945e3b.png",
+    "originalUrl": "/uploads/originals/31d7b048eb945e3b.png",
+    "status": "archived",
+    "createdAt": 1784947670090,
+    "autoMatting": true,
+    "archivedAt": 1784948023930
+  },
+  {
+    "id": "f922d7b0fbf4cac2",
+    "name": "墨墨",
+    "date": "20260725",
+    "filename": "f922d7b0fbf4cac2.png",
+    "url": "/uploads/artworks/f922d7b0fbf4cac2.png",
+    "originalUrl": "/uploads/originals/f922d7b0fbf4cac2.png",
+    "status": "active",
+    "createdAt": 1784948306659,
+    "autoMatting": true
+  },
+  {
+    "id": "3c901c4d6143086a",
+    "name": "小铁牛",
+    "date": "20260725",
+    "filename": "3c901c4d6143086a.png",
+    "url": "/uploads/artworks/3c901c4d6143086a.png",
+    "originalUrl": "/uploads/originals/3c901c4d6143086a.png",
+    "status": "active",
+    "createdAt": 1784948754006,
+    "autoMatting": true
+  },
+  {
+    "id": "a985dbe274b724fc",
+    "name": "小天",
+    "date": "20260725",
+    "filename": "a985dbe274b724fc.png",
+    "url": "/uploads/artworks/a985dbe274b724fc.png",
+    "originalUrl": "/uploads/originals/a985dbe274b724fc.png",
+    "status": "active",
+    "createdAt": 1784949277541,
+    "autoMatting": true
+  },
+  {
+    "id": "ac7c79478e8b0672",
+    "name": "帅哥",
+    "date": "20260725",
+    "filename": "ac7c79478e8b0672.png",
+    "url": "/uploads/artworks/ac7c79478e8b0672.png",
+    "originalUrl": "/uploads/originals/ac7c79478e8b0672.png",
+    "status": "active",
+    "createdAt": 1784949408597,
+    "autoMatting": true
+  },
+  {
+    "id": "585cbf5d47671398",
+    "name": "小茶叶",
+    "date": "20260725",
+    "filename": "585cbf5d47671398.png",
+    "url": "/uploads/artworks/585cbf5d47671398.png",
+    "originalUrl": "/uploads/originals/585cbf5d47671398.png",
+    "status": "active",
+    "createdAt": 1784949735653,
+    "autoMatting": true
+  },
+  {
+    "id": "31ceb74011ff4c83",
+    "name": "小山竹",
+    "date": "20260725",
+    "filename": "31ceb74011ff4c83.png",
+    "url": "/uploads/artworks/31ceb74011ff4c83.png",
+    "originalUrl": "/uploads/originals/31ceb74011ff4c83.png",
+    "status": "active",
+    "createdAt": 1784949887736,
+    "autoMatting": true
+  },
+  {
+    "id": "51d28e56c5d3fa38",
+    "name": "周轶",
+    "date": "20260725",
+    "filename": "51d28e56c5d3fa38.png",
+    "url": "/uploads/artworks/51d28e56c5d3fa38.png",
+    "originalUrl": "/uploads/originals/51d28e56c5d3fa38.png",
+    "status": "active",
+    "createdAt": 1784950056430,
+    "autoMatting": true
+  },
+  {
+    "id": "91eccf035b86af97",
+    "name": "测试",
+    "date": "20260725",
+    "filename": "91eccf035b86af97.png",
+    "url": "/uploads/artworks/91eccf035b86af97.png",
+    "originalUrl": "/uploads/originals/91eccf035b86af97.png",
+    "status": "archived",
+    "createdAt": 1784950387671,
+    "autoMatting": true,
+    "archivedAt": 1784951240168
+  },
+  {
+    "id": "69cb72ce7d7bcc35",
+    "name": "炫舞庭飞",
+    "date": "20260725",
+    "filename": "69cb72ce7d7bcc35.png",
+    "url": "/uploads/artworks/69cb72ce7d7bcc35.png",
+    "originalUrl": "/uploads/originals/69cb72ce7d7bcc35.png",
+    "status": "archived",
+    "createdAt": 1784951436341,
+    "autoMatting": true,
+    "archivedAt": 1784974091006
+  },
+  {
+    "id": "77c87ad5e2b579b5",
+    "name": "小紫",
+    "date": "20260725",
+    "filename": "77c87ad5e2b579b5.png",
+    "url": "/uploads/artworks/77c87ad5e2b579b5.png",
+    "originalUrl": "/uploads/originals/77c87ad5e2b579b5.png",
+    "status": "active",
+    "createdAt": 1784951928623,
+    "autoMatting": true
+  },
+  {
+    "id": "63b3a293442b4452",
+    "name": "女林天",
+    "date": "20260725",
+    "filename": "63b3a293442b4452.png",
+    "url": "/uploads/artworks/63b3a293442b4452.png",
+    "status": "active",
+    "createdAt": 1784955373230
+  },
+  {
+    "id": "cf407f44f5934086",
+    "name": "女林天",
+    "date": "20260725",
+    "filename": "cf407f44f5934086.png",
+    "url": "/uploads/artworks/cf407f44f5934086.png",
+    "originalUrl": "/uploads/originals/cf407f44f5934086.png",
+    "status": "archived",
+    "createdAt": 1784955540149,
+    "autoMatting": true,
+    "archivedAt": 1784955552337
+  },
+  {
+    "id": "f9cc315c2fddc99a",
+    "name": "美龄天女",
+    "date": "20260725",
+    "filename": "f9cc315c2fddc99a.png",
+    "url": "/uploads/artworks/f9cc315c2fddc99a.png",
+    "originalUrl": "/uploads/originals/f9cc315c2fddc99a.png",
+    "status": "active",
+    "createdAt": 1784955708352,
+    "autoMatting": true
+  },
+  {
+    "id": "d045d8c10cab6e2c",
+    "name": "文殊菩萨",
+    "date": "20260725",
+    "filename": "d045d8c10cab6e2c.png",
+    "url": "/uploads/artworks/d045d8c10cab6e2c.png",
+    "originalUrl": "/uploads/originals/d045d8c10cab6e2c.png",
+    "status": "active",
+    "createdAt": 1784956402620,
+    "autoMatting": true
+  },
+  {
+    "id": "ac4ca11876582dcc",
+    "name": "九色鹿",
+    "date": "20260725",
+    "filename": "ac4ca11876582dcc.png",
+    "url": "/uploads/artworks/ac4ca11876582dcc.png",
+    "originalUrl": "/uploads/originals/ac4ca11876582dcc_c.png",
+    "status": "active",
+    "createdAt": 1784956944509,
+    "autoMatting": true
+  },
+  {
+    "id": "57446b7f9c121744",
+    "name": "小赵云",
+    "date": "20260725",
+    "filename": "57446b7f9c121744.png",
+    "url": "/uploads/artworks/57446b7f9c121744.png",
+    "originalUrl": "/uploads/originals/57446b7f9c121744_c.png",
+    "status": "active",
+    "createdAt": 1784957154909,
+    "autoMatting": true
+  },
+  {
+    "id": "3f4bde94de5cdc3c",
+    "name": "安安",
+    "date": "20260725",
+    "filename": "3f4bde94de5cdc3c.png",
+    "url": "/uploads/artworks/3f4bde94de5cdc3c.png",
+    "originalUrl": "/uploads/originals/3f4bde94de5cdc3c_c.png",
+    "status": "archived",
+    "createdAt": 1784957821027,
+    "autoMatting": true,
+    "archivedAt": 1784957882720
+  },
+  {
+    "id": "771c464314aaab47",
+    "name": "白榆",
+    "date": "20260725",
+    "filename": "771c464314aaab47.png",
+    "url": "/uploads/artworks/771c464314aaab47.png",
+    "originalUrl": "/uploads/originals/771c464314aaab47_c.png",
+    "status": "active",
+    "createdAt": 1784958732172,
+    "autoMatting": true
+  },
+  {
+    "id": "c7a5f3d6324e1c5d",
+    "name": "星诺",
+    "date": "20260725",
+    "filename": "c7a5f3d6324e1c5d.png",
+    "url": "/uploads/artworks/c7a5f3d6324e1c5d.png",
+    "originalUrl": "/uploads/originals/c7a5f3d6324e1c5d_c.png",
+    "status": "active",
+    "createdAt": 1784959494807,
+    "autoMatting": true
+  },
+  {
+    "id": "06654b5b9740669b",
+    "name": "小希",
+    "date": "20260725",
+    "filename": "06654b5b9740669b.png",
+    "url": "/uploads/artworks/06654b5b9740669b.png",
+    "originalUrl": "/uploads/originals/06654b5b9740669b_c.png",
+    "status": "active",
+    "createdAt": 1784959965815,
+    "autoMatting": true
+  },
+  {
+    "id": "a8a66bbb3ba4013e",
+    "name": "孙悟空",
+    "date": "20260725",
+    "filename": "a8a66bbb3ba4013e.png",
+    "url": "/uploads/artworks/a8a66bbb3ba4013e.png",
+    "originalUrl": "/uploads/originals/a8a66bbb3ba4013e_c.png",
+    "status": "active",
+    "createdAt": 1784960397269,
+    "autoMatting": true
+  },
+  {
+    "id": "ffc724e4422b7411",
+    "name": "哮天",
+    "date": "20260725",
+    "filename": "ffc724e4422b7411.png",
+    "url": "/uploads/artworks/ffc724e4422b7411.png",
+    "originalUrl": "/uploads/originals/ffc724e4422b7411_c.png",
+    "status": "active",
+    "createdAt": 1784960515103,
+    "autoMatting": true
+  },
+  {
+    "id": "127edceade97107b",
+    "name": "小晨",
+    "date": "20260725",
+    "filename": "127edceade97107b.png",
+    "url": "/uploads/artworks/127edceade97107b.png",
+    "originalUrl": "/uploads/originals/127edceade97107b_c.png",
+    "status": "active",
+    "createdAt": 1784961166492,
+    "autoMatting": true
+  },
+  {
+    "id": "2d05895cdc0ecaf3",
+    "name": "小白兔",
+    "date": "20260725",
+    "filename": "2d05895cdc0ecaf3.png",
+    "url": "/uploads/artworks/2d05895cdc0ecaf3.png",
+    "originalUrl": "/uploads/originals/2d05895cdc0ecaf3_c.png",
+    "status": "active",
+    "createdAt": 1784962256951,
+    "autoMatting": true
+  },
+  {
+    "id": "583b5e1ed09bc643",
+    "name": "小白",
+    "date": "20260725",
+    "filename": "583b5e1ed09bc643.png",
+    "url": "/uploads/artworks/583b5e1ed09bc643.png",
+    "originalUrl": "/uploads/originals/583b5e1ed09bc643_c.png",
+    "status": "active",
+    "createdAt": 1784962775146,
+    "autoMatting": true
+  },
+  {
+    "id": "3a0035ab54412ca4",
+    "name": "小朵",
+    "date": "20260725",
+    "filename": "3a0035ab54412ca4.png",
+    "url": "/uploads/artworks/3a0035ab54412ca4.png",
+    "originalUrl": "/uploads/originals/3a0035ab54412ca4_c.png",
+    "status": "active",
+    "createdAt": 1784962968447,
+    "autoMatting": true
+  },
+  {
+    "id": "8b918466469f5503",
+    "name": "小金",
+    "date": "20260725",
+    "filename": "8b918466469f5503.png",
+    "url": "/uploads/artworks/8b918466469f5503.png",
+    "originalUrl": "/uploads/originals/8b918466469f5503_c.png",
+    "status": "active",
+    "createdAt": 1784963032590,
+    "autoMatting": true
+  },
+  {
+    "id": "4246c096f52f6494",
+    "name": "小桃子",
+    "date": "20260725",
+    "filename": "4246c096f52f6494.png",
+    "url": "/uploads/artworks/4246c096f52f6494.png",
+    "originalUrl": "/uploads/originals/4246c096f52f6494_c.png",
+    "status": "archived",
+    "createdAt": 1784963540500,
+    "autoMatting": true,
+    "archivedAt": 1784975004516
+  },
+  {
+    "id": "2e36326f61558d96",
+    "name": "悟空",
+    "date": "20260725",
+    "filename": "2e36326f61558d96.png",
+    "url": "/uploads/artworks/2e36326f61558d96.png",
+    "originalUrl": "/uploads/originals/2e36326f61558d96_c.png",
+    "status": "archived",
+    "createdAt": 1784965908171,
+    "autoMatting": true,
+    "archivedAt": 1784968644508
+  },
+  {
+    "id": "3304116459be040b",
+    "name": "小彩",
+    "date": "20260725",
+    "filename": "3304116459be040b.png",
+    "url": "/uploads/artworks/3304116459be040b.png",
+    "originalUrl": "/uploads/originals/3304116459be040b_c.png",
+    "status": "archived",
+    "createdAt": 1784966463089,
+    "autoMatting": true,
+    "archivedAt": 1784975005643
+  },
+  {
+    "id": "70be83c6a7262ecf",
+    "name": "如来佛",
+    "date": "20260725",
+    "filename": "70be83c6a7262ecf.png",
+    "url": "/uploads/artworks/70be83c6a7262ecf.png",
+    "originalUrl": "/uploads/originals/70be83c6a7262ecf_c.png",
+    "status": "archived",
+    "createdAt": 1784968576747,
+    "autoMatting": true,
+    "archivedAt": 1784975006449
+  },
+  {
+    "id": "3c894e77c7efc2a4",
+    "name": "莲花菩萨",
+    "date": "20260725",
+    "filename": "3c894e77c7efc2a4.png",
+    "url": "/uploads/artworks/3c894e77c7efc2a4.png",
+    "originalUrl": "/uploads/originals/3c894e77c7efc2a4_c.png",
+    "status": "archived",
+    "createdAt": 1784969075156,
+    "autoMatting": true,
+    "archivedAt": 1784975007259
+  },
+  {
+    "id": "746398c7697afaee",
+    "name": "青仙女",
+    "date": "20260725",
+    "filename": "746398c7697afaee.png",
+    "url": "/uploads/artworks/746398c7697afaee.png",
+    "originalUrl": "/uploads/originals/746398c7697afaee_c.png",
+    "status": "archived",
+    "createdAt": 1784969616565,
+    "autoMatting": true,
+    "archivedAt": 1784975008339
+  },
+  {
+    "id": "bf3fa43534f6949a",
+    "name": "哪吒",
+    "date": "20260725",
+    "filename": "bf3fa43534f6949a.png",
+    "url": "/uploads/artworks/bf3fa43534f6949a.png",
+    "originalUrl": "/uploads/originals/bf3fa43534f6949a_c.png",
+    "status": "active",
+    "createdAt": 1784969846838,
+    "autoMatting": true
+  },
+  {
+    "id": "8bafa14ec3d0ad98",
+    "name": "小仙女",
+    "date": "20260725",
+    "filename": "8bafa14ec3d0ad98.png",
+    "url": "/uploads/artworks/8bafa14ec3d0ad98.png",
+    "originalUrl": "/uploads/originals/8bafa14ec3d0ad98_c.png",
+    "status": "archived",
+    "createdAt": 1784969969297,
+    "autoMatting": true,
+    "archivedAt": 1784971962311
+  },
+  {
+    "id": "e8fed8713b96a73a",
+    "name": "小兔仙",
+    "date": "20260725",
+    "filename": "e8fed8713b96a73a.png",
+    "url": "/uploads/artworks/e8fed8713b96a73a.png",
+    "originalUrl": "/uploads/originals/e8fed8713b96a73a_c.png",
+    "status": "archived",
+    "createdAt": 1784970510466,
+    "autoMatting": true,
+    "archivedAt": 1784971033827
+  },
+  {
+    "id": "925ca6d6e4c9bc7e",
+    "name": "笛仙子",
+    "date": "20260725",
+    "filename": "925ca6d6e4c9bc7e.png",
+    "url": "/uploads/artworks/925ca6d6e4c9bc7e.png",
+    "originalUrl": "/uploads/originals/925ca6d6e4c9bc7e_c.png",
+    "status": "archived",
+    "createdAt": 1784970689240,
+    "autoMatting": true,
+    "archivedAt": 1784975021306
+  },
+  {
+    "id": "2df82c1e40827cf9",
+    "name": "年年",
+    "date": "20260725",
+    "filename": "2df82c1e40827cf9.png",
+    "url": "/uploads/artworks/2df82c1e40827cf9.png",
+    "originalUrl": "/uploads/originals/2df82c1e40827cf9_c.png",
+    "status": "archived",
+    "createdAt": 1784970728704,
+    "autoMatting": true,
+    "archivedAt": 1784971964785
+  },
+  {
+    "id": "a0db7f9712786800",
+    "name": "包包",
+    "date": "20260725",
+    "filename": "a0db7f9712786800.png",
+    "url": "/uploads/artworks/a0db7f9712786800.png",
+    "originalUrl": "/uploads/originals/a0db7f9712786800_c.png",
+    "status": "archived",
+    "createdAt": 1784971129038,
+    "autoMatting": true,
+    "archivedAt": 1784974036930
+  },
+  {
+    "id": "899faa7f16fcda06",
+    "name": "慧希",
+    "date": "20260725",
+    "filename": "899faa7f16fcda06.png",
+    "url": "/uploads/artworks/899faa7f16fcda06.png",
+    "originalUrl": "/uploads/originals/899faa7f16fcda06_c.png",
+    "status": "archived",
+    "createdAt": 1784971402391,
+    "autoMatting": true,
+    "archivedAt": 1784974196889
+  },
+  {
+    "id": "a93ba1bdf9d46a43",
+    "name": "豆豆",
+    "date": "20260725",
+    "filename": "a93ba1bdf9d46a43.png",
+    "url": "/uploads/artworks/a93ba1bdf9d46a43.png",
+    "originalUrl": "/uploads/originals/a93ba1bdf9d46a43_c.png",
+    "status": "active",
+    "createdAt": 1784972189114,
+    "autoMatting": true
+  },
+  {
+    "id": "fb38543cbb7b210d",
+    "name": "莲宝菩萨",
+    "date": "20260725",
+    "filename": "fb38543cbb7b210d.png",
+    "url": "/uploads/artworks/fb38543cbb7b210d.png",
+    "originalUrl": "/uploads/originals/fb38543cbb7b210d_c.png",
+    "status": "archived",
+    "createdAt": 1784972485875,
+    "autoMatting": true,
+    "archivedAt": 1784975010874
+  },
+  {
+    "id": "72add478db631cf6",
+    "name": "君索取经人",
+    "date": "20260725",
+    "filename": "72add478db631cf6.png",
+    "url": "/uploads/artworks/72add478db631cf6.png",
+    "originalUrl": "/uploads/originals/72add478db631cf6_c.png",
+    "status": "active",
+    "createdAt": 1784972939833,
+    "autoMatting": true
+  },
+  {
+    "id": "61a5515f6e490f16",
+    "name": "齐天大圣",
+    "date": "20260725",
+    "filename": "61a5515f6e490f16.png",
+    "url": "/uploads/artworks/61a5515f6e490f16.png",
+    "originalUrl": "/uploads/originals/61a5515f6e490f16_c.png",
+    "status": "active",
+    "createdAt": 1784973182760,
+    "autoMatting": true
+  },
+  {
+    "id": "06b5c141d49568ac",
+    "name": "小琵琶仙",
+    "date": "20260725",
+    "filename": "06b5c141d49568ac.png",
+    "url": "/uploads/artworks/06b5c141d49568ac.png",
+    "originalUrl": "/uploads/originals/06b5c141d49568ac_c.png",
+    "status": "active",
+    "createdAt": 1784973407235,
+    "autoMatting": true
+  },
+  {
+    "id": "78c106884e4bcf7c",
+    "name": "轩辕",
+    "date": "20260725",
+    "filename": "78c106884e4bcf7c.png",
+    "url": "/uploads/artworks/78c106884e4bcf7c.png",
+    "originalUrl": "/uploads/originals/78c106884e4bcf7c_c.png",
+    "status": "active",
+    "createdAt": 1784973776583,
+    "autoMatting": true
+  },
+  {
+    "id": "c0067d3d530e5d5a",
+    "name": "观音菩萨",
+    "date": "20260725",
+    "filename": "c0067d3d530e5d5a.png",
+    "url": "/uploads/artworks/c0067d3d530e5d5a.png",
+    "originalUrl": "/uploads/originals/c0067d3d530e5d5a_c.png",
+    "status": "active",
+    "createdAt": 1784974169736,
+    "autoMatting": true
+  },
+  {
+    "id": "792d0abb0ede29df",
+    "name": "凤凰玉女",
+    "date": "20260725",
+    "filename": "792d0abb0ede29df.png",
+    "url": "/uploads/artworks/792d0abb0ede29df.png",
+    "originalUrl": "/uploads/originals/792d0abb0ede29df_c.png",
+    "status": "active",
+    "createdAt": 1784974264045,
+    "autoMatting": true
+  },
+  {
+    "id": "1c7edb49ebb6767e",
+    "name": "绘晓",
+    "date": "20260725",
+    "filename": "1c7edb49ebb6767e.png",
+    "url": "/uploads/artworks/1c7edb49ebb6767e.png",
+    "originalUrl": "/uploads/originals/1c7edb49ebb6767e_c.png",
+    "status": "active",
+    "createdAt": 1784974854314,
+    "autoMatting": true
+  },
+  {
+    "id": "99f11d8fa128a1ce",
+    "name": "晓绘",
+    "date": "20260725",
+    "filename": "99f11d8fa128a1ce.png",
+    "url": "/uploads/artworks/99f11d8fa128a1ce.png",
+    "originalUrl": "/uploads/originals/99f11d8fa128a1ce_c.png",
+    "status": "active",
+    "createdAt": 1784974876314,
+    "autoMatting": true
+  },
+  {
+    "id": "b4040fe1511121cc",
+    "name": "孙悟空可爱",
+    "date": "20260725",
+    "filename": "b4040fe1511121cc.png",
+    "url": "/uploads/artworks/b4040fe1511121cc.png",
+    "originalUrl": "/uploads/originals/b4040fe1511121cc_c.png",
+    "status": "active",
+    "createdAt": 1784974921108,
+    "autoMatting": true
   }
 ]

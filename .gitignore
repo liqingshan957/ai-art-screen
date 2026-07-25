@@ -1,4 +1,4 @@
-# Dependencies
+﻿# Dependencies
 node_modules/
 
 # Uploads (user-generated content, not versioned)
@@ -43,3 +43,7 @@ tools/
 # Deploy outputs (generated, not source)
 deploy-pagefire/
 deploy-test/
+
+# Generated share pages (regenerate with generate-works-data.ps1)
+public/works/
+public/works-data.json

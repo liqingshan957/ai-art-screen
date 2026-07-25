@@ -1,0 +1,422 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作品管理 · 投屏系统</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --gold:#c9a96e;--gold-light:#f0dda0;--brown:#3d3020;--brown-light:#8a7a5e;
+      --cream:#f8f4ee;--cream-dark:#efe8dc;--purple:#a855f7;--card-radius:14px;
+    }
+    body{
+      font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+      background:var(--cream);color:var(--brown);min-height:100vh;
+    }
+    .app{max-width:1100px;margin:0 auto;padding:20px}
+
+    /* Header */
+    .m-header{
+      display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+      background:rgba(255,255,255,.6);backdrop-filter:blur(12px);
+      border:1px solid rgba(201,169,110,.15);border-radius:16px;
+      padding:16px 20px;margin-bottom:16px;
+    }
+    .m-header h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .m-header h1 span{color:var(--brown-light);font-weight:400;font-size:13px}
+    .m-header .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+    /* Stats */
+    .stats-row{display:flex;gap:8px}
+    .stat-pill{
+      padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;
+      background:rgba(201,169,110,.1);color:var(--brown-light);
+      display:flex;align-items:center;gap:4px;
+    }
+    .stat-pill strong{color:var(--brown);font-size:14px}
+
+    /* Search & Filters */
+    .m-toolbar{
+      display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;
+    }
+    .search-box{
+      flex:1;min-width:200px;position:relative;
+    }
+    .search-box input{
+      width:100%;padding:9px 14px 9px 36px;border:1px solid rgba(201,169,110,.25);
+      border-radius:24px;font-size:13px;background:#fff;outline:none;
+      transition:border-color .2s,box-shadow .2s;
+    }
+    .search-box input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,110,.1)}
+    .search-box .icon{
+      position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.5;
+    }
+    .filter-tabs{display:flex;gap:4px}
+    .filter-tab{
+      padding:6px 16px;border-radius:18px;border:none;font-size:12px;font-weight:500;
+      cursor:pointer;background:#fff;color:var(--brown-light);transition:all .2s;
+    }
+    .filter-tab:hover{background:rgba(201,169,110,.1)}
+    .filter-tab.active{background:var(--brown);color:#fff}
+    .filter-tab .count{font-size:10px;opacity:.7;margin-left:4px}
+
+    /* Grid */
+    .artwork-grid{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:12px;min-height:200px;
+    }
+    .artwork-grid.empty::after{
+      content:'暂无作品';grid-column:1/-1;text-align:center;padding:60px 20px;
+      color:var(--brown-light);font-size:14px;
+    }
+
+    /* Card */
+    .a-card{
+      background:#fff;border-radius:var(--card-radius);overflow:hidden;
+      box-shadow:0 2px 8px rgba(74,63,48,.04);transition:all .25s ease;
+      position:relative;cursor:default;
+    }
+    .a-card:hover{box-shadow:0 4px 16px rgba(74,63,48,.08);transform:translateY(-1px)}
+    .a-card .thumb-wrap{
+      position:relative;aspect-ratio:1;overflow:hidden;background:#f0ece6;
+    }
+    .a-card .thumb-wrap img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
+    .a-card:hover .thumb-wrap img{transform:scale(1.05)}
+    .a-card .status-badge{
+      position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:8px;
+      font-size:10px;font-weight:600;letter-spacing:.5px;
+    }
+    .a-card .status-badge.active{background:rgba(34,197,94,.12);color:#16a34a}
+    .a-card .status-badge.archived{background:rgba(201,169,110,.12);color:var(--brown-light)}
+
+    .a-card .card-body{padding:10px 12px 12px}
+    .a-card .card-name{font-size:13px;font-weight:600;color:var(--brown)}
+    .a-card .card-date{font-size:11px;color:var(--brown-light);margin-top:2px}
+    .a-card .card-actions{
+      display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;
+    }
+    .a-card .card-actions button{
+      flex:1;min-width:0;padding:6px 4px;border:none;border-radius:8px;
+      font-size:11px;cursor:pointer;transition:all .2s;
+      background:rgba(201,169,110,.08);color:var(--brown-light);white-space:nowrap;
+    }
+    .a-card .card-actions button:hover{background:rgba(201,169,110,.18)}
+    .a-card .card-actions .btn-copy{background:rgba(168,85,247,.08);color:var(--purple)}
+    .a-card .card-actions .btn-copy:hover{background:rgba(168,85,247,.18)}
+    .a-card .card-actions .btn-archive{color:#d97706}
+    .a-card .card-actions .btn-restore{color:#16a34a}
+    .a-card .card-actions .btn-purge{color:#ef4444}
+
+    /* Toast */
+    .toast{
+      position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+      background:rgba(61,48,32,.9);backdrop-filter:blur(8px);color:var(--gold-light);
+      padding:10px 22px;border-radius:22px;font-size:13px;z-index:99999;
+      opacity:0;pointer-events:none;transition:all .3s ease;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+
+    /* Modal */
+    .modal-overlay{
+      position:fixed;top:0;left:0;width:100%;height:100%;z-index:9998;
+      background:rgba(0,0,0,.5);backdrop-filter:blur(4px);
+      display:flex;align-items:center;justify-content:center;
+      opacity:0;pointer-events:none;transition:opacity .25s ease;
+    }
+    .modal-overlay.show{opacity:1;pointer-events:auto}
+    .modal-box{
+      background:#fff;border-radius:20px;padding:24px;max-width:420px;width:88%;
+      box-shadow:0 12px 40px rgba(0,0,0,.15);transform:scale(.92);transition:transform .3s ease;
+    }
+    .modal-overlay.show .modal-box{transform:scale(1)}
+    .modal-box h3{font-size:16px;margin-bottom:12px}
+    .modal-box .modal-actions{display:flex;gap:8px;margin-top:16px}
+    .modal-box .modal-actions button{flex:1;padding:10px;border:none;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer}
+    .modal-box .modal-actions .btn-cancel{background:#f0ece6;color:var(--brown)}
+    .modal-box .modal-actions .btn-confirm{background:#ef4444;color:#fff}
+
+    /* Loading */
+    .loader{text-align:center;padding:60px 20px;color:var(--brown-light);font-size:14px}
+    .loader .spinner{display:inline-block;width:28px;height:28px;border:3px solid rgba(201,169,110,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Responsive */
+    @media(max-width:600px){
+      .artwork-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+      .m-header{flex-direction:column;align-items:stretch;text-align:center}
+      .m-header .header-actions{justify-content:center}
+      .m-toolbar{flex-direction:column}
+      .search-box{min-width:0;width:100%}
+      .a-card .card-actions button{font-size:10px;padding:5px 3px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <div class="m-header">
+      <h1>🎨 作品管理 <span>· 敦煌AIGC投屏系统</span></h1>
+      <div class="header-actions">
+        <div class="stats-row">
+          <span class="stat-pill">📦 共 <strong id="stat-total">0</strong></span>
+          <span class="stat-pill">🖼️ 在架 <strong id="stat-active">0</strong></span>
+          <span class="stat-pill">📦 归档 <strong id="stat-archived">0</strong></span>
+        </div>
+        <span id="conn-status" style="font-size:10px;color:#999">⏳ 连接中...</span>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="m-toolbar">
+      <div class="search-box">
+        <span class="icon">🔍</span>
+        <input type="text" id="search-input" placeholder="搜索作品名称..." oninput="filterArtworks()">
+      </div>
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">全部 <span class="count" id="count-all">0</span></button>
+        <button class="filter-tab" data-filter="active" onclick="setFilter('active')">在架 <span class="count" id="count-active">0</span></button>
+        <button class="filter-tab" data-filter="archived" onclick="setFilter('archived')">归档 <span class="count" id="count-archived">0</span></button>
+      </div>
+    </div>
+
+    <!-- Artwork Grid -->
+    <div class="artwork-grid" id="artwork-grid">
+      <div class="loader"><div class="spinner"></div><br>加载作品中...</div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-box">
+      <h3 id="confirm-title">确认操作</h3>
+      <p id="confirm-msg" style="font-size:13px;color:#6a5a4a;line-height:1.6"></p>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeConfirm()">取消</button>
+        <button class="btn-confirm" id="confirm-btn" onclick="executeConfirm()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ===== State =====
+    let allArtworks = [];
+    let currentFilter = 'all';
+    let currentSearch = '';
+    let confirmAction = null;
+
+    const socket = io();
+
+    // ===== Connection =====
+    socket.on('connect', () => {
+      document.getElementById('conn-status').textContent = '🟢 已连接';
+      loadArtworks();
+    });
+    socket.on('disconnect', () => {
+      document.getElementById('conn-status').textContent = '🔴 已断开';
+    });
+
+    // Real-time updates
+    socket.on('artwork:new', () => { loadArtworks(); });
+    socket.on('artworks:batch', () => { loadArtworks(); });
+    socket.on('artwork:archive', () => { loadArtworks(); });
+    socket.on('artwork:restore', () => { loadArtworks(); });
+    socket.on('artwork:purge', () => { loadArtworks(); });
+
+    // ===== Load =====
+    async function loadArtworks() {
+      try {
+        const res = await fetch('/api/artworks/all');
+        allArtworks = await res.json();
+        updateStats();
+        renderGrid();
+      } catch(e) {
+        console.error('加载失败:', e);
+      }
+    }
+
+    // ===== Stats =====
+    function updateStats() {
+      const total = allArtworks.length;
+      const active = allArtworks.filter(a => a.status === 'active').length;
+      const archived = allArtworks.filter(a => a.status === 'archived').length;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-active').textContent = active;
+      document.getElementById('stat-archived').textContent = archived;
+      document.getElementById('count-all').textContent = total;
+      document.getElementById('count-active').textContent = active;
+      document.getElementById('count-archived').textContent = archived;
+    }
+
+    // ===== Filter =====
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+      renderGrid();
+    }
+
+    function filterArtworks() {
+      currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
+      renderGrid();
+    }
+
+    function getFilteredArtworks() {
+      let list = [...allArtworks];
+      if (currentFilter === 'active') list = list.filter(a => a.status === 'active');
+      else if (currentFilter === 'archived') list = list.filter(a => a.status === 'archived');
+      if (currentSearch) list = list.filter(a => a.name.toLowerCase().includes(currentSearch));
+      return list;
+    }
+
+    // ===== Render =====
+    function renderGrid() {
+      const grid = document.getElementById('artwork-grid');
+      const list = getFilteredArtworks();
+
+      if (list.length === 0) {
+        const msg = currentSearch ? '没有匹配的作品' : (currentFilter === 'archived' ? '暂无归档作品' : '暂无作品');
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--brown-light);font-size:14px">${msg}</div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map(a => {
+        const isActive = a.status === 'active';
+        const dateStr = a.date ? a.date.slice(0,4)+'年'+a.date.slice(4,6)+'月'+a.date.slice(6,8)+'日' : '';
+        return `
+          <div class="a-card">
+            <div class="thumb-wrap" onclick="previewArtwork('${a.id}')">
+              <img src="${a.url}" alt="${escapeAttr(a.name)}" loading="lazy">
+              <span class="status-badge ${isActive ? 'active' : 'archived'}">${isActive ? '🟢 在架' : '📦 归档'}</span>
+            </div>
+            <div class="card-body">
+              <div class="card-name">${escapeHtml(a.name)}</div>
+              <div class="card-date">${dateStr}${a.autoMatting ? ' · 🤖 抠图' : ''}</div>
+              <div class="card-actions">
+                <button class="btn-copy" onclick="event.stopPropagation();copyShareLink('${a.id}')" title="复制分享链接">📋 分享</button>
+                ${isActive
+                  ? `<button onclick="event.stopPropagation();confirmArchive('${a.id}','${escapeAttr(a.name)}')">📦 归档</button>`
+                  : `<button class="btn-restore" onclick="event.stopPropagation();restoreArtwork('${a.id}')">↩️ 上架</button>`
+                }
+                <button class="btn-purge" onclick="event.stopPropagation();confirmPurge('${a.id}','${escapeAttr(a.name)}')">🗑️ 删除</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ===== Actions =====
+    async function copyShareLink(id) {
+      const a = allArtworks.find(x => x.id === id);
+      if (!a) return;
+      const base = window.location.origin;
+      const url = base + '/works/' + id + '.html';
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('✅ 分享链接已复制');
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = url; ta.style.cssText = 'position:fixed;left:-9999px';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        showToast('✅ 分享链接已复制');
+      }
+    }
+
+    async function archiveArtwork(id) {
+      try {
+        const r = await fetch('/api/artworks/' + id + '/archive', { method: 'PUT' });
+        const d = await r.json();
+        if (d.success) { showToast('📦 已归档'); loadArtworks(); }
+        else showToast('❌ ' + (d.error || '归档失败'));
+      } catch(e) { showToast('❌ 网络错误'); }
+    }
+
+    async function restoreArtwork(id) {
+      try {
+        const r = await fetch('/api/artworks/' + id + '/restore', { method: 'PUT' });
+        const d = await r.json();
+        if (d.success) { showToast('↩️ 已重新上架'); loadArtworks(); }
+        else showToast('❌ ' + (d.error || '上架失败'));
+      } catch(e) { showToast('❌ 网络错误'); }
+    }
+
+    async function purgeArtwork(id) {
+      try {
+        const r = await fetch('/api/artworks/' + id + '/purge', { method: 'DELETE' });
+        const d = await r.json();
+        if (d.success) { showToast('🗑️ 已彻底删除'); loadArtworks(); }
+        else showToast('❌ ' + (d.error || '删除失败'));
+      } catch(e) { showToast('❌ 网络错误'); }
+    }
+
+    function previewArtwork(id) {
+      const a = allArtworks.find(x => x.id === id);
+      if (!a) return;
+      const base = window.location.origin;
+      const url = base + '/works/' + id + '.html';
+      window.open(url, '_blank');
+    }
+
+    // ===== Confirm =====
+    function confirmArchive(id, name) {
+      document.getElementById('confirm-title').textContent = '📦 确认归档';
+      document.getElementById('confirm-msg').textContent = '将 "' + name + '" 下架归档？作品将从展示页移除，但数据不会删除。';
+      document.getElementById('confirm-btn').className = 'btn-confirm';
+      document.getElementById('confirm-btn').style.background = '#d97706';
+      document.getElementById('confirm-btn').textContent = '确认归档';
+      confirmAction = () => { archiveArtwork(id); closeConfirm(); };
+      document.getElementById('confirm-modal').classList.add('show');
+    }
+
+    function confirmPurge(id, name) {
+      document.getElementById('confirm-title').textContent = '⚠️ 确认彻底删除';
+      document.getElementById('confirm-msg').textContent = '将 "' + name + '" 彻底删除？此操作将永久删除作品文件和所有数据，不可恢复！';
+      document.getElementById('confirm-btn').className = 'btn-confirm';
+      document.getElementById('confirm-btn').style.background = '#ef4444';
+      document.getElementById('confirm-btn').textContent = '确认删除';
+      confirmAction = () => { purgeArtwork(id); closeConfirm(); };
+      document.getElementById('confirm-modal').classList.add('show');
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirm-modal').classList.remove('show');
+      confirmAction = null;
+    }
+
+    function executeConfirm() {
+      if (confirmAction) confirmAction();
+    }
+
+    // Close modal on overlay click
+    document.getElementById('confirm-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeConfirm();
+    });
+
+    // ===== Toast =====
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ===== Helpers =====
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = String(str);
+      return d.innerHTML;
+    }
+    function escapeAttr(str) {
+      return String(str).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    // ===== Init =====
+    loadArtworks();
+  </script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>敦煌AIGC · 作品欣赏</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--gold:#c9a96e;--gold-light:#f0dda0;--brown:#3d3020;--brown-light:#8a7a5e;--cream:#f8f4ee;--card-radius:12px}
+    body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:var(--cream);color:var(--brown);min-height:100vh}
+    .app{max-width:1100px;margin:0 auto;padding:16px}
+
+    /* Header */
+    .hd{text-align:center;padding:24px 16px 8px;margin-bottom:8px}
+    .hd h1{font-size:22px;font-weight:700;letter-spacing:2px;color:var(--brown)}
+    .hd p{font-size:13px;color:var(--brown-light);margin-top:4px}
+    .hd .count{display:inline-block;margin-top:6px;font-size:12px;color:var(--brown-light)}
+    .hd .count strong{color:var(--brown)}
+
+    /* Search */
+    .search-wrap{max-width:360px;margin:0 auto 16px;position:relative}
+    .search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1px solid rgba(201,169,110,.2);border-radius:24px;font-size:13px;background:#fff;outline:none;transition:all .2s}
+    .search-wrap input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,110,.1)}
+    .search-wrap .s-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.4}
+
+    /* Grid */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+    @media(min-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}}
+    @media(min-width:900px){.grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}}
+
+    /* Card */
+    .card{
+      background:#fff;border-radius:var(--card-radius);overflow:hidden;
+      box-shadow:0 2px 8px rgba(74,63,48,.04);cursor:pointer;
+      transition:all .25s ease;
+    }
+    .card:hover{box-shadow:0 4px 16px rgba(74,63,48,.08);transform:translateY(-2px)}
+    .card .thumb{position:relative;aspect-ratio:1;overflow:hidden;background:#f0ece6}
+    .card .thumb img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
+    .card:hover .thumb img{transform:scale(1.06)}
+    .card .thumb .badge{
+      position:absolute;bottom:6px;left:6px;font-size:10px;padding:2px 8px;border-radius:6px;
+      background:rgba(61,48,32,.7);backdrop-filter:blur(4px);
+      color:var(--gold-light);letter-spacing:.5px;
+    }
+    .card .info{padding:8px 10px 10px}
+    .card .name{font-size:13px;font-weight:600;color:var(--brown);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .card .date{font-size:11px;color:var(--brown-light);margin-top:1px}
+
+    /* Empty */
+    .empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--brown-light);font-size:14px}
+
+    /* Lightbox */
+    .lb{
+      position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;
+      background:rgba(0,0,0,.85);backdrop-filter:blur(20px);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      opacity:0;pointer-events:none;transition:opacity .3s ease;padding:20px;
+    }
+    .lb.show{opacity:1;pointer-events:auto}
+    .lb img{max-width:100%;max-height:75vh;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.4);margin-bottom:16px}
+    .lb .lb-info{text-align:center;color:#e8d5b0;max-width:400px}
+    .lb .lb-name{font-size:18px;font-weight:600}
+    .lb .lb-date{font-size:12px;color:#a8946c;margin-top:4px}
+    .lb .lb-close{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+    .lb .lb-share{margin-top:10px;padding:10px 28px;background:linear-gradient(135deg,var(--gold),#a08050);border:none;border-radius:20px;font-size:14px;font-weight:600;color:var(--brown);cursor:pointer;letter-spacing:1px}
+    .lb .lb-share:active{transform:scale(.95)}
+
+    /* Loading */
+    .loading{text-align:center;padding:60px;color:var(--brown-light);font-size:14px}
+    .loading .spinner{display:inline-block;width:28px;height:28px;border:3px solid rgba(201,169,110,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="hd">
+      <h1>🪷 敦煌 · AIGC作品欣赏</h1>
+      <p>广州美术馆 · 大象智绘AI科创</p>
+      <div class="count">共 <strong id="total-count">0</strong> 幅作品</div>
+    </div>
+
+    <div class="search-wrap">
+      <span class="s-icon">🔍</span>
+      <input type="text" id="search" placeholder="搜索小画家名字..." oninput="render()">
+    </div>
+
+    <div class="grid" id="grid">
+      <div class="loading"><div class="spinner"></div><br>加载作品中...</div>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lb" id="lb" onclick="closeLB()">
+    <button class="lb-close" onclick="closeLB()">✕</button>
+    <img id="lb-img" src="" alt="">
+    <div class="lb-info">
+      <div class="lb-name" id="lb-name"></div>
+      <div class="lb-date" id="lb-date"></div>
+      <div class="lb-actions" style="display:flex;gap:8px;margin-top:12px;justify-content:center;flex-wrap:wrap">
+        <button class="lb-btn-primary" onclick="openSharePage()" style="padding:10px 24px;background:linear-gradient(135deg,#c9a96e,#a08050);border:none;border-radius:20px;font-size:14px;font-weight:600;color:var(--brown);cursor:pointer;letter-spacing:1px;box-shadow:0 2px 8px rgba(201,169,110,.3)">🖼️ 查看完整作品页</button>
+        <button class="lb-btn-secondary" onclick="shareCurrent()" style="padding:10px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;font-size:13px;color:#e8d5b0;cursor:pointer">📋 复制分享链接</button>
+      </div>
+    </div>
+  </div>  <script>
+    let artworks = [];
+    let currentId = null;
+
+    // Load data
+    fetch('works-data.json?' + Date.now())
+      .then(r => { if(!r.ok) throw new Error('Not found'); return r.json(); })
+      .then(data => {
+        artworks = data;
+        document.getElementById('total-count').textContent = artworks.length;
+        render();
+      })
+      .catch(() => {
+        document.getElementById('grid').innerHTML = '<div class="empty">⚠️ 数据加载失败，请确认 works-data.json 文件存在</div>';
+      });
+
+    function render() {
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const list = q ? artworks.filter(a => a.name.toLowerCase().includes(q)) : artworks;
+
+      const grid = document.getElementById('grid');
+      if (list.length === 0) {
+        grid.innerHTML = '<div class="empty">' + (q ? '没有找到匹配的小画家' : '暂无作品') + '</div>';
+        return;
+      }
+
+      // Group by month
+      const groups = {};
+      list.forEach(a => {
+        const ym = a.date ? a.date.slice(0,4) + '年' + parseInt(a.date.slice(4,6)) + '月' : '其他';
+        if (!groups[ym]) groups[ym] = [];
+        groups[ym].push(a);
+      });
+
+      let html = '';
+      const months = Object.keys(groups).sort().reverse();
+      months.forEach(ym => {
+        html += '<div class="month-header" style="grid-column:1/-1;padding:16px 4px 6px;font-size:14px;font-weight:600;color:var(--brown);letter-spacing:1px;border-top:1px solid rgba(201,169,110,.15);margin-top:4px">🪷 ' + ym + ' <span style="font-weight:400;font-size:12px;color:var(--brown-light)">' + groups[ym].length + '幅</span></div>';
+        groups[ym].forEach(a => {
+          const imgUrl = a.url.startsWith('http') ? a.url : (a.url.startsWith('/') ? a.url.substring(1) : a.url);
+          html += '<div class="card" onclick="openLB(\'' + a.id + '\')">'
+            + '<div class="thumb"><img src="' + imgUrl + '" alt="' + esc(a.name) + '" loading="lazy">'
+            + '<span class="badge">✨ AI 共创</span></div>'
+            + '<div class="info"><div class="name">' + esc(a.name) + '</div>'
+            + '<div class="date">' + (a.date ? a.date.slice(0,4)+'年'+parseInt(a.date.slice(4,6))+'月'+parseInt(a.date.slice(6,8))+'日' : '') + '</div></div></div>';
+        });
+      });
+      grid.innerHTML = html;
+    }
+
+    function openLB(id) {
+      const a = artworks.find(x => x.id === id);
+      if (!a) return;
+      currentId = id;
+      const imgUrl = a.url.startsWith('http') ? a.url : (a.url.startsWith('/') ? a.url.substring(1) : a.url);
+      document.getElementById('lb-img').src = imgUrl;
+      document.getElementById('lb-name').textContent = a.name + ' 的AI艺术作品';
+      const d = a.date ? a.date.slice(0,4)+'年'+a.date.slice(4,6)+'月'+a.date.slice(6,8)+'日' : '';
+      document.getElementById('lb-date').textContent = d;
+      document.getElementById('lb').classList.add('show');
+    }
+
+    function closeLB() {
+      document.getElementById('lb').classList.remove('show');
+    }
+
+    function shareCurrent() {
+      if (!currentId) return;
+      const url = window.location.origin + '/works/' + currentId + '.html';
+      if (navigator.share) {
+        navigator.share({ title: document.getElementById('lb-name').textContent, url: url }).catch(()=>{});
+      } else {
+        navigator.clipboard.writeText(url).then(() => showToast('✅ 链接已复制')).catch(() => showToast('❌ 复制失败'));
+      }
+    }
+
+    
+    function openSharePage() {
+      if (!currentId) return;
+      window.open('works/' + currentId + '.html', '_blank');
+    }function showToast(msg) {
+      const t = document.createElement('div');
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(61,48,32,.9);backdrop-filter:blur(8px);color:var(--gold-light);padding:10px 22px;border-radius:22px;font-size:13px;z-index:99999;animation:fadeOut 2.5s ease forwards';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2500);
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = String(s);
+      return d.innerHTML;
+    }
+
+    // Toast animation
+    const st = document.createElement('style');
+    st.textContent = '@keyframes fadeOut{0%{opacity:0;transform:translateX(-50%) translateY(10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}';
+    document.head.appendChild(st);
+
+    // Keyboard close
+    document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLB(); });
+  </script>
+</body>
+</html>
+
+

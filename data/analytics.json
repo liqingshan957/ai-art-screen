@@ -7,5 +7,28 @@
     "newArtworks": 6,
     "displayViews": 30,
     "shareClicks": 0
+  },
+  "20260723": {
+    "pageViews": 0,
+    "visitors": [],
+    "newArtworks": 45,
+    "displayViews": 10,
+    "shareClicks": 0
+  },
+  "20260724": {
+    "pageViews": 0,
+    "visitors": [],
+    "newArtworks": 25,
+    "displayViews": 10,
+    "shareClicks": 0
+  },
+  "20260725": {
+    "pageViews": 12,
+    "visitors": [
+      "::1"
+    ],
+    "newArtworks": 61,
+    "displayViews": 28,
+    "shareClicks": 0
   }
 }
