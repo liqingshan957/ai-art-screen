@@ -155,8 +155,11 @@
       const m = location.search.match(/[?&]api_key=([^&]*)/);
       return m ? decodeURIComponent(m[1]) : '';
     })();
-    // 展示相册 ID：URL 参数 > meta 标签 > null（=显示全部）
+    // 展示相册 ID：URL hash > URL 参数 > meta 标签 > null（=显示全部）
+    // hash 方式兼容 PageFire（?query 不支持），如 #album=20
     const CMS_ALBUM_ID = (function(){
+      const h = location.hash.match(/album=([^&]*)/);
+      if (h) return decodeURIComponent(h[1]) || null;
       const m = location.search.match(/[?&]album=([^&]*)/);
       if (m) return decodeURIComponent(m[1]) || null;
       const meta = document.querySelector('meta[name="cms-album-id"]');
