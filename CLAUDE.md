@@ -13,16 +13,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # 启动主服务（必需：Node.js + Express + Socket.IO）
 npm start          # node server.js (port 3000)
-npm run dev        # 同上
+
+# 本地开发（含自动抠图，需要 Rembg 服务）
+ENABLE_AUTO_CUTOUT=true node server.js     # 默认，开启自动抠图
+
+# 纯服务模式（不抠图，等远程 notify 推送大屏）
+ENABLE_AUTO_CUTOUT=false node server.js    # 服务器部署用
+
+# 启动 Rembg 抠图服务（Python，自动抠图需要）
+start-rembg.bat    # Python 服务，端口 7000，模型 u2net
+
+# 本地抠图工作脚本（配合远程服务器，独立运行）
+node scripts/local-cutout-worker.js
 
 # 安装依赖
 npm install        # express, socket.io, multer, sharp
-
-# 启动 Rembg 抠图服务（Python，可选，自动抠图需要）
-start-rembg.bat    # Python 服务，端口 7000，模型 u2net
-
-# 一键启动全部
-启动投屏系统.bat
 ```
 
 ## Architecture
@@ -41,6 +46,20 @@ start-rembg.bat    # Python 服务，端口 7000，模型 u2net
 两种上传路径：
 - **自动抠图**（`POST /api/auto-matting`）：收件箱/飞书调用，经历完整抠图流水线
 - **手动上传**（`POST /api/artworks/upload` 或 `/api/artworks/batch`）：管理员操作，不抠图不裁剪
+
+### 抠图模式（双模式）
+
+```
+ENABLE_AUTO_CUTOUT=true（本地开发，默认）
+  CMS 新作品 → 服务端轮询 → 自动抠图队列 → Rembg → 上传 CMS → push 大屏
+
+ENABLE_AUTO_CUTOUT=false（服务器部署）
+  CMS 新作品 → 服务端轮询（仅同步缓存，不入队列）
+  ↓
+  本地电脑 local-cutout-worker.js
+    → 轮询 CMS → 下载 → Rembg → 上传 → POST /api/cms/cutout/notify
+    → 服务器收到通知 → push 大屏
+```
 
 ### 双数据源 & CMS 集成
 
@@ -76,7 +95,7 @@ CMS 远程相册 (OpenAPI)         本地文件 (artworks.json)
 
 ```
 ai-art-screen/
-├── server.js               # 唯一后端入口（~700行）。API + Socket.IO + 抠图流水线 + CMS 代理
+├── server.js               # 唯一后端入口（~950行）。API + Socket.IO + 抠图流水线 + CMS 代理
 ├── web-gallery/             # 🖼️ 作品画廊（纯前端 SPA，可独立部署到任何静态托管）
 │   ├── index.html          #     画廊首页（三层加载：CMS 直连→静态快照→离线）
 │   ├── work.html           #     作品详情页模板（预生成时服务端渲染填充）
@@ -96,10 +115,14 @@ ai-art-screen/
 ├── services/rembg/         # Python 独立抠图服务（基于 rembg + http.server）
 │   └── rembg-server.py     #     零外部依赖，POST /api/remove 接收图片返回 PNG
 ├── scripts/                # 工具脚本
-│   └── init-album-data.js  #     初始化活动相册数据
+│   ├── init-album-data.js  #     初始化活动相册数据
+│   ├── local-cutout-worker.js          #     本地 Rembg 抠图工作脚本（配合远程服务器）
+│   └── local-cutout-config.template.json  #     抠图工作脚本配置模板
+├── examples/               # 示例作品图片
 ├── data/                   # 后端运行时 JSON 数据文件（artworks.json, analytics.json 等）
 ├── docs/
-│   └── openapi.md          # OpenAPI 接口文档（第三方系统集成用）
+│   ├── openapi.md          #     OpenAPI 接口文档（第三方系统集成用）
+│   └── deploy/             #     部署文档、SSH 密钥、证书管理
 └── uploads/                # 用户上传的图片/视频（gitignored）
     ├── artworks/           #     抠图版（透明背景 PNG）
     ├── originals/          #     原图 + 裁剪版
@@ -197,5 +220,8 @@ ai-art-screen/
 | `GET/POST /api/dashboard/today` | 运营看板 |
 | `GET/PUT /api/cms/display-album` | 展示相册设置 |
 | `POST /api/cms/albums/sync` | 手动触发 CMS 相册同步 |
-| `POST /api/cms/albums/{albumId}/medias/{mediaId}/cutout` | 单张触发 CMS 抠图 |
+| `POST /api/cms/cutout/notify` | 本地 Rembg 抠图完成通知（推送大屏） |
+| `POST /api/cms/cutout/scan/:albumId` | 扫描相册中缺少抠图的媒体 |
+| `POST /api/cms/cutout/:albumId/:mediaId` | 手动触发单张抠图 |
+| `GET/DELETE /api/cms/cutout/queue` | 抠图队列状态查询/清理 |
 | `GET /open-api/v1/*` | OpenAPI 第三方接口（代理至 `vapi.hkting.com`） |
