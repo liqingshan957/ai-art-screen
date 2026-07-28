@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -15,8 +15,8 @@
         <span class="header-sub">敦煌AIGC艺术展览</span>
       </div>
       <div class="header-right">
-        <a href="/gallery" class="btn btn-outline">🖼️ 作品欣赏</a>
-        <a href="/dashboard" class="btn btn-outline">📊 数据看板</a>
+<a href="/gallery" target="_blank" class="btn btn-outline">🖼️ 作品欣赏</a>
+        <a href="/dashboard" target="_blank" class="btn btn-outline">📊 数据看板</a>
         <a href="/display" target="_blank" class="btn btn-outline">📺 打开展示页</a>
         <span id="connection-status" class="status-dot connected">● 已连接</span>
       </div>
@@ -90,86 +90,150 @@
         <div id="video-upload-progress" class="upload-progress hidden"></div>
       </section>
 
-      <!-- 右栏：作品管理 -->
+      <!-- 右栏 -->
       <section class="panel artwork-panel">
-        <h2 class="panel-title">🎨 作品管理</h2>
+        <h2 class="panel-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
+          <span style="display:flex;align-items:center;gap:8px">
+            <span id="page-title">🖼️ 作品展示</span>
+            <button class="admin-tab active" id="tab-works" onclick="switchPanel('works')" style="padding:3px 10px;border:none;background:#c9a96e;font-size:11px;font-weight:600;color:#fff;cursor:pointer;border-radius:4px">作品展示</button>
+            <button class="admin-tab" id="tab-cutout" onclick="switchPanel('cutout')" style="padding:3px 10px;border:none;background:rgba(201,169,110,.15);font-size:11px;color:#8a7a5e;cursor:pointer;border-radius:4px">抠图队列</button>
+          </span>
+          <span style="display:flex;align-items:center;gap:6px">
+            <span id="cms-badge" class="count-badge" style="font-size:10px;background:#27ae60">☁️ CMS</span>
+            <span id="rembg-badge" class="count-badge" style="background:#999;display:none">✂️ 抠图</span>
+            <a href="/admin/settings" style="text-decoration:none;font-size:16px;cursor:pointer;padding:4px" title="设置">⚙️</a>
+          </span>
+        </h2>
 
-        <!-- 统计看板 -->
-        <div class="stats-bar">
-          <div class="stat-card" id="stat-total">
-            <div class="stat-value">0</div>
-            <div class="stat-label">作品总数</div>
-          </div>
-          <div class="stat-card active-card" id="stat-active">
-            <div class="stat-value">0</div>
-            <div class="stat-label">📺 在展中</div>
-          </div>
-          <div class="stat-card archived-card" id="stat-archived">
-            <div class="stat-value">0</div>
-            <div class="stat-label">📦 已归档</div>
-          </div>
-        </div>
-
-        <!-- Tab 切换 -->
-        <div class="tab-bar">
-          <button class="tab-btn active" onclick="switchTab('active')">📺 在展中 <span id="tab-active-count">0</span></button>
-          <button class="tab-btn" onclick="switchTab('archived')">📦 历史归档 <span id="tab-archived-count">0</span></button>
-        </div>
-
-        <!-- 外部访问地址配置 -->
-        <div class="external-url-bar" id="external-url-bar">
-          <span class="ext-label">🔗 外部访问地址：</span>
-          <input type="text" id="external-base-url" placeholder="https://17xskj-daxiang.pagefire.openhkt.com" class="ext-url-input">
-          <button id="ext-url-save" class="ext-url-btn">保存</button>
-          <span id="pagefire-badge" class="pf-badge done">✅ 已同步</span>
-          <span id="ext-url-status" class="ext-url-status hidden"></span>
-        </div>
-
-        <!-- 上传区（仅在"在展中"tab显示） -->
-        <div id="upload-section">
-          <div class="upload-zone" id="upload-zone">
-            <div class="upload-zone-inner">
-              <div class="upload-icon">📸</div>
-              <p>点击或拖拽图片到此处上传</p>
-              <p class="upload-hint">支持批量上传 · JPG/PNG/WebP</p>
-            </div>
-            <input type="file" id="artwork-upload" accept="image/*" multiple hidden>
+        <div id="panel-works">
+          <div style="display:flex;align-items:center;gap:8px;padding:0 0 8px;flex-wrap:wrap">
+            <label style="font-size:13px;font-weight:600;color:#3d2f1f">📺 展示相册：</label>
+            <select id="display-album-select" onchange="switchDisplayAlbum(this.value)" style="flex:1;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;min-width:200px;max-width:300px">
+              <option value="">— 请选择 —</option>
+            </select>
+            <button class="btn btn-sm" onclick="createAlbum()" style="font-size:11px">📁 新建</button>
+            <button class="btn btn-sm" onclick="syncAlbums()" style="font-size:11px">🔄 同步</button>
+            <span id="album-source-badge" style="font-size:11px;color:#999"></span>
           </div>
 
-          <!-- 上传中的作品信息填写 -->
-          <div id="upload-form" class="upload-form hidden">
-            <div class="form-header">
-              <span>为 <strong id="pending-count">0</strong> 张作品填写信息</span>
-              <button class="btn btn-sm" onclick="useDefaultInfo()">全部用默认</button>
-            </div>
-            <div id="pending-list" class="pending-list"></div>
-            <div class="form-actions">
-              <button class="btn btn-primary" onclick="submitBatchUpload()">✓ 确认上传</button>
-              <button class="btn btn-cancel" onclick="cancelBatchUpload()">取消</button>
+          <div class="stats-bar" style="margin-bottom:6px">
+            <div class="stat-card" id="stat-total"><div class="stat-value">0</div><div class="stat-label">作品总数</div></div>
+            <div class="stat-card active-card" id="stat-active"><div class="stat-value">0</div><div class="stat-label">📺 在展中</div></div>
+          </div>
+
+          <div class="external-url-bar" id="external-url-bar">
+            <span class="ext-label">🔗 外部地址：</span>
+            <input type="text" id="external-base-url" placeholder="https://..." class="ext-url-input">
+            <button id="ext-url-save" class="ext-url-btn">保存</button>
+            <span id="ext-url-status" class="ext-url-status hidden"></span>
+          </div>
+
+          <div class="artwork-list-header">
+            <span id="list-header-title">作品列表</span>
+            <div style="display:flex;gap:6px">
+              <button id="btn-batch-archive" class="btn btn-sm btn-danger-outline" onclick="archiveAll()">📦 全部下架</button>
+              <button class="btn btn-sm" onclick="scanAlbumCutout(currentDisplayAlbumId)" style="font-size:11px">✂️ 批量抠图</button>
             </div>
           </div>
+          <div id="artwork-grid" class="artwork-grid"><div class="grid-empty">请先选择展示相册</div></div>
 
-          <!-- 上传进度 -->
-          <div id="artwork-upload-progress" class="upload-progress hidden"></div>
-        </div>
-
-        <!-- 作品列表 -->
-        <div class="artwork-list-header">
-          <span id="list-header-title">已上架作品</span>
-          <div>
-            <button id="btn-batch-archive" class="btn btn-sm btn-danger-outline" onclick="archiveAll()">📦 全部下架</button>
+          <div id="upload-section" style="margin-top:12px">
+            <div class="upload-zone" id="upload-zone" style="padding:14px">
+              <div class="upload-zone-inner">
+                <div class="upload-icon">📸</div>
+                <p>点击或拖拽图片上传到当前相册</p>
+                <p class="upload-hint">支持批量上传 · 自动上传到 CMS</p>
+              </div>
+              <input type="file" id="artwork-upload" accept="image/*" multiple hidden>
+            </div>
+            <div id="upload-form" class="upload-form hidden">
+              <div class="form-header">
+                <span>为 <strong id="pending-count">0</strong> 张作品填写信息</span>
+                <button class="btn btn-sm" onclick="useDefaultInfo()">全部用默认</button>
+              </div>
+              <div id="pending-list" class="pending-list"></div>
+              <div class="form-actions">
+                <button class="btn btn-primary" onclick="submitBatchUpload()">✓ 确认上传</button>
+                <button class="btn btn-cancel" onclick="cancelBatchUpload()">取消</button>
+              </div>
+            </div>
+            <div id="artwork-upload-progress" class="upload-progress hidden"></div>
           </div>
         </div>
-        <div id="artwork-grid" class="artwork-grid">
-          <div class="grid-empty">还没有作品，上传第一张吧！</div>
+
+        <!-- ===== Tab: 抠图队列 ===== -->
+        <div id="panel-cutout" class="hidden">
+          <!-- Rembg 健康检测 -->
+          <div class="rembg-health" id="rembg-health">
+            <span class="health-dot" id="rembg-dot"></span>
+            <div class="health-info">
+              <span class="health-service">Rembg 抠图服务</span>
+              <span class="health-status" id="rembg-status-text">检测中...</span>
+            </div>
+            <span class="health-refresh-timer" id="rembg-refresh-timer">30s</span>
+          </div>
+
+          <!-- 队列统计 + 操作 -->
+          <div class="cutout-toolbar">
+            <div class="cutout-stats">
+              <span style="font-size:13px;color:#999">队列：</span>
+              <span id="cutout-queue-count" class="cutout-stat-value">0</span>
+              <span class="cutout-stat-label">待处理</span>
+              <span class="cutout-stat-divider">·</span>
+              <span id="cutout-processing-status" class="cutout-stat-label">空闲</span>
+            </div>
+            <div class="cutout-actions">
+              <button class="btn btn-sm" onclick="clearCompletedCutout()" title="清除已完成任务">🗑️ 清除</button>
+              <button class="btn btn-sm" onclick="refreshCutoutStatus()">🔄 刷新</button>
+            </div>
+          </div>
+
+          <!-- 状态筛选 -->
+          <div class="cutout-filters" id="cutout-filters">
+            <button class="cutout-filter-btn active" data-filter="all" onclick="filterCutoutQueue('all')">全部 <span class="filter-count" id="count-all">0</span></button>
+            <button class="cutout-filter-btn" data-filter="pending" onclick="filterCutoutQueue('pending')">⏳ 排队 <span class="filter-count" id="count-pending">0</span></button>
+            <button class="cutout-filter-btn" data-filter="processing" onclick="filterCutoutQueue('processing')">🔄 抠图中 <span class="filter-count" id="count-processing">0</span></button>
+            <button class="cutout-filter-btn" data-filter="done" onclick="filterCutoutQueue('done')">✅ 完成 <span class="filter-count" id="count-done">0</span></button>
+            <button class="cutout-filter-btn" data-filter="error" onclick="filterCutoutQueue('error')">❌ 失败 <span class="filter-count" id="count-error">0</span></button>
+          </div>
+
+          <!-- 队列列表 -->
+          <div id="cutout-list" class="cutout-list">
+            <div class="grid-empty">暂无抠图任务</div>
+          </div>
+
+          <!-- 分页 -->
+          <div id="cutout-pagination" class="cutout-pagination hidden">
+            <button class="btn btn-sm" onclick="changeCutoutPage(-1)" id="cutout-prev-btn">◀ 上一页</button>
+            <span id="cutout-page-info" class="cutout-page-info"></span>
+            <button class="btn btn-sm" onclick="changeCutoutPage(1)" id="cutout-next-btn">下一页 ▶</button>
+          </div>
         </div>
 
-        <!-- 归档操作区 -->
-        <div id="archived-section" class="artwork-list-header hidden" style="margin-top:0;">
-          <span id="archived-header-title">已归档作品</span>
-          <button class="btn btn-sm btn-danger-outline" onclick="purgeAllArchived()">🗑️ 清空归档</button>
+        <!-- ===== Tab: 设置 ===== -->
+        <div id="panel-settings" class="hidden">
+          <div class="cms-field">
+            <label>API Key</label>
+            <div style="display:flex;gap:8px">
+              <input type="password" id="cms-api-key" placeholder="ak_xxx..." style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:monospace">
+              <button class="btn btn-sm" onclick="toggleApiKeyVisibility()" style="min-width:44px" id="key-toggle-btn">👁️</button>
+            </div>
+          </div>
+          <div class="cms-field">
+            <label>API Base URL</label>
+            <input type="text" id="cms-api-base" value="https://vapi.hkting.com/api" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:monospace">
+          </div>
+          <div class="cms-field">
+            <label>连接</label>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span id="cms-status-text" style="color:#999">未检测</span>
+              <button class="btn btn-sm" onclick="testCmsConnection()">🔗 测试</button>
+              <button class="btn btn-sm" onclick="saveCmsConfig()">💾 保存</button>
+              <button class="btn btn-sm" onclick="syncAlbums()">🔄 同步</button>
+              
+            </div>
+          </div>
         </div>
-        <div id="archived-grid" class="artwork-grid hidden"></div>
       </section>
     </div>
   </div>
@@ -182,6 +246,7 @@
         <span id="preview-name"></span>
         <span id="preview-date"></span>
       </div>
+      <div class="preview-tabs" id="preview-tabs"></div>
       <button class="modal-close" onclick="closePreview()">✕</button>
     </div>
   </div>
@@ -198,10 +263,21 @@
     </div>
   </div>
 
+  <!-- 新建相册弹窗 -->
+  <div id="create-album-modal" class="modal hidden" onclick="if(event.target===this)closeAlbumModal()">
+    <div class="confirm-dialog" style="max-width:360px">
+      <h3 style="margin-bottom:16px;font-size:15px;color:#3d2f1f">📁 新建相册</h3>
+      <input type="text" id="new-album-name" placeholder="相册名称" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:12px">
+      <button class="btn btn-primary" onclick="doCreateAlbum()" style="width:100%;justify-content:center">创建</button>
+      <button class="btn btn-cancel" onclick="closeAlbumModal()" style="width:100%;justify-content:center;margin-top:6px">取消</button>
+    </div>
+  </div>
+
   <!-- Toast 提示 -->
   <div id="toast" class="toast hidden"></div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/api.js"></script>
   <script src="/js/admin.js"></script>
 </body>
 </html>

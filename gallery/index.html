@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="cms-api-key" content="ak_88ntfN52X8NKgtXWyOWCUac6JFfgkNE6zI0mIF7B">
+  <meta name="cms-album-id" content="4">
+  <title>敦煌AIGC · 作品欣赏</title>
+  <meta property="og:title" id="og-title" content="敦煌 AIGC 作品欣赏">
+  <meta property="og:description" id="og-desc" content="大象智绘 AI 科创 · 孩子们用 AI 创作的敦煌风格艺术作品">
+  <meta property="og:image" id="og-image" content="">
+  <meta property="og:type" content="website">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--gold:#c9a96e;--gold-light:#f0dda0;--brown:#3d3020;--brown-light:#8a7a5e;--cream:#f8f4ee;--card-radius:12px}
+    body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:var(--cream);color:var(--brown);min-height:100vh}
+    .app{max-width:1100px;margin:0 auto;padding:16px}
+    .app.hidden{display:none}
+
+    /* Header */
+    .hd{text-align:center;padding:24px 16px 8px;margin-bottom:8px}
+    .hd h1{font-size:22px;font-weight:700;letter-spacing:2px;color:var(--brown)}
+    .hd p{font-size:13px;color:var(--brown-light);margin-top:4px}
+    .hd .count{display:inline-block;margin-top:6px;font-size:12px;color:var(--brown-light)}
+    .hd .count strong{color:var(--brown)}
+    .source-badge{display:inline-block;margin-top:4px;font-size:11px;color:#a8946c}
+    .source-badge .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle}
+    .source-badge .dot.live{background:#22c55e}
+    .source-badge .dot.cms{background:#6366f1}
+    .source-badge .dot.static{background:#c9a96e}
+
+    /* Album filter bar */
+    .album-bar{display:flex;gap:6px;padding:6px 0 12px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+    .album-bar::-webkit-scrollbar{display:none}
+    .album-chip{padding:5px 14px;border-radius:16px;font-size:12px;white-space:nowrap;cursor:pointer;border:1px solid rgba(201,169,110,.25);background:rgba(255,255,255,.5);color:var(--brown-light);transition:all .2s;flex-shrink:0;user-select:none}
+    .album-chip:hover{background:rgba(201,169,110,.12);border-color:rgba(201,169,110,.4)}
+    .album-chip.active{background:var(--gold);color:#fff;border-color:var(--gold);font-weight:600}
+    .album-chip .chip-count{font-size:10px;opacity:.7;margin-left:3px}
+
+    /* Search */
+    .search-wrap{max-width:360px;margin:0 auto 16px;position:relative}
+    .search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1px solid rgba(201,169,110,.2);border-radius:24px;font-size:13px;background:#fff;outline:none;transition:all .2s}
+    .search-wrap input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,169,110,.1)}
+    .search-wrap .s-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.4}
+
+    /* Grid */
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+    @media(min-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}}
+    @media(min-width:900px){.grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}}
+
+    /* Card */
+    .card{
+      background:#fff;border-radius:var(--card-radius);overflow:hidden;
+      box-shadow:0 2px 8px rgba(74,63,48,.04);cursor:pointer;
+      transition:all .25s ease;
+    }
+    .card:hover{box-shadow:0 4px 16px rgba(74,63,48,.08);transform:translateY(-2px)}
+    .card .thumb{position:relative;aspect-ratio:1;overflow:hidden;background:#f0ece6}
+    .card .thumb img{width:100%;height:100%;object-fit:cover;transition:transform .4s ease}
+    .card:hover .thumb img{transform:scale(1.06)}
+    .card .thumb .badge{
+      position:absolute;bottom:6px;left:6px;font-size:10px;padding:2px 8px;border-radius:6px;
+      background:rgba(61,48,32,.7);backdrop-filter:blur(4px);
+      color:var(--gold-light);letter-spacing:.5px;
+    }
+    .card .info{padding:8px 10px 10px}
+    .card .name{font-size:13px;font-weight:600;color:var(--brown);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .card .date{font-size:11px;color:var(--brown-light);margin-top:1px}
+    .card .album-tag{font-size:10px;color:#a8946c;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* Empty / Loading */
+    .empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--brown-light);font-size:14px}
+    .loading{text-align:center;padding:60px;color:var(--brown-light);font-size:14px}
+    .loading .spinner{display:inline-block;width:28px;height:28px;border:3px solid rgba(201,169,110,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Lightbox */
+    .lb{
+      position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;
+      background:rgba(0,0,0,.85);backdrop-filter:blur(20px);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      opacity:0;pointer-events:none;transition:opacity .3s ease;padding:20px;
+    }
+    .lb.show{opacity:1;pointer-events:auto}
+    .lb img{max-width:100%;max-height:75vh;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.4);margin-bottom:16px}
+    .lb .lb-info{text-align:center;color:#e8d5b0;max-width:400px}
+    .lb .lb-name{font-size:18px;font-weight:600}
+    .lb .lb-date{font-size:12px;color:#a8946c;margin-top:4px}
+    .lb .lb-album{font-size:11px;color:#a8946c;margin-top:2px;opacity:.7}
+    .lb .lb-close{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+    .lb-actions{display:flex;gap:10px;margin-top:12px;justify-content:center;flex-wrap:wrap}
+
+    /* Error retry */
+    .err-actions{margin-top:16px;display:flex;gap:10px;justify-content:center}
+    .btn-retry{padding:8px 24px;border:1px solid rgba(201,169,110,.4);border-radius:20px;background:rgba(201,169,110,.08);color:var(--brown-light);font-size:13px;cursor:pointer;transition:all .2s;letter-spacing:.5px}
+    .btn-retry:hover{background:rgba(201,169,110,.2)}
+
+    /* Pull-to-refresh */
+    #ptr-indicator{text-align:center;height:0;overflow:hidden;transition:height .3s;font-size:13px;color:var(--brown-light);display:flex;align-items:center;justify-content:center;gap:6px}
+    #ptr-indicator .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(201,169,110,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+    #ptr-indicator.show{height:44px}
+    #ptr-indicator .arrow{display:inline-block;transition:transform .3s;font-size:16px}
+    #ptr-indicator .arrow.down{transform:rotate(180deg)}
+    .refresh-btn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--brown-light);padding:4px 8px;border-radius:6px;transition:background .2s;vertical-align:middle}
+    .refresh-btn:hover{background:rgba(201,169,110,.15)}
+  </style>
+</head>
+<body>
+  <div id="ptr-indicator"><span class="arrow" id="ptr-arrow">↓</span> <span id="ptr-text">下拉刷新</span></div>
+  <div class="app" id="app">
+    <div class="hd">
+      <h1>🪷 敦煌 · AIGC作品欣赏</h1>
+      <p>广州美术馆 · 大象智绘AI科创</p>
+      <div class="count">共 <strong id="total-count">0</strong> 幅作品 <button class="refresh-btn" id="refresh-btn" onclick="refreshData()" title="刷新数据">🔄</button></div>
+      <div class="source-badge"><span class="dot" id="source-dot"></span><span id="source-label">加载中...</span></div>
+    </div>
+
+    <!-- 相册筛选栏 -->
+    <div class="album-bar" id="album-bar"></div>
+
+    <div class="search-wrap">
+      <span class="s-icon">🔍</span>
+      <input type="text" id="search" placeholder="搜索小画家名字..." oninput="filterAndRender()">
+    </div>
+
+    <div class="grid" id="grid">
+      <div class="loading"><div class="spinner"></div><br>加载作品中...</div>
+    </div>
+  </div>
+
+  <!-- Lightbox (simple image preview) -->
+  <div class="lb" id="lb" onclick="closeLB()">
+    <button class="lb-close" onclick="closeLB()">✕</button>
+    <img id="lb-img" src="" alt="">
+    <div class="lb-info">
+      <div class="lb-name" id="lb-name"></div>
+      <div class="lb-date" id="lb-date"></div>
+      <div class="lb-album" id="lb-album"></div>
+      <div class="lb-actions">
+        <button class="lb-btn-primary" onclick="openWorkPage(currentId)" style="padding:10px 24px;background:linear-gradient(135deg,#c9a96e,#a08050);border:none;border-radius:20px;font-size:14px;font-weight:600;color:var(--brown);cursor:pointer;letter-spacing:1px;box-shadow:0 2px 8px rgba(201,169,110,.3)">🖼️ 查看作品详情</button>
+        <button class="lb-btn-secondary" onclick="shareWork()" style="padding:10px 20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;font-size:13px;color:#e8d5b0;cursor:pointer">📋 复制链接</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== CMS 直连配置 ==========
+    // API Key 来源优先级：meta 标签 > 查询参数 > 空
+    // 部署时可在 HTML head 中添加：
+    //   <meta name="cms-api-key" content="ak_xxxx...">
+    // 或访问时加 ?api_key=ak_xxx...
+    const CMS_API_BASE = 'https://vapi.hkting.com/api/open-api/v1';
+    const CMS_API_KEY = (function(){
+      const meta = document.querySelector('meta[name="cms-api-key"]');
+      if (meta) return meta.getAttribute('content');
+      const m = location.search.match(/[?&]api_key=([^&]*)/);
+      return m ? decodeURIComponent(m[1]) : '';
+    })();
+    // 展示相册 ID：meta 标签 > 查询参数 > null（=显示全部）
+    const CMS_ALBUM_ID = (function(){
+      const meta = document.querySelector('meta[name="cms-album-id"]');
+      if (meta) return meta.getAttribute('content') || null;
+      const m = location.search.match(/[?&]album=([^&]*)/);
+      return m ? decodeURIComponent(m[1]) : null;
+    })();
+
+    let artworks = [];
+    let albums = [];
+    let currentId = null;
+    let activeAlbumId = null;
+
+    // ========== CMS 直连请求 ==========
+    async function cmsFetch(path) {
+      if (!CMS_API_KEY) throw new Error('CMS_API_KEY 未配置');
+      const url = CMS_API_BASE + path;
+      const res = await fetch(url, { headers: { 'X-Api-Key': CMS_API_KEY } });
+      const data = await res.json();
+      if (data.code !== 0) throw new Error(data.message || 'CMS error (code=' + data.code + ')');
+      return data.data;
+    }
+
+    // ========== 数据加载（三层降级） ==========
+    function loadData() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '<div class="loading"><div class="spinner"></div><br>加载作品中...</div>';
+
+      // 第一层：CMS 直连（静态部署 / 独立部署）
+      if (CMS_API_KEY) {
+        loadFromCms().then(ok => {
+          if (ok) return;
+          loadFromProxy(); // CMS 直连成功但数据为空，尝试代理
+        }).catch(() => loadFromProxy());
+      } else {
+        loadFromProxy();
+      }
+    }
+
+    // CMS 直连：获取相册列表 + 每个相册的媒体
+    async function loadFromCms() {
+      try {
+        // 1. 获取相册列表（CMS 不返回 enabled 字段，仅从本地缓存管理）
+        const albumData = await cmsFetch('/activity-albums?pageSize=100');
+        const albumRows = albumData.rows || albumData || [];
+
+        // 尝试加载本地启用的相册列表（SSR 部署时会通过 meta 或 query 传）
+        let enabledAlbumIds = null;
+        try {
+          const localAlbums = await fetch('/api/cms/albums?pageSize=100').then(r => r.json());
+          if (localAlbums.success) {
+            enabledAlbumIds = new Set(
+              (localAlbums.data?.rows || [])
+                .filter(a => a.enabled !== false)
+                .map(a => String(a.albumId || a.id))
+            );
+          }
+        } catch(e) { /* 非展览环境（纯静态部署），不过滤 */ }
+
+        // 过滤：启用相册 + 配置的展示相册
+        const albumFilter = CMS_ALBUM_ID ? [String(CMS_ALBUM_ID)] : null;
+        albums = albumRows
+          .filter(a => (!enabledAlbumIds || enabledAlbumIds.has(String(a.albumId || a.id))) && (!albumFilter || albumFilter.includes(String(a.albumId || a.id))))
+          .map(a => ({ ...a, albumId: a.albumId || a.id }));
+
+        // 2. 获取每个相册的媒体
+        let allMedia = [];
+        for (const album of albums) {
+          try {
+            const detail = await cmsFetch('/activity-albums/' + album.albumId);
+            const medias = detail.mediaList || detail.medias || [];
+            medias.forEach(m => {
+              allMedia.push({
+                id: 'cms_' + (m.mediaId || m.id),
+                name: m.mediaName || '匿名小画家',
+                date: m.createTime ? m.createTime.slice(0, 10).replace(/-/g, '') : '',
+                url: m.mediaUrl,
+                originalUrl: m.sourceUrl || m.mediaUrl,
+                albumId: album.albumId,
+                albumName: album.albumName || '',
+              });
+            });
+          } catch(e) { /* 单个相册失败不影响其他 */ }
+        }
+
+        artworks = allMedia;
+        setSource('cms', 'CMS 直连');
+        onDataLoaded();
+        return true;
+      } catch(e) {
+        console.warn('CMS 直连失败:', e.message);
+        return false;
+      }
+    }
+
+    // 第二层：本地代理 API（展览现场模式）
+    function loadFromProxy() {
+      fetch('/api/artworks?' + Date.now())
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(data => {
+          artworks = Array.isArray(data) ? data : (data.data || []);
+          setSource('live', '本地服务');
+          // 尝试加载相册信息
+          fetch('/api/cms/albums?pageSize=100').then(r => r.json()).then(d => {
+            if (d.success) albums = (d.data?.rows || []).map(a => ({ ...a, albumId: a.albumId || a.id }));
+          }).catch(() => {});
+          onDataLoaded();
+        })
+        .catch(() => loadFromSnapshot());
+    }
+
+    // 第三层：静态快照（离线降级）
+    function loadFromSnapshot() {
+      fetch('data/works-data.json?' + Date.now())
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(data => {
+          artworks = Array.isArray(data) ? data : (data.data || []);
+          setSource('static', '静态快照');
+          onDataLoaded();
+        })
+        .catch(() => {
+          document.getElementById('grid').innerHTML = '<div class="empty">⚠️ 数据加载失败'
+            + '<div class="err-actions"><button class="btn-retry" onclick="loadData()">🔄 重试</button></div></div>';
+        });
+    }
+
+    function onDataLoaded() {
+      document.getElementById('total-count').textContent = artworks.length;
+      buildAlbumBar();
+      filterAndRender();
+    }
+
+    function setSource(type, label) {
+      document.getElementById('source-dot').className = 'dot ' + type;
+      document.getElementById('source-label').textContent = label;
+    }
+
+    // ========== 相册筛选栏 ==========
+    function buildAlbumBar() {
+      const bar = document.getElementById('album-bar');
+      // 收集作品中出现的相册 ID
+      const albumIdsInWorks = new Set();
+      artworks.forEach(a => { if (a.albumId || a.albumName) albumIdsInWorks.add(String(a.albumId || a.albumName)); });
+
+      let html = '<div class="album-chip' + (!activeAlbumId ? ' active' : '') + '" onclick="filterByAlbum(null)">🪷 全部 <span class="chip-count">' + artworks.length + '</span></div>';
+
+      albums.forEach(a => {
+        if (!albumIdsInWorks.has(String(a.albumId)) && !a.medias?.length) return;
+        const count = artworks.filter(w => String(w.albumId) === String(a.albumId)).length;
+        if (count === 0 && !a.mediaCount) return;
+        const active = activeAlbumId && String(a.albumId) === String(activeAlbumId);
+        html += '<div class="album-chip' + (active ? ' active' : '') + '" onclick="filterByAlbum(\'' + a.albumId + '\')">📁 ' + esc(a.albumName || '未命名') + ' <span class="chip-count">' + (count || a.mediaCount || 0) + '</span></div>';
+      });
+      bar.innerHTML = html;
+    }
+
+    function filterByAlbum(albumId) {
+      activeAlbumId = albumId;
+      buildAlbumBar();
+      filterAndRender();
+    }
+
+    // ========== 搜索 & 渲染 ==========
+    function filterAndRender() {
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      let list = artworks;
+      // 相册过滤
+      if (activeAlbumId) list = list.filter(a => String(a.albumId) === String(activeAlbumId));
+      // 搜索过滤
+      if (q) list = list.filter(a => (a.name || '').toLowerCase().includes(q));
+
+      document.getElementById('total-count').textContent = list.length;
+      render(list);
+    }
+
+    function render(list) {
+      const grid = document.getElementById('grid');
+      if (list.length === 0) {
+        const q = document.getElementById('search').value.trim();
+        grid.innerHTML = '<div class="empty">' + (q || activeAlbumId ? '没有找到匹配的作品 🌸' : '✨ 暂无作品') + '</div>';
+        return;
+      }
+
+      // 按月分组
+      const groups = {};
+      list.forEach(a => {
+        const ym = a.date ? a.date.slice(0,4) + '年' + parseInt(a.date.slice(4,6)) + '月' : '其他';
+        if (!groups[ym]) groups[ym] = [];
+        groups[ym].push(a);
+      });
+
+      let html = '';
+      const months = Object.keys(groups).sort().reverse();
+      months.forEach(ym => {
+        html += '<div class="month-header" style="grid-column:1/-1;padding:16px 4px 6px;font-size:14px;font-weight:600;color:var(--brown);letter-spacing:1px;border-top:1px solid rgba(201,169,110,.15);margin-top:4px">🪷 ' + ym + ' <span style="font-weight:400;font-size:12px;color:var(--brown-light)">' + groups[ym].length + '幅</span></div>';
+        groups[ym].forEach(a => {
+          const albumName = a.albumName || (albums.find(al => String(al.albumId) === String(a.albumId))?.albumName) || '';
+          html += '<div class="card" onclick="openLB(\'' + a.id + '\')">'
+            + '<div class="thumb"><img src="' + a.url + '" alt="' + esc(a.name) + '" loading="lazy">'
+            + '<span class="badge">✨ AI 共创</span></div>'
+            + '<div class="info"><div class="name">' + esc(a.name) + '</div>'
+            + '<div class="date">' + formatDateStr(a.date) + '</div>'
+            + (albumName ? '<div class="album-tag">📁 ' + esc(albumName) + '</div>' : '')
+            + '</div></div>';
+        });
+      });
+      grid.innerHTML = html;
+    }
+
+    // ========== Lightbox ==========
+    function openLB(id) {
+      const a = artworks.find(x => x.id === id);
+      if (!a) return;
+      currentId = id;
+      const albumName = a.albumName || (albums.find(al => String(al.albumId) === String(a.albumId))?.albumName) || '';
+      document.getElementById('lb-img').src = a.url;
+      document.getElementById('lb-name').textContent = a.name + ' 的AI艺术作品';
+      document.getElementById('lb-date').textContent = formatDateStr(a.date);
+      document.getElementById('lb-album').textContent = albumName ? '📁 ' + albumName : '';
+      document.getElementById('lb').classList.add('show');
+    }
+
+    function closeLB() { document.getElementById('lb').classList.remove('show'); }
+
+    function openWorkPage(id) {
+      if (!id) return;
+      window.open('work.html?work=' + encodeURIComponent(id), '_blank');
+    }
+
+    function shareWork() {
+      if (!currentId) return;
+      var url = window.location.origin + window.location.pathname.replace(/\/gallery\/[^\/]*$/, '/gallery/').replace(/\/[^\/]*$/, '/') + 'work.html?work=' + encodeURIComponent(currentId);
+      if (navigator.share) {
+        navigator.share({ title: document.getElementById('lb-name').textContent, url: url }).catch(function(){});
+      } else {
+        navigator.clipboard.writeText(url).then(function(){ showToast('✅ 链接已复制'); }).catch(function(){ showToast('❌ 复制失败'); });
+      }
+    }
+
+    // ========== 工具函数 ==========
+    function formatDateStr(d) {
+      if (!d || d.length < 8) return '';
+      return d.slice(0,4) + '年' + parseInt(d.slice(4,6)) + '月' + parseInt(d.slice(6,8)) + '日';
+    }
+
+    function showToast(msg) {
+      const t = document.createElement('div');
+      t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(61,48,32,.9);backdrop-filter:blur(8px);color:var(--gold-light);padding:10px 22px;border-radius:22px;font-size:13px;z-index:99999;animation:fadeOut 2.5s ease forwards';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2500);
+    }
+
+    function esc(s) {
+      const d = document.createElement('div');
+      d.textContent = String(s);
+      return d.innerHTML;
+    }
+
+    // Toast animation style
+    const st = document.createElement('style');
+    st.textContent = '@keyframes fadeOut{0%{opacity:0;transform:translateX(-50%) translateY(10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}';
+    document.head.appendChild(st);
+
+    // Keyboard close
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLB(); });
+
+    // ========== 刷新 ==========
+    let isRefreshing = false;
+    function refreshData() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+      const btn = document.getElementById('refresh-btn');
+      if (btn) btn.style.animation = 'spin .8s linear infinite';
+      const indicator = document.getElementById('ptr-indicator');
+      if (indicator) {
+        indicator.innerHTML = '<span class="spinner"></span> 刷新中...';
+        indicator.classList.add('show');
+      }
+      loadData();
+      // 2 秒后重置状态（loadData 完成后会自动刷新页面，但设一个超时以防万一）
+      setTimeout(() => {
+        isRefreshing = false;
+        if (btn) btn.style.animation = '';
+        if (indicator) { indicator.classList.remove('show'); indicator.innerHTML = '<span class="arrow" id="ptr-arrow">↓</span> <span id="ptr-text">下拉刷新</span>'; }
+      }, 5000);
+    }
+
+    // 重写 loadData 完成后的回调，重置刷新状态
+    var _origOnDataLoaded = onDataLoaded;
+    onDataLoaded = function() {
+      isRefreshing = false;
+      const btn = document.getElementById('refresh-btn');
+      if (btn) btn.style.animation = '';
+      const indicator = document.getElementById('ptr-indicator');
+      if (indicator) { indicator.classList.remove('show'); indicator.innerHTML = '<span class="arrow" id="ptr-arrow">↓</span> <span id="ptr-text">下拉刷新</span>'; }
+      _origOnDataLoaded();
+    };
+
+    // ========== 下拉手势 ==========
+    (function() {
+      var startY = 0, pullDist = 0, pulling = false, moved = false;
+      var app = document.getElementById('app');
+      var indicator = document.getElementById('ptr-indicator');
+
+      app.addEventListener('touchstart', function(e) {
+        if (window.scrollY > 0 || isRefreshing) return;
+        startY = e.touches[0].clientY;
+        pullDist = 0;
+        moved = false;
+        pulling = true;
+      }, { passive: true });
+
+      app.addEventListener('touchmove', function(e) {
+        if (!pulling || isRefreshing) return;
+        var dy = e.touches[0].clientY - startY;
+        if (dy < 0) { pullDist = 0; return; }
+        moved = true;
+        pullDist = Math.min(dy * 0.5, 80);
+        indicator.classList.toggle('show', pullDist > 5);
+        var arrow = document.getElementById('ptr-arrow');
+        if (arrow) arrow.classList.toggle('down', pullDist > 50);
+        document.getElementById('ptr-text').textContent = pullDist > 50 ? '释放刷新' : '下拉刷新';
+      }, { passive: true });
+
+      app.addEventListener('touchend', function(e) {
+        if (!pulling) return;
+        pulling = false;
+        if (moved && pullDist > 50) {
+          refreshData();
+        } else {
+          indicator.classList.remove('show');
+          document.getElementById('ptr-text').textContent = '下拉刷新';
+        }
+      }, { passive: true });
+    })();
+
+    // Init
+    loadData();
+
+    // 深链：?work=id 跳转到 work.html
+    (function(){
+      var m = location.search.match(/[?&]work=([^&]*)/);
+      if (m) { window.location.replace('work.html?work=' + m[1]); }
+    })();
+  </script>
+</body>
+</html>

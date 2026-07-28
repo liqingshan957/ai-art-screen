@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="cms-api-key" content="ak_88ntfN52X8NKgtXWyOWCUac6JFfgkNE6zI0mIF7B">
   <title>AI 艺术作品 · 敦煌 AIGC 艺术展</title>
-  <!-- OG tags injected by server (/work/:id) -->
   <meta property="og:type" content="website">
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -162,28 +162,19 @@
         render();
         return;
       }
-      // Priority 2: Parse id from URL and fetch
-      var id = getParam('id');
+      // Priority 2: Parse id from URL
+      var id = getParam('work') || getParam('id');
       if (!id) { showNotFound(); return; }
       window.__WORK_ID__ = id;
-      fetch('/api/artworks?' + Date.now())
+      // Priority 3: Fall back to static data
+      fetch('data/works-data.json?' + Date.now())
         .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
         .then(function(list) {
           workData = list.find(function(a) { return a.id === id; });
           if (workData) { render(); return; }
-          throw new Error('not found');
+          showNotFound();
         })
-        .catch(function() {
-          // Priority 3: Fall back to static data
-          fetch('data/works-data.json?' + Date.now())
-            .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
-            .then(function(list) {
-              workData = list.find(function(a) { return a.id === id; });
-              if (workData) { render(); return; }
-              showNotFound();
-            })
-            .catch(showNotFound);
-        });
+        .catch(showNotFound);
     }
 
     function getParam(name) {
@@ -251,7 +242,7 @@
         +   '<div class="qr-wrap"><div class="qr-placeholder"><span style="font-size:26px">📫</span><span>扫码加微信</span><span style="font-size:10px">请替换为实际二维码</span></div></div>'
         + '</div>'
         + '</div>'
-        + '<div class="gallery-link"><a href="/gallery"><span class="arrow">←</span> 浏览全部作品</a></div>';
+        + '<div class="gallery-link"><a href="index.html"><span class="arrow">←</span> 浏览全部作品</a></div>';
 
       // Observe reveals
       var obs = new IntersectionObserver(function(es) {

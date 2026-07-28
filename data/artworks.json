@@ -1820,5 +1820,38 @@
     "status": "active",
     "createdAt": 1784975637040,
     "autoMatting": true
+  },
+  {
+    "id": "bd64852251492577",
+    "name": "裁剪测试作品",
+    "date": "20260728",
+    "filename": "bd64852251492577.png",
+    "url": "/uploads/artworks/bd64852251492577.png",
+    "originalUrl": "/uploads/originals/bd64852251492577_c.jpg",
+    "status": "active",
+    "createdAt": 1785237755053,
+    "autoMatting": true
+  },
+  {
+    "id": "4cd6ab4a84d00ac1",
+    "name": "小小艺术家-小美",
+    "date": "20260728",
+    "filename": "4cd6ab4a84d00ac1.png",
+    "url": "/uploads/artworks/4cd6ab4a84d00ac1.png",
+    "originalUrl": "/uploads/originals/4cd6ab4a84d00ac1_c.jpg",
+    "status": "active",
+    "createdAt": 1785237801504,
+    "autoMatting": true
+  },
+  {
+    "id": "92b429bccb389f85",
+    "name": "快乐成长-阳阳",
+    "date": "20260728",
+    "filename": "92b429bccb389f85.png",
+    "url": "/uploads/artworks/92b429bccb389f85.png",
+    "originalUrl": "/uploads/originals/92b429bccb389f85_c.jpg",
+    "status": "active",
+    "createdAt": 1785238450034,
+    "autoMatting": true
   }
 ]

@@ -30,9 +30,22 @@ build/
 .ai-assist/
 .skills/
 
-# Generated gallery pages & data
-web/gallery/works/
-web/gallery/data/
+# Generated gallery snapshot
+gallery/data/
 
 # Migration package
 迁移新电脑/
+
+# Temp / test / cache
+scripts/temp/
+test_batch2/
+services/rembg/model_cache/
+services/rembg/server.err
+
+# MCP config (local)
+.mcp.json
+
+# CMS runtime state
+data/cms-cache.json
+data/cms-config.json
+data/cutout-queue.json

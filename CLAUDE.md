@@ -30,19 +30,21 @@ scripts/启动投屏系统.bat
 ```
 ai-art-screen/
 ├── server.js               # 唯一后端入口。API + Socket.IO + 抠图流水线
+├── gallery/                # 🖼️ 作品画廊（纯前端 SPA，可独立部署到任何静态托管）
+│   ├── index.html          #     作品画廊（三层加载：CMS 直连→静态快照）
+│   ├── work.html           #     作品详情页模板（预生成时使用）
+│   ├── works/              #     预生成手机作品页（含 OG 标签+分析信标）
+│   │   └── {id}.html
+│   └── data/               #     作品列表快照（由 prebuild 脚本生成）
+│       └── works-data.json
 ├── web/                    # 前端页面（Express 直接 serve）
-│   ├── admin.html          # 后台管理（上传/归档/配置）
+│   ├── admin.html          # 后台管理（上传/相册/CMS 配置）
 │   ├── display.html        # 大屏展示（浮动卡片+粒子特效+视频插播）
 │   ├── dashboard.html      # 运营数据看板
-│   └── gallery/            # 🆕 作品展示（纯前端，可独立部署到任何静态托管）
-│       ├── index.html      #     作品画廊（支持 API/静态双数据源）
-│       ├── works/          #     预生成手机作品页（纯静态，含OG标签+分析信标）
-│       │   └── {id}.html
-│       └── data/           #     作品列表快照（gitignored，运行时生成）
-│           └── works-data.json
+│   └── js/, css/           # 共用的 JS/CSS
 ├── services/rembg/         # Python 独立抠图服务
-├── scripts/                # Windows 启动脚本
-├── data/                   # 后端运行时 JSON 数据文件（动态生成）
+├── scripts/                # Windows 启动脚本 + prebuild-gallery.js
+├── data/                   # 后端运行时 JSON 数据文件
 └── uploads/                # 用户上传的图片/视频（gitignored）
 ```
 

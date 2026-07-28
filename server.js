@@ -26,12 +26,12 @@ const BG_DIR = path.join(UPLOADS_DIR, 'background');
 const VIDEOS_DIR = path.join(UPLOADS_DIR, 'videos');
 const DATA_DIR = path.join(ROOT_DIR, 'data');
 
-const GALLERY_DIR = path.join(WEB_DIR, 'gallery');
+const GALLERY_DIR = path.join(ROOT_DIR, 'gallery');
 const GALLERY_WORKS_DIR = path.join(GALLERY_DIR, 'works');
 const GALLERY_DATA_DIR = path.join(GALLERY_DIR, 'data');
 const WORKS_DATA_FILE = path.join(GALLERY_DATA_DIR, 'works-data.json');
 
-[UPLOADS_DIR, ARTWORKS_DIR, ORIGINALS_DIR, BG_DIR, VIDEOS_DIR, DATA_DIR, GALLERY_DIR, GALLERY_WORKS_DIR, GALLERY_DATA_DIR].forEach(d => {
+[UPLOADS_DIR, ARTWORKS_DIR, ORIGINALS_DIR, BG_DIR, VIDEOS_DIR, DATA_DIR].forEach(d => {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 });
 
@@ -42,6 +42,52 @@ const VIDEOS_CONFIG_FILE = path.join(DATA_DIR, 'videos_config.json');
 const ANALYTICS_FILE = path.join(DATA_DIR, 'analytics.json');
 const DASHBOARD_FILE = path.join(DATA_DIR, 'dashboard.json');
 const ARCHIVE_FILE = path.join(DATA_DIR, 'artworks_archive.json');
+
+// ===== CMS 配置 =====
+const CMS_CONFIG_FILE = path.join(DATA_DIR, 'cms-config.json');
+const CMS_CACHE_FILE = path.join(DATA_DIR, 'cms-cache.json');
+
+// 简单的 XOR + Base64 加密
+const XOR_KEY = 'dunhuang2024';
+function obfuscate(str) {
+  if (!str) return '';
+  let r = '';
+  for (let i = 0; i < str.length; i++) r += String.fromCharCode(str.charCodeAt(i) ^ XOR_KEY.charCodeAt(i % XOR_KEY.length));
+  return Buffer.from(r, 'binary').toString('base64');
+}
+function deobfuscate(str) {
+  if (!str) return '';
+  try {
+    const d = Buffer.from(str, 'base64').toString('binary');
+    let r = '';
+    for (let i = 0; i < d.length; i++) r += String.fromCharCode(d.charCodeAt(i) ^ XOR_KEY.charCodeAt(i % XOR_KEY.length));
+    return r;
+  } catch (e) { return str; }
+}
+
+function getCmsConfig() {
+  const raw = loadJSON(CMS_CONFIG_FILE, { apiKey: '', apiBase: 'https://vapi.hkting.com/api' });
+  return { ...raw, apiKey: deobfuscate(raw.apiKey) };
+}
+function saveCmsConfig(cfg) {
+  saveJSON(CMS_CONFIG_FILE, { ...cfg, apiKey: obfuscate(cfg.apiKey) });
+}
+function getCmsCache() { const c = loadJSON(CMS_CACHE_FILE, { albums: [], artworks: [] }); return { ...c, displayAlbumId: c.displayAlbumId || null }; }
+function saveCmsCache(cache) { saveJSON(CMS_CACHE_FILE, cache); }
+
+// 展示相册 API
+app.get('/api/cms/display-album', (req, res) => {
+  const cache = getCmsCache();
+  res.json({ albumId: cache.displayAlbumId || null });
+});
+app.put('/api/cms/display-album', express.json(), (req, res) => {
+  const cache = getCmsCache();
+  cache.displayAlbumId = req.body.albumId || null;
+  saveCmsCache(cache);
+  // 通知大屏刷新数据（相册切换）
+  io.emit('display:reload', { albumId: cache.displayAlbumId });
+  res.json({ success: true, albumId: cache.displayAlbumId });
+});
 
 function loadJSON(file, fallback) {
   try { if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, 'utf8')); }
@@ -59,27 +105,57 @@ let dashboardData = loadJSON(DASHBOARD_FILE, {});
 let archive = loadJSON(ARCHIVE_FILE, []);
 artworks = artworks.map(a => ({ ...a, status: a.status || 'active' }));
 
-// ===== SSR: 读取 work.html 模板 + 注入 OG 标签 =====
-const WORK_TEMPLATE_PATH = path.join(GALLERY_DIR, 'work.html');
-let workTemplateCache = '';
-try { workTemplateCache = fs.readFileSync(WORK_TEMPLATE_PATH, 'utf8'); } catch(e) { console.error('Failed to read work template:', e.message); }
-
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function renderWorkPage(a) {
-  const og = ''
-    + '<title>' + escHtml(a.name) + ' 的 AI 艺术作品 · 敦煌 AIGC 艺术展</title>\n'
-    + '<meta property="og:title" content="' + escHtml(a.name) + ' 的敦煌 AI 艺术作品 | 大象智绘 AI 科创">\n'
-    + '<meta property="og:description" content="大象智绘 AI 科创 · 20 年艺术教育经验 · AI 创新教育。我在广州美术馆用 AI 创作了一幅敦煌风格作品，快来看看吧！">\n'
-    + '<meta property="og:image" content="' + escHtml(a.url) + '">\n'
-    + '<meta property="og:type" content="website">\n'
-    + '<script>window.__WORK_DATA__=' + JSON.stringify({ id: a.id, name: a.name, url: a.url, date: a.date }) + ';<\/script>\n';
-  return workTemplateCache.replace('</head>', og + '</head>');
+// ===== 合并 CMS 缓存中的作品，按展示相册过滤 =====
+function getAllArtworks(filterEnabled = true) {
+  const cache = getCmsCache();
+  const displayAlbumId = cache.displayAlbumId || null;
+  const cmsWorks = [];
+  if (cache.albums) {
+    cache.albums.forEach(album => {
+      // 相册本身被禁用 → 跳过
+      if (filterEnabled && album.enabled === false) return;
+      // 展示模式 → 只取展示相册
+      if (filterEnabled && displayAlbumId && String(album.albumId) !== String(displayAlbumId)) return;
+      if (album.medias) {
+        album.medias.forEach(m => {
+          if (filterEnabled && m.enabled === false) return;
+          // enabled=false 且 filterEnabled=false（管理后台）→ 设为 archived 状态
+          // enabled=false 且 filterEnabled=true（画廊/大屏）→ 已在上面 return 排除
+          const cmsStatus = (m.enabled === false) ? 'archived' : 'active';
+          cmsWorks.push({
+            id: 'cms_' + (m.mediaId || Math.random().toString(36).slice(2, 10)),
+            name: m.localName || m.mediaName || '匿名小画家',
+            date: m.createTime ? m.createTime.slice(0, 10).replace(/-/g, '') : '',
+            url: m.cutoutUrl || m.mediaUrl,
+            mediaUrl: m.mediaUrl,
+            originalUrl: m.sourceUrl || m.mediaUrl,
+            thumbnailUrl: m.thumbnailUrl || m.mediaUrl,
+            status: cmsStatus,
+            isCms: true,
+            albumId: album.albumId,
+            albumName: album.albumName || '',
+            mediaId: m.mediaId,
+            createdAt: m.createTime ? new Date(m.createTime).getTime() : 0,
+            sourceUrl: m.sourceUrl,
+            cutoutUrl: m.cutoutUrl
+          });
+        });
+      }
+    });
+  }
+  // 合并并且去重（CMS 优先）
+  const seen = new Set();
+  return [...cmsWorks, ...artworks].filter(a => {
+    const key = a.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function generateWorksDataJson() {
-  const list = artworks.filter(a => a.status === 'active').map(a => ({
-    id: a.id, name: a.name, date: a.date, url: a.url
+  const list = getAllArtworks(true).map(a => ({
+    id: a.id, name: a.name, date: a.date, url: a.mediaUrl || a.url, albumId: a.albumId, albumName: a.albumName
   }));
   saveJSON(WORKS_DATA_FILE, list);
 }
@@ -130,26 +206,498 @@ async function callRembg(imagePath) {
 
 function calcCrop(m){return{left:Math.round(m.width*8/102),top:Math.round(m.height*8/152),width:Math.round(m.width*(102-8-8)/102),height:Math.round(m.height*(152-8-32)/152)};}
 
-// ===== Static files & Routes =====
+// ===== CMS API 代理 =====
+async function cmsRequest(path, options = {}) {
+  const cfg = getCmsConfig();
+  if (!cfg.apiKey) throw new Error('CMS 未配置，请先设置 API Key');
+  const url = cfg.apiBase.replace(/\/+$/, '') + '/open-api/v1' + path;
+  const headers = { 'X-Api-Key': cfg.apiKey, ...options.headers };
+  const resp = await fetch(url, { ...options, headers });
+  const contentType = resp.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const data = await resp.json();
+    if (data.code !== 0) throw new Error(data.message || 'CMS API 错误 (code=' + data.code + ')');
+    return data.data;
+  }
+  // 非 JSON 响应（如 HTML 错误页）
+  const text = await resp.text();
+  throw new Error('CMS 返回非 JSON (' + resp.status + '): ' + text.slice(0, 200));
+}
+
+/** JSON 对象转 x-www-form-urlencoded 字符串 */
+function toFormBody(obj) {
+  const p = new URLSearchParams();
+  Object.entries(obj).forEach(([k, v]) => { if (v !== undefined && v !== null) p.set(k, String(v)); });
+  return p.toString();
+}
+
+// CMS 配置 API
+app.get('/api/cms/config', (req, res) => {
+  const cfg = getCmsConfig();
+  const masked = cfg.apiKey ? cfg.apiKey.slice(0, 7) + '****' + cfg.apiKey.slice(-4) : '';
+  res.json({ configured: !!cfg.apiKey, apiKeyPrefix: masked, apiBase: cfg.apiBase });
+});
+app.post('/api/cms/config', express.json(), (req, res) => {
+  const cfg = getCmsConfig();
+  if (req.body.apiKey !== undefined) cfg.apiKey = req.body.apiKey;
+  if (req.body.apiBase !== undefined) cfg.apiBase = req.body.apiBase;
+  saveCmsConfig(cfg);
+  res.json({ success: true });
+});
+app.get('/api/cms/test', async (req, res) => {
+  try {
+    const data = await cmsRequest('/tenant/profile');
+    res.json({ success: true, tenant: data });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// ===== CMS 活动相册代理 =====
+// 辅助：合并本地增强字段
+function mergeLocalAlbum(album) {
+  const cache = getCmsCache();
+  const local = cache.albums.find(a => String(a.albumId) === String(album.albumId || album.id));
+  return { ...album, enabled: local ? local.enabled !== false : true, displayOrder: local?.displayOrder || 0 };
+}
+
+// 列表
+app.get('/api/cms/albums', async (req, res) => {
+  try {
+    const { pageNum = 1, pageSize = 50 } = req.query;
+    const data = await cmsRequest(`/activity-albums?pageNum=${pageNum}&pageSize=${pageSize}`);
+    const rows = (data.rows || []).map(mergeLocalAlbum);
+    res.json({ success: true, data: { total: data.total || rows.length, rows }, fromCache: false });
+  } catch (e) {
+    // Fallback to cache
+    const cache = getCmsCache();
+    res.json({ success: true, data: { total: cache.albums.length, rows: cache.albums }, fromCache: true });
+  }
+});
+
+// 创建
+app.post('/api/cms/albums', express.json(), async (req, res) => {
+  try {
+    const data = await cmsRequest('/activity-albums', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ albumName: req.body.albumName, albumStatus: req.body.albumStatus || '1', location: req.body.location || '' })
+    });
+    res.json({ success: true, album: { ...data, enabled: true, displayOrder: 0 } });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// 详情
+app.get('/api/cms/albums/:id', async (req, res) => {
+  try {
+    const data = await cmsRequest(`/activity-albums/${req.params.id}`);
+    const merged = mergeLocalAlbum(data);
+    res.json({ success: true, album: merged, fromCache: false });
+  } catch (e) {
+    const cache = getCmsCache();
+    const album = cache.albums.find(a => String(a.albumId) === req.params.id);
+    res.json({ success: !!album, album: album || null, fromCache: true });
+  }
+});
+
+// 更新
+app.put('/api/cms/albums/:id', express.json(), async (req, res) => {
+  try {
+    const data = await cmsRequest(`/activity-albums/${req.params.id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    res.json({ success: true, album: data });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// 媒体列表
+app.get('/api/cms/albums/:id/media', async (req, res) => {
+  try {
+    const { pageNum = 1, pageSize = 200 } = req.query;
+    const data = await cmsRequest(`/activity-albums/${req.params.id}/media?pageNum=${pageNum}&pageSize=${pageSize}`);
+    const rows = (data.rows || data || []).map(m => {
+      const cache = getCmsCache();
+      const local = cache.albums.flatMap(a => a.medias || []).find(mm => String(mm.mediaId) === String(m.mediaId || m.id));
+      return { ...m, enabled: local ? local.enabled !== false : true, localName: local?.localName || '' };
+    });
+    res.json({ success: true, data: { total: data.total || rows.length, rows }, fromCache: false });
+  } catch (e) {
+    const cache = getCmsCache();
+    const album = cache.albums.find(a => String(a.albumId) === req.params.id);
+    const rows = (album?.medias || []).map(m => ({ ...m, enabled: m.enabled !== false }));
+    res.json({ success: true, data: { total: rows.length, rows }, fromCache: true });
+  }
+});
+
+// 添加媒体（支持文件上传 + 裁剪）
+const cmsUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+app.post('/api/cms/albums/:id/media', cmsUpload.single('file'), async (req, res) => {
+  try {
+    const albumId = req.params.id;
+    // 步骤1: 上传文件到 CMS
+    if (!req.file) return res.json({ success: false, error: '请选择文件' });
+    const uploadResult = await cmsFileUpload(req.file, 'original');
+    // 步骤2: 添加媒体到相册
+    const body = {
+      mediaUrl: uploadResult.url,
+      mediaType: req.body.mediaType || 'image',
+      mediaName: req.body.mediaName || req.file.originalname.replace(/\.[^.]+$/, ''),
+      sourceUrl: uploadResult.url
+    };
+    if (req.body.mediaName) body.mediaName = req.body.mediaName;
+    if (req.body.cropX !== undefined) { body.cropX = parseInt(req.body.cropX); body.cropY = parseInt(req.body.cropY); body.cropWidth = parseInt(req.body.cropWidth); body.cropHeight = parseInt(req.body.cropHeight); }
+    if (req.body.naturalWidth !== undefined) { body.naturalWidth = parseInt(req.body.naturalWidth); body.naturalHeight = parseInt(req.body.naturalHeight); }
+    const data = await cmsRequest(`/activity-albums/${albumId}/media`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    // 步骤3: 缓存本地
+    const cache = getCmsCache();
+    let album = cache.albums.find(a => String(a.albumId) === albumId);
+    if (!album) { album = { albumId, medias: [] }; cache.albums.push(album); }
+    if (!album.medias) album.medias = [];
+    album.medias.push({ mediaId: data.mediaId || data.id, mediaUrl: uploadResult.url, sourceUrl: uploadResult.url, mediaName: body.mediaName, enabled: true, mediaType: 'image' });
+    saveCmsCache(cache);
+    // 步骤4: 向大屏推送新作品通知
+    const workId = 'cms_' + (data.mediaId || data.id);
+    const newWork = { id: workId, name: body.mediaName, date: new Date().toISOString().slice(0,10).replace(/-/g,''), url: uploadResult.url, originalUrl: uploadResult.url, status: 'active', isCms: true };
+    io.emit('artwork:new', newWork);
+    res.json({ success: true, media: { ...data, mediaUrl: uploadResult.url, enabled: true, id: workId } });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// 添加媒体（仅 JSON，URL 已存在，不需要重新上传文件）
+app.post('/api/cms/albums/:id/media/add-url', express.json(), async (req, res) => {
+  try {
+    const albumId = req.params.id;
+    const body = {
+      mediaUrl: req.body.mediaUrl,
+      mediaType: req.body.mediaType || 'image',
+      mediaName: req.body.mediaName || '',
+      sourceUrl: req.body.sourceUrl || req.body.mediaUrl
+    };
+    if (!body.mediaUrl) return res.json({ success: false, error: 'mediaUrl 必填' });
+    if (req.body.cropX !== undefined) { body.cropX = parseInt(req.body.cropX); body.cropY = parseInt(req.body.cropY); body.cropWidth = parseInt(req.body.cropWidth); body.cropHeight = parseInt(req.body.cropHeight); }
+    if (req.body.naturalWidth !== undefined) { body.naturalWidth = parseInt(req.body.naturalWidth); body.naturalHeight = parseInt(req.body.naturalHeight); }
+    const data = await cmsRequest(`/activity-albums/${albumId}/media`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    // 缓存本地
+    const cache = getCmsCache();
+    let album = cache.albums.find(a => String(a.albumId) === albumId);
+    if (!album) { album = { albumId, medias: [] }; cache.albums.push(album); }
+    if (!album.medias) album.medias = [];
+    const mediaEntry = { mediaId: data.mediaId || data.id, mediaUrl: body.mediaUrl, sourceUrl: body.sourceUrl, mediaName: body.mediaName, enabled: true, mediaType: 'image' };
+    album.medias.push(mediaEntry);
+    saveCmsCache(cache);
+    // 自动触发抠图（异步；抠图完成才推送给大屏）
+    const workId = 'cms_' + mediaEntry.mediaId;
+    if (!cutoutQueue.find(q => String(q.mediaId) === String(mediaEntry.mediaId))) {
+      cutoutQueue.push({ albumId, mediaId: String(mediaEntry.mediaId), mediaUrl: body.mediaUrl, sourceUrl: body.sourceUrl, mediaName: body.mediaName || '', status: 'pending', addedAt: Date.now() });
+      persistCutoutQueue();
+      if (!isProcessingCutout) processCutoutQueue();
+    }
+    res.json({ success: true, media: { ...data, mediaUrl: body.mediaUrl, enabled: true, id: workId } });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// 更新媒体
+app.put('/api/cms/albums/:id/media/:mediaId', express.json(), async (req, res) => {
+  try {
+    const data = await cmsRequest(`/activity-albums/${req.params.id}/media/${req.params.mediaId}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    // 更新缓存
+    const cache = getCmsCache();
+    const album = cache.albums.find(a => String(a.albumId) === req.params.id);
+    if (album && album.medias) {
+      const idx = album.medias.findIndex(m => String(m.mediaId) === req.params.mediaId);
+      if (idx !== -1) Object.assign(album.medias[idx], req.body);
+      saveCmsCache(cache);
+    }
+    res.json({ success: true, media: data });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// 删除媒体
+app.delete('/api/cms/albums/:id/media/:mediaId', async (req, res) => {
+  try {
+    await cmsRequest(`/activity-albums/${req.params.id}/media/${req.params.mediaId}`, { method: 'DELETE' });
+    const cache = getCmsCache();
+    const album = cache.albums.find(a => String(a.albumId) === req.params.id);
+    if (album && album.medias) { album.medias = album.medias.filter(m => String(m.mediaId) !== req.params.mediaId); saveCmsCache(cache); }
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// 浏览+1 / 点赞+1
+app.post('/api/cms/albums/media/:mediaId/view', async (req, res) => {
+  try { await cmsRequest(`/activity-albums/media/${req.params.mediaId}/view`, { method: 'POST' }); res.json({ success: true }); } catch (e) { res.json({ success: false }); }
+});
+app.post('/api/cms/albums/media/:mediaId/like', async (req, res) => {
+  try { await cmsRequest(`/activity-albums/media/${req.params.mediaId}/like`, { method: 'POST' }); res.json({ success: true }); } catch (e) { res.json({ success: false }); }
+});
+
+// 检查相册新增媒体（游标轮询）
+app.get('/api/cms/albums/:id/media/check', async (req, res) => {
+  try {
+    const sinceId = req.query.sinceId || 0;
+    const limit = req.query.limit || 50;
+    const data = await cmsRequest('/activity-albums/' + req.params.id + '/media/check?sinceId=' + sinceId + '&limit=' + limit);
+    res.json({ success: true, data: data });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// 上传文件到 CMS（便捷代理）
+/** 截断文件名（CMS 限制 100 字节，中文占3字节） */
+function truncateFilename(name) {
+  if (Buffer.byteLength(name, "utf8") <= 90) return name;
+  const ext = require("path").extname(name);
+  const base = Buffer.from(name.slice(0, 30), "utf8");
+  return base.slice(0, 80).toString("utf8").replace(/[ -]/g, "") + ext;
+}
+async function cmsFileUpload(file, mode) {
+  const BOUNDARY = '----CMS' + crypto.randomBytes(8).toString('hex');
+  let body = Buffer.from('');
+  const append = (s) => { body = Buffer.concat([body, Buffer.from(s)]); };
+  append(`--${BOUNDARY}\r\nContent-Disposition: form-data; name="file"; filename="${truncateFilename(file.originalname)}"\r\nContent-Type: ${file.mimetype || 'application/octet-stream'}\r\n\r\n`);
+  body = Buffer.concat([body, file.buffer]);
+  if (mode) append(`\r\n--${BOUNDARY}\r\nContent-Disposition: form-data; name="mode"\r\n\r\n${mode}`);
+  append(`\r\n--${BOUNDARY}--\r\n`);
+  const cfg = getCmsConfig();
+  const url = cfg.apiBase.replace(/\/+$/, '') + '/open-api/v1/files/upload';
+  const resp = await fetch(url, {
+    method: 'POST', headers: { 'X-Api-Key': cfg.apiKey, 'Content-Type': 'multipart/form-data; boundary=' + BOUNDARY, 'Content-Length': body.length },
+    body
+  });
+  const data = await resp.json();
+  if (data.code !== 0) throw new Error('文件上传失败: ' + data.message);
+  return data.data;
+}
+app.post('/api/cms/upload', cmsUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.json({ success: false, error: '请选择文件' });
+    const data = await cmsFileUpload(req.file, 'original');
+    res.json({ success: true, url: data.url, width: data.width, height: data.height });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// ===== 本地增强（启用/禁用/排序） =====
+app.put('/api/cms/albums/:id/enable', express.json(), (req, res) => {
+  const cache = getCmsCache();
+  let album = cache.albums.find(a => String(a.albumId) === req.params.id);
+  if (!album) { album = { albumId: req.params.id, medias: [] }; cache.albums.push(album); }
+  album.enabled = req.body.enabled !== false;
+  saveCmsCache(cache);
+  res.json({ success: true, enabled: album.enabled });
+});
+app.put('/api/cms/albums/:id/media/:mediaId/enable', express.json(), (req, res) => {
+  const cache = getCmsCache();
+  const album = cache.albums.find(a => String(a.albumId) === req.params.id);
+  if (album && album.medias) {
+    const m = album.medias.find(mm => String(mm.mediaId) === req.params.mediaId);
+    if (m) {
+      m.enabled = req.body.enabled !== false;
+      saveCmsCache(cache);
+      const workId = 'cms_' + m.mediaId;
+      const evt = m.enabled ? 'artwork:restore' : 'artwork:archive';
+      io.emit(evt, m.enabled ? { id: workId, artwork: { id: workId, name: m.mediaName || '', url: m.mediaUrl, status: 'active', isCms: true } } : { id: workId });
+      res.json({ success: true, enabled: m.enabled });
+    } else res.json({ success: false, error: 'Media not found' });
+  } else res.json({ success: false, error: 'Album not found' });
+});
+
+// ===== Rembg 健康检测 =====
+app.get('/api/cms/rembg-health', async (req, res) => {
+  try {
+    const resp = await fetch(`http://${REMBG_HOST}:${REMBG_PORT}/api/health`, { signal: AbortSignal.timeout(5000) });
+    if (resp.ok) { const d = await resp.json(); return res.json({ success: true, status: d.status || 'ready' }); }
+    res.json({ success: false, status: 'error' });
+  } catch (e) { res.json({ success: false, status: 'unavailable', error: e.message }); }
+});
+
+// ===== 异步抠图流水线 =====
+const CUTOUT_DIR = path.join(UPLOADS_DIR, 'cutout_temp');
+if (!fs.existsSync(CUTOUT_DIR)) fs.mkdirSync(CUTOUT_DIR, { recursive: true });
+
+let isProcessingCutout = false;
+
+// 内存队列（避免文件读写竞态）
+let cutoutQueue = loadJSON(DATA_DIR + '/cutout-queue.json', []);
+function persistCutoutQueue() { saveJSON(DATA_DIR + '/cutout-queue.json', cutoutQueue); }
+
+// 批量触发：检查 CMS 相册中所有没有 cutoutUrl 的媒体
+// ⚠️ 必须放在 /:albumId/:mediaId 之前，避免 "scan" 被当作 albumId 匹配
+app.post('/api/cms/cutout/scan/:albumId', async (req, res) => {
+  try {
+    const data = await cmsRequest(`/activity-albums/${req.params.albumId}/media?pageSize=200`);
+    const rows = data.rows || data || [];
+    const needsProcessing = rows.filter(m => !m.cutoutUrl);
+    let added = 0;
+    needsProcessing.forEach(m => {
+      if (!cutoutQueue.find(q => String(q.mediaId) === String(m.mediaId || m.id))) {
+        cutoutQueue.push({ albumId: req.params.albumId, mediaId: String(m.mediaId || m.id), mediaUrl: m.mediaUrl || m.sourceUrl, sourceUrl: m.sourceUrl, mediaName: m.mediaName || '', status: 'pending', addedAt: Date.now() });
+        added++;
+      }
+    });
+    persistCutoutQueue();
+    if (added > 0 && !isProcessingCutout) processCutoutQueue();
+    res.json({ success: true, addedToQueue: added, totalMissing: needsProcessing.length });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// 添加到抠图队列
+app.post('/api/cms/cutout/:albumId/:mediaId', async (req, res) => {
+  try {
+    const { albumId, mediaId } = req.params;
+    // 获取媒体信息
+    const data = await cmsRequest(`/activity-albums/media/${mediaId}`);
+    if (!data.sourceUrl && !data.mediaUrl) return res.json({ success: false, error: '没有可处理的图片 URL' });
+    if (cutoutQueue.find(q => String(q.mediaId) === mediaId)) return res.json({ success: true, message: '已在队列中' });
+    cutoutQueue.push({ albumId, mediaId, mediaUrl: data.mediaUrl || data.sourceUrl, sourceUrl: data.sourceUrl, mediaName: data.mediaName || '', status: 'pending', addedAt: Date.now() });
+    persistCutoutQueue();
+    if (!isProcessingCutout) processCutoutQueue();
+    res.json({ success: true, message: '已加入抠图队列' });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// 查询队列状态
+app.get('/api/cms/cutout/queue', (req, res) => {
+  res.json({ items: cutoutQueue, processing: isProcessingCutout });
+});
+
+// 清空已完成队列
+app.delete('/api/cms/cutout/queue', (req, res) => {
+  cutoutQueue = cutoutQueue.filter(q => q.status !== 'done' && q.status !== 'error');
+  persistCutoutQueue();
+  res.json({ success: true, remaining: cutoutQueue.length });
+});
+
+// ===== 抠图并发控制 =====
+const MAX_CONCURRENT_CUTOUT = 3;
+
+/** 处理单个抠图任务 */
+async function processOneCutout(item) {
+  console.log('[Cutout] 处理:', item.mediaName || item.mediaId);
+  // 从 CMS 刷新最新媒体信息（确保 URL 不过期、跳过已抠图的）
+  let mediaInfo;
+  try { mediaInfo = await cmsRequest('/activity-albums/media/' + item.mediaId); } catch (e) {}
+  if (mediaInfo) {
+    if (mediaInfo.cutoutUrl) { item.status = 'done'; item.resultUrl = mediaInfo.cutoutUrl; item.doneAt = Date.now(); console.log('[Cutout] 跳过(已有抠图):', item.mediaName || item.mediaId); return; }
+    item.mediaUrl = mediaInfo.mediaUrl || item.mediaUrl;
+    item.sourceUrl = mediaInfo.sourceUrl || item.sourceUrl;
+  }
+  const downloadUrl = item.mediaUrl || item.sourceUrl;
+  if (!downloadUrl) throw new Error('没有可下载的图片 URL');
+  const resp = await fetch(downloadUrl);
+  if (!resp.ok) throw new Error('下载失败 HTTP ' + resp.status);
+  const buf = Buffer.from(await resp.arrayBuffer());
+  const ext = path.extname(new URL(downloadUrl).pathname) || '.jpg';
+  const tmpFile = path.join(CUTOUT_DIR, item.mediaId + ext);
+  fs.writeFileSync(tmpFile, buf);
+  let mattedBuffer;
+  try { mattedBuffer = await callRembg(tmpFile); } catch (e) {
+    const img = sharp(tmpFile);
+    mattedBuffer = await img.png().toBuffer();
+    console.warn('[Cutout] Rembg 不可用，使用原图:', e.message);
+  }
+  const cutoutFile = { originalname: 'cutout_' + item.mediaId + '.png', buffer: mattedBuffer, mimetype: 'image/png', size: mattedBuffer.length };
+  const uploadResult = await cmsFileUpload(cutoutFile);
+  await cmsRequest(`/activity-albums/${item.albumId}/media/${item.mediaId}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cutoutUrl: uploadResult.url })
+  });
+  const cCache = getCmsCache();
+  const cAlbum = cCache.albums.find(a => String(a.albumId) === item.albumId);
+  if (cAlbum && cAlbum.medias) {
+    const cMedia = cAlbum.medias.find(m => String(m.mediaId) === item.mediaId);
+    if (cMedia) cMedia.cutoutUrl = uploadResult.url;
+  }
+  saveCmsCache(cCache);
+  const workId = 'cms_' + item.mediaId;
+  io.emit('artwork:new', { id: workId, name: item.mediaName || '', date: new Date().toISOString().slice(0,10).replace(/-/g,''), url: uploadResult.url, originalUrl: item.mediaUrl, status: 'active', isCms: true });
+  item.status = 'done';
+  item.resultUrl = uploadResult.url;
+  item.doneAt = Date.now();
+  console.log('[Cutout] 完成:', item.mediaName || item.mediaId, '→', uploadResult.url);
+}
+
+/** 后台处理抠图队列（并发 3 张） */
+async function processCutoutQueue() {
+  if (isProcessingCutout) return;
+  isProcessingCutout = true;
+  while (true) {
+    const batch = cutoutQueue.filter(q => q.status === 'pending').slice(0, MAX_CONCURRENT_CUTOUT);
+    if (batch.length === 0) break;
+    batch.forEach(item => { item.status = 'processing'; });
+    persistCutoutQueue();
+    await Promise.allSettled(batch.map(item =>
+      processOneCutout(item).catch(e => {
+        item.status = 'error';
+        item.error = e.message;
+        item.doneAt = Date.now();
+        console.error('[Cutout] 失败:', item.mediaName || item.mediaId, e.message);
+      })
+    ));
+    persistCutoutQueue();
+  }
+  generateWorksDataJson();
+  isProcessingCutout = false;
+}
+// 启动时检查队列（恢复未完成的抠图）
+(function resumeCutoutQueue() {
+  cutoutQueue.forEach(q => { if (q.status === 'processing') q.status = 'pending'; });
+  persistCutoutQueue();
+  if (cutoutQueue.find(q => q.status === 'pending')) setTimeout(processCutoutQueue, 2000);
+})();
+
+// ===== 同步 CMS 数据到本地缓存 =====
+app.post('/api/cms/sync', async (req, res) => {
+  try {
+    const data = await cmsRequest('/activity-albums?pageSize=200');
+    const rows = data.rows || data || [];
+    const cache = getCmsCache();
+    // 保留本地增强字段，合并 CMS 最新数据
+    for (const album of rows) {
+      const albumId = String(album.albumId || album.id);
+      const existing = cache.albums.find(a => String(a.albumId) === albumId);
+      const localFields = existing ? { enabled: existing.enabled, displayOrder: existing.displayOrder, medias: existing.medias || [] } : { enabled: true, displayOrder: 0, medias: [] };
+      const idx = cache.albums.findIndex(a => String(a.albumId) === albumId);
+      const merged = { ...album, albumId, ...localFields };
+      if (idx !== -1) cache.albums[idx] = merged; else cache.albums.push(merged);
+      // 同步每个相册的 media 列表（最多 200 条）
+      try {
+        const mediaData = await cmsRequest(`/activity-albums/${albumId}/media?pageSize=200`);
+        const mediaRows = mediaData.rows || mediaData || [];
+        const mergedMedias = mediaRows.map(m => {
+          const mediaId = String(m.mediaId || m.id);
+          const localMedia = (localFields.medias || []).find(mm => String(mm.mediaId) === mediaId);
+          return { ...m, mediaId, enabled: localMedia ? localMedia.enabled !== false : true, localName: localMedia?.localName || '' };
+        });
+        const albumCache = cache.albums.find(a => String(a.albumId) === albumId);
+        if (albumCache) albumCache.medias = mergedMedias;
+      } catch (e) { /* 单个相册 media 同步失败不影响整体 */ }
+    }
+    saveCmsCache(cache);
+    res.json({ success: true, albumsCount: cache.albums.length });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
 app.use(express.static(WEB_DIR, { index: false, redirect: false }));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 app.get('/display',(req,res)=>res.sendFile(path.join(WEB_DIR,'display.html')));
 app.get('/admin',(req,res)=>res.sendFile(path.join(WEB_DIR,'admin.html')));
+app.get('/admin/settings', (req,res)=>res.sendFile(path.join(WEB_DIR,'admin.html')));
 app.get('/dashboard',(req,res)=>res.sendFile(path.join(WEB_DIR,'dashboard.html')));
-app.get('/gallery',(req,res)=>res.sendFile(path.join(GALLERY_DIR,'index.html')));
-app.get('/',(req,res)=>res.redirect('/gallery'));
+app.get('/',(req,res)=>res.redirect('/admin'));
 
-// SSR: 作品详情页 — OG 标签服务端渲染 + 内嵌 __WORK_DATA__
-app.get('/work/:id',(req,res)=>{
-  const a=artworks.find(x=>x.id===req.params.id);
-  if(!a)return res.status(404).send('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Not found</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#999;font-size:18px}</style></head><body>Artwork not found</body></html>');
-  res.send(renderWorkPage(a));
-});
+// 画廊 SPA（同时支持独立部署到 PageFire）
+app.use('/gallery', express.static(path.join(ROOT_DIR, 'gallery'), { redirect: false, index: 'index.html' }));
+app.get('/gallery*', (req, res) => res.sendFile(path.join(ROOT_DIR, 'gallery', 'index.html')));
 
-app.get('/api/artworks',(req,res)=>res.json(artworks.filter(a=>a.status==='active')));
-app.get('/api/artworks/all',(req,res)=>res.json(artworks));
-app.get('/api/artworks/stats',(req,res)=>{const a=artworks.filter(x=>x.status==='active').length,b=artworks.filter(x=>x.status==='archived').length;res.json({total:artworks.length,active:a,archived:b});});
+app.get('/api/artworks',(req,res)=>res.json(getAllArtworks(true)));
+app.get('/api/artworks/all',(req,res)=>res.json(getAllArtworks(false)));
+app.get('/api/artworks/stats',(req,res)=>{const all=getAllArtworks(false),a=all.filter(x=>x.status==='active').length,b=all.filter(x=>x.status==='archived').length;res.json({total:all.length,active:a,archived:b});});
 
 app.post('/api/artworks/upload',uploadArtwork.single('image'),(req,res)=>{
   if(!req.file)return res.status(400).json({error:'Please select image'});
@@ -185,23 +733,52 @@ app.post('/api/auto-matting',uploadArtwork.single('image'),async(req,res)=>{
 });
 
 app.put('/api/artworks/:id/archive',(req,res)=>{
-  const a=artworks.find(x=>x.id===req.params.id);if(!a)return res.status(404).json({error:'Not found'});
+  const id = req.params.id;
+  // CMS 作品 → 禁用本地缓存
+  if (id.startsWith('cms_')) {
+    const cache = getCmsCache();
+    const mediaId = id.replace('cms_', '');
+    cache.albums.forEach(a => { if (a.medias) a.medias.forEach(m => { if (String(m.mediaId) === mediaId) m.enabled = false; }); });
+    saveCmsCache(cache);
+    io.emit('artwork:archive',{id});
+    return res.json({success:true,archived:true,isCms:true});
+  }
+  const a=artworks.find(x=>x.id===id);if(!a)return res.status(404).json({error:'Not found'});
   a.status='archived';a.archivedAt=Date.now();saveJSON(ARTWORKS_FILE,artworks);
   if(!archive.find(x=>x.id===a.id)){archive.push({...a});saveJSON(ARCHIVE_FILE,archive);}
   generateWorksDataJson();
-  io.emit('artwork:archive',{id:a.id});res.json({success:true,artwork:a});
+  io.emit('artwork:archive',{id});res.json({success:true,artwork:a});
 });
 app.put('/api/artworks/:id/restore',(req,res)=>{
-  const a=artworks.find(x=>x.id===req.params.id);if(!a)return res.status(404).json({error:'Not found'});
+  const id = req.params.id;
+  if (id.startsWith('cms_')) {
+    const cache = getCmsCache();
+    const mediaId = id.replace('cms_', '');
+    cache.albums.forEach(a => { if (a.medias) a.medias.forEach(m => { if (String(m.mediaId) === mediaId) m.enabled = true; }); });
+    saveCmsCache(cache);
+    const m = cache.albums.flatMap(a => a.medias || []).find(x => String(x.mediaId) === mediaId);
+    io.emit('artwork:restore',{id, artwork:{id, name: m?.mediaName||'', url: m?.mediaUrl||'', status:'active', isCms:true}});
+    return res.json({success:true,restored:true,isCms:true});
+  }
+  const a=artworks.find(x=>x.id===id);if(!a)return res.status(404).json({error:'Not found'});
   a.status='active';delete a.archivedAt;archive=archive.filter(x=>x.id!==a.id);saveJSON(ARCHIVE_FILE,archive);saveJSON(ARTWORKS_FILE,artworks);
   generateWorksDataJson();
-  io.emit('artwork:restore',{id:a.id,artwork:a});res.json({success:true,artwork:a});
+  io.emit('artwork:restore',{id,artwork:a});res.json({success:true,artwork:a});
 });
 app.delete('/api/artworks/:id/purge',(req,res)=>{
-  const idx=artworks.findIndex(a=>a.id===req.params.id);if(idx===-1)return res.status(404).json({error:'Not found'});
+  const id = req.params.id;
+  if (id.startsWith('cms_')) {
+    const cache = getCmsCache();
+    const mediaId = id.replace('cms_', '');
+    cache.albums.forEach(a => { if (a.medias) a.medias = a.medias.filter(m => String(m.mediaId) !== mediaId); });
+    saveCmsCache(cache);
+    io.emit('artwork:purge',{id});
+    return res.json({success:true, purged:true, isCms:true});
+  }
+  const idx=artworks.findIndex(a=>a.id===id);if(idx===-1)return res.status(404).json({error:'Not found'});
   const a=artworks[idx];artworks.splice(idx,1);archive=archive.filter(x=>x.id!==a.id);saveJSON(ARTWORKS_FILE,artworks);saveJSON(ARCHIVE_FILE,archive);
   generateWorksDataJson();
-  io.emit('artwork:purge',{id:a.id});res.json({success:true});
+  io.emit('artwork:purge',{id});res.json({success:true});
 });
 app.post('/api/regenerate-pages',(req,res)=>{generateWorksDataJson();res.json({success:true,message:'Done'});});
 
@@ -226,33 +803,81 @@ app.post('/api/dashboard/today',express.json(),(req,res)=>{
   dashboardData[k].updatedAt=Date.now();saveJSON(DASHBOARD_FILE,dashboardData);res.json({success:true,data:dashboardData[k]});
 });
 
-// ===== Background =====
+// ===== Background（支持 CMS + 本地）=====
 app.get('/api/background',(req,res)=>res.json(bgConfig));
-app.post('/api/background/upload',uploadBg.single('image'),(req,res)=>{
+app.post('/api/background/upload',uploadBg.single('image'),async (req,res)=>{
   if(!req.file)return res.status(400).json({error:'No file'});
-  if(bgConfig.filename&&bgConfig.filename!==req.file.filename){const p=path.join(BG_DIR,bgConfig.filename);if(fs.existsSync(p))try{fs.unlinkSync(p);}catch(e){}}
-  bgConfig.filename=req.file.filename;bgConfig.url='/uploads/background/'+req.file.filename;saveJSON(BG_FILE,bgConfig);io.emit('background:update',bgConfig);
-  res.json({success:true,background:bgConfig});
+  try {
+    // 上传到 CMS
+    const cmsFile = { originalname: req.file.originalname, buffer: fs.readFileSync(req.file.path), mimetype: req.file.mimetype, size: req.file.size };
+    const uploadResult = await cmsFileUpload(cmsFile);
+    // 更新配置
+    const oldFile = bgConfig.filename;
+    bgConfig.filename = req.file.filename;
+    bgConfig.url = uploadResult.url;
+    bgConfig.cmsUrl = uploadResult.url;
+    saveJSON(BG_FILE,bgConfig); io.emit('background:update',bgConfig);
+    // 清理旧本地文件
+    if(oldFile&&oldFile!==req.file.filename){const p=path.join(BG_DIR,oldFile);if(fs.existsSync(p))try{fs.unlinkSync(p);}catch(e){}}
+    res.json({success:true,background:bgConfig,cmsUrl:uploadResult.url});
+  } catch(e) {
+    // CMS 上传失败，回退本地
+    console.warn('[BG] CMS 上传失败，使用本地:', e.message);
+    if(bgConfig.filename&&bgConfig.filename!==req.file.filename){const p=path.join(BG_DIR,bgConfig.filename);if(fs.existsSync(p))try{fs.unlinkSync(p);}catch(e){}}
+    bgConfig.filename=req.file.filename;bgConfig.url='/uploads/background/'+req.file.filename;saveJSON(BG_FILE,bgConfig);io.emit('background:update',bgConfig);
+    res.json({success:true,background:bgConfig});
+  }
 });
 app.put('/api/background',express.json(),(req,res)=>{if(req.body.position)bgConfig.position=req.body.position;if(req.body.scale)bgConfig.scale=req.body.scale;saveJSON(BG_FILE,bgConfig);io.emit('background:update',bgConfig);res.json({success:true,background:bgConfig});});
 
-// ===== Videos =====
+// ===== Videos（支持 CMS + 本地）=====
 app.get('/api/videos',(req,res)=>res.json(videos));
 app.get('/api/videos/config',(req,res)=>res.json({interval:videoConfig.interval,repeat:videoConfig.repeat,enabled:videos.length>0}));
-app.post('/api/videos/upload',uploadVideo.single('video'),(req,res)=>{
+app.post('/api/videos/upload',uploadVideo.single('video'),async (req,res)=>{
   if(!req.file)return res.status(400).json({error:'No video'});
   const v={id:path.basename(req.file.filename,path.extname(req.file.filename)),name:req.body.name||'Video',date:req.body.date||new Date().toISOString().slice(0,10).replace(/-/g,''),filename:req.file.filename,url:'/uploads/videos/'+req.file.filename,createdAt:Date.now()};
+  // 尝试上传到 CMS
+  try {
+    const cmsFile = { originalname: req.file.originalname, buffer: fs.readFileSync(req.file.path), mimetype: req.file.mimetype, size: req.file.size };
+    const uploadResult = await cmsFileUpload(cmsFile);
+    v.cmsUrl = uploadResult.url;
+    v.url = uploadResult.url; // 大屏直接用 CMS URL
+  } catch(e) { console.warn('[Video] CMS 上传失败，使用本地:', e.message); }
   videos.push(v);saveJSON(VIDEOS_FILE,videos);io.emit('videos:update',videos);res.json({success:true,video:v});
 });
 app.delete('/api/videos/:id',(req,res)=>{const idx=videos.findIndex(v=>v.id===req.params.id);if(idx===-1)return res.status(404).json({error:'Not found'});const v=videos[idx];videos.splice(idx,1);saveJSON(VIDEOS_FILE,videos);io.emit('videos:update',videos);const fp=path.join(VIDEOS_DIR,v.filename);if(fs.existsSync(fp))try{fs.unlinkSync(fp);}catch(e){}res.json({success:true});});
 app.put('/api/videos/config',express.json(),(req,res)=>{videoConfig.interval=req.body.interval||300;videoConfig.repeat=req.body.repeat||2;saveJSON(VIDEOS_CONFIG_FILE,videoConfig);const cfg={interval:videoConfig.interval,repeat:videoConfig.repeat,enabled:videos.length>0};io.emit('videos:config',cfg);res.json({success:true,config:cfg});});
 
-app.post('/api/track/cta-click',express.json(),(req,res)=>res.json({success:true}));
+// ===== 服务端定时轮询 CMS 新增媒体 =====
+let cmsPollState = { albumId: null, sinceId: 0 };
+async function pollCmsNewMedia() {
+  const cache = getCmsCache();
+  const albumId = cache.displayAlbumId || null;
+  if (!albumId) return;
+  if (cmsPollState.albumId !== albumId) { cmsPollState.albumId = albumId; cmsPollState.sinceId = 0; }
+  try {
+    const data = await cmsRequest(`/activity-albums/${albumId}/media/check?sinceId=${cmsPollState.sinceId}&limit=20`);
+    if (!data || !data.length) return;
+    let maxId = cmsPollState.sinceId;
+    for (const m of data) {
+      const mid = parseInt(m.mediaId || m.id);
+      if (mid > maxId) maxId = mid;
+      if (!m.cutoutUrl && !cutoutQueue.find(q => String(q.mediaId) === String(mid))) {
+        cutoutQueue.push({ albumId, mediaId: String(mid), mediaUrl: m.mediaUrl, sourceUrl: m.sourceUrl, mediaName: m.mediaName || '', status: 'pending', addedAt: Date.now() });
+        persistCutoutQueue();
+        if (!isProcessingCutout) processCutoutQueue();
+      }
+    }
+    cmsPollState.sinceId = maxId;
+    generateWorksDataJson();
+  } catch (e) { /* silent */ }
+}
+setInterval(pollCmsNewMedia, 45000);
 
 // ===== Socket.IO =====
 io.on('connection',(socket)=>{
   console.log('Client connected:',socket.id);
-  socket.emit('sync',{artworks:artworks.filter(a=>a.status==='active'),background:bgConfig,videos});
+  socket.emit('sync',{artworks:getAllArtworks(true).filter(function(a) { return a.cutoutUrl; }),background:bgConfig,videos});
   socket.on('display:connected',()=>track('displayViews'));
   socket.on('disconnect',()=>console.log('Disconnected:',socket.id));
 });

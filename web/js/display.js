@@ -206,6 +206,7 @@ socket.on('sync', (data) => {
 
 // 新作品到达 → 触发 spotlight
 socket.on('artwork:new', (artwork) => {
+  if (allArtworks.find(a => a.id === artwork.id)) return;
   allArtworks.push(artwork);
   emptyHint.classList.add('hidden');
 
@@ -219,7 +220,7 @@ socket.on('artwork:new', (artwork) => {
 });
 
 socket.on('artworks:batch', (artworks) => {
-  artworks.forEach(a => allArtworks.push(a));
+  artworks.forEach(a => { if (!allArtworks.find(x => x.id === a.id)) allArtworks.push(a); });
   if (allArtworks.length > 0) emptyHint.classList.add('hidden');
   fillCards();
 });
@@ -251,6 +252,19 @@ socket.on('artwork:restore', ({ id, artwork }) => {
 
 socket.on('background:update', (bg) => applyBackground(bg));
 
+// 抠图完成 → 更新卡片图片
+socket.on('artwork:update', ({ id, url }) => {
+  const artwork = allArtworks.find(a => a.id === id);
+  if (artwork) artwork.url = url;
+  // 更新正在展示的卡片
+  activeCards.forEach(c => {
+    if (c.artwork.id === id) {
+      const img = c.el.querySelector('img');
+      if (img) img.src = url;
+    }
+  });
+});
+
 socket.on('videos:update', (list) => {
   videos = list;
   if (list.length === 0) {
@@ -262,7 +276,19 @@ socket.on('videos:update', (list) => {
 
 socket.on('videos:config', (cfg) => {
   videoConfig = cfg;
-  restartVideoSchedule();
+});
+
+// 管理员切换展示相册 → 重新加载全部数据
+socket.on('display:reload', () => {
+  console.log('相册已切换, 重新加载...');
+  fetch('/api/artworks')
+    .then(r => r.json())
+    .then(artworks => {
+      allArtworks = artworks.filter(a => a.cutoutUrl);
+      resetDisplay();
+    });
+  fetch('/api/videos').then(r => r.json()).then(list => { videos = list; restartVideoSchedule(); }).catch(() => {});
+  fetch('/api/background').then(r => r.json()).then(bg => applyBackground(bg)).catch(() => {});
 });
 
 // ===== 视频插播引擎 =====
@@ -653,8 +679,13 @@ function finishSpotlight(art, pos, targetSize) {
 
 // ===== 背景 =====
 function applyBackground(bg) {
-  if (!bg || !bg.url) return;
-  bgLayer.style.backgroundImage = `url('${bg.url}')`;
+  if (!bg || !bg.url) {
+    bgLayer.style.backgroundImage = 'url(/default-bg.jpg)';
+    bgLayer.style.backgroundSize = 'cover';
+    bgLayer.style.backgroundPosition = 'center';
+    return;
+  }
+  bgLayer.style.backgroundImage = 'url(\'' + bg.url + '\')';
   bgLayer.style.backgroundSize = bg.scale || 'cover';
   bgLayer.style.backgroundPosition = bg.position || 'center';
 }
