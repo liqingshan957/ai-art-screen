@@ -125,6 +125,7 @@
             <span class="ext-label">🔗 外部地址：</span>
             <input type="text" id="external-base-url" placeholder="https://..." class="ext-url-input">
             <button id="ext-url-save" class="ext-url-btn">保存</button>
+            <button id="ext-url-open" class="ext-url-btn" onclick="window.open(document.getElementById('external-base-url').value, '_blank')" title="在新标签页打开">↗ 打开</button>
             <span id="ext-url-status" class="ext-url-status hidden"></span>
           </div>
 
