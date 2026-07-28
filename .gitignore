@@ -54,3 +54,4 @@ data/cutout-queue.json
 docs/deploy/*.pem
 docs/deploy/ssh.txt
 docs/deploy/*.secret
+docs/deploy/DEPLOY_PRIVATE.md
