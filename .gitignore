@@ -49,3 +49,8 @@ services/rembg/server.err
 data/cms-cache.json
 data/cms-config.json
 data/cutout-queue.json
+
+# Deployment secrets
+docs/deploy/*.pem
+docs/deploy/ssh.txt
+docs/deploy/*.secret
