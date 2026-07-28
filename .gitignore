@@ -58,3 +58,6 @@ test-*.bat
 test-rembg/
 nul
 public/spotlight-test.html
+
+# Migration package
+迁移新电脑/

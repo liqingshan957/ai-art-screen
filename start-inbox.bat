@@ -1,7 +1,9 @@
 @echo off
-cd /d "D:\桌面\开发项目\收件箱监听"
+cd /d "%~dp0..\收件箱监听"
+chcp 65001 >nul 2>nul
 title Inbox Watcher
 echo Inbox watcher starting...
+echo Watching remote computers for new artwork images...
 node inbox-watcher.js
 echo.
 echo Stopped. Press any key to close...
