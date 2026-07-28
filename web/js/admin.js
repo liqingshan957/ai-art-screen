@@ -605,7 +605,7 @@ function updateExternalUrl(albumId) {
   if (!el) return;
   const base = PAGEFIRE_URL;
   if (albumId) {
-    el.value = base + '#album=' + albumId;
+    el.value = base + '/index.html?album=' + albumId;
   } else {
     el.value = base;
   }
