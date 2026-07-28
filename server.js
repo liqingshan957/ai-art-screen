@@ -17,6 +17,7 @@ const REMBG_PORT = parseInt(process.env.REMBG_PORT || '7000');
 const REMBG_TIMEOUT = 15000;
 const CMS_POLL_INTERVAL = parseInt(process.env.CMS_POLL_INTERVAL || '5000');
 const DEDUP_WINDOW = 30000;
+const ENABLE_AUTO_CUTOUT = process.env.ENABLE_AUTO_CUTOUT !== 'false';
 
 const ROOT_DIR = path.resolve(__dirname);
 const WEB_DIR = path.join(ROOT_DIR, 'web-admin');
@@ -390,7 +391,15 @@ app.post('/api/cms/albums/:id/media/add-url', express.json(), async (req, res) =
     const mediaEntry = { mediaId: data.mediaId || data.id, mediaUrl: body.mediaUrl, sourceUrl: body.sourceUrl, mediaName: body.mediaName, enabled: true, mediaType: 'image' };
     album.medias.push(mediaEntry);
     saveCmsCache(cache);
-    // 抠图由本地 Rembg 工作脚本异步处理，通过 notify 通知推送大屏
+    // 自动触发抠图（ENABLE_AUTO_CUTOUT=false 时由本地 Rembg 工作脚本 + notify 处理）
+    if (ENABLE_AUTO_CUTOUT) {
+      const workId = 'cms_' + mediaEntry.mediaId;
+      if (!cutoutQueue.find(q => String(q.mediaId) === String(mediaEntry.mediaId))) {
+        cutoutQueue.push({ albumId, mediaId: String(mediaEntry.mediaId), mediaUrl: body.mediaUrl, sourceUrl: body.sourceUrl, mediaName: body.mediaName || '', status: 'pending', addedAt: Date.now() });
+        persistCutoutQueue();
+        if (!isProcessingCutout) processCutoutQueue();
+      }
+    }
     res.json({ success: true, media: { ...data, mediaUrl: body.mediaUrl, enabled: true, id: 'cms_' + mediaEntry.mediaId } });
   } catch (e) { res.json({ success: false, error: e.message }); }
 });
@@ -515,24 +524,111 @@ app.get('/api/cms/rembg-health', async (req, res) => {
 const CUTOUT_DIR = path.join(UPLOADS_DIR, 'cutout_temp');
 if (!fs.existsSync(CUTOUT_DIR)) fs.mkdirSync(CUTOUT_DIR, { recursive: true });
 
-// 检查相册中缺少抠图的媒体（处理由本地 Rembg 工作脚本完成）
+let isProcessingCutout = false;
+let cutoutQueue = loadJSON(DATA_DIR + '/cutout-queue.json', []);
+function persistCutoutQueue() { saveJSON(DATA_DIR + '/cutout-queue.json', cutoutQueue); }
+
+/** 处理单个抠图任务 */
+async function processOneCutout(item) {
+  console.log('[Cutout] 处理:', item.mediaName || item.mediaId);
+  let mediaInfo;
+  try { mediaInfo = await cmsRequest('/activity-albums/media/' + item.mediaId); } catch (e) {}
+  if (mediaInfo) {
+    if (mediaInfo.cutoutUrl) { item.status = 'done'; item.resultUrl = mediaInfo.cutoutUrl; item.doneAt = Date.now(); console.log('[Cutout] 跳过(已有抠图):', item.mediaName || item.mediaId); return; }
+    item.mediaUrl = mediaInfo.mediaUrl || item.mediaUrl;
+    item.sourceUrl = mediaInfo.sourceUrl || item.sourceUrl;
+  }
+  const downloadUrl = item.mediaUrl || item.sourceUrl;
+  if (!downloadUrl) throw new Error('没有可下载的图片 URL');
+  const resp = await fetch(downloadUrl);
+  if (!resp.ok) throw new Error('下载失败 HTTP ' + resp.status);
+  const buf = Buffer.from(await resp.arrayBuffer());
+  const ext = path.extname(new URL(downloadUrl).pathname) || '.jpg';
+  const tmpFile = path.join(CUTOUT_DIR, item.mediaId + ext);
+  fs.writeFileSync(tmpFile, buf);
+  let mattedBuffer;
+  try { mattedBuffer = await callRembg(tmpFile); } catch (e) {
+    const img = sharp(tmpFile);
+    mattedBuffer = await img.png().toBuffer();
+    console.warn('[Cutout] Rembg 不可用，使用原图:', e.message);
+  }
+  const cutoutFile = { originalname: 'cutout_' + item.mediaId + '.png', buffer: mattedBuffer, mimetype: 'image/png', size: mattedBuffer.length };
+  const uploadResult = await cmsFileUpload(cutoutFile);
+  await cmsRequest(`/activity-albums/${item.albumId}/media/${item.mediaId}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cutoutUrl: uploadResult.url })
+  });
+  const cCache = getCmsCache();
+  const cAlbum = cCache.albums.find(a => String(a.albumId) === item.albumId);
+  if (cAlbum && cAlbum.medias) {
+    const cMedia = cAlbum.medias.find(m => String(m.mediaId) === item.mediaId);
+    if (cMedia) cMedia.cutoutUrl = uploadResult.url;
+  }
+  saveCmsCache(cCache);
+  const workId = 'cms_' + item.mediaId;
+  io.emit('artwork:new', { id: workId, name: item.mediaName || '', date: new Date().toISOString().slice(0,10).replace(/-/g,''), url: uploadResult.url, originalUrl: item.mediaUrl, status: 'active', isCms: true });
+  item.status = 'done'; item.resultUrl = uploadResult.url; item.doneAt = Date.now();
+  console.log('[Cutout] 完成:', item.mediaName || item.mediaId, '→', uploadResult.url);
+}
+/** 后台处理抠图队列（并发 3 张） */
+async function processCutoutQueue() {
+  if (isProcessingCutout) return;
+  isProcessingCutout = true;
+  while (true) {
+    const batch = cutoutQueue.filter(q => q.status === 'pending').slice(0, 3);
+    if (batch.length === 0) break;
+    batch.forEach(item => { item.status = 'processing'; });
+    persistCutoutQueue();
+    await Promise.allSettled(batch.map(item =>
+      processOneCutout(item).catch(e => {
+        item.status = 'error'; item.error = e.message; item.doneAt = Date.now();
+        item.retryCount = (item.retryCount || 0) + 1;
+        console.error('[Cutout] 失败:', item.mediaName || item.mediaId, '(' + item.retryCount + '次)', e.message);
+      })
+    ));
+    persistCutoutQueue();
+  }
+  generateWorksDataJson();
+  isProcessingCutout = false;
+}
+(function resumeCutoutQueue() {
+  cutoutQueue.forEach(q => { if (q.status === 'processing') q.status = 'pending'; });
+  persistCutoutQueue();
+  if (cutoutQueue.find(q => q.status === 'pending')) setTimeout(processCutoutQueue, 2000);
+})();
+
+// 批量扫描：将缺少抠图的媒体加入队列
 // ⚠️ 必须放在 /:albumId/:mediaId 之前，避免 "scan" 被当作 albumId 匹配
 app.post('/api/cms/cutout/scan/:albumId', async (req, res) => {
   try {
     const data = await cmsRequest(`/activity-albums/${req.params.albumId}/media?pageSize=200`);
     const rows = data.rows || data || [];
     const needsProcessing = rows.filter(m => !m.cutoutUrl);
-    res.json({ success: true, totalMissing: needsProcessing.length, message: '待抠图数量，将由本地 Rembg 工作脚本自动处理' });
+    let added = 0;
+    needsProcessing.forEach(m => {
+      if (!cutoutQueue.find(q => String(q.mediaId) === String(m.mediaId || m.id))) {
+        cutoutQueue.push({ albumId: req.params.albumId, mediaId: String(m.mediaId || m.id), mediaUrl: m.mediaUrl || m.sourceUrl, sourceUrl: m.sourceUrl, mediaName: m.mediaName || '', status: 'pending', addedAt: Date.now() });
+        added++;
+      }
+    });
+    persistCutoutQueue();
+    if (added > 0 && ENABLE_AUTO_CUTOUT) processCutoutQueue();
+    res.json({ success: true, addedToQueue: added, totalMissing: needsProcessing.length });
   } catch (e) { res.json({ success: false, error: e.message }); }
 });
 
-// 手动触发单张抠图（由本地 Rembg 工作脚本处理）
+// 手动触发单张抠图
 app.post('/api/cms/cutout/:albumId/:mediaId', async (req, res) => {
   try {
     const { albumId, mediaId } = req.params;
     const data = await cmsRequest(`/activity-albums/media/${mediaId}`);
     if (!data.sourceUrl && !data.mediaUrl) return res.json({ success: false, error: '没有可处理的图片 URL' });
-    res.json({ success: true, message: '已标记待处理，本地 Rembg 工作脚本将自动抠图' });
+    if (!cutoutQueue.find(q => String(q.mediaId) === mediaId)) {
+      cutoutQueue.push({ albumId, mediaId, mediaUrl: data.mediaUrl || data.sourceUrl, sourceUrl: data.sourceUrl, mediaName: data.mediaName || '', status: 'pending', addedAt: Date.now() });
+      persistCutoutQueue();
+      if (ENABLE_AUTO_CUTOUT) processCutoutQueue();
+    }
+    res.json({ success: true, message: '已加入抠图队列' });
   } catch (e) { res.json({ success: false, error: e.message }); }
 });
 
@@ -547,11 +643,6 @@ app.delete('/api/cms/cutout/queue', (req, res) => {
   persistCutoutQueue();
   res.json({ success: true, remaining: cutoutQueue.length });
 });
-
-// ===== 抠图队列（仅管理接口，处理由本地 Rembg 完成）=====
-let isProcessingCutout = false;
-let cutoutQueue = loadJSON(DATA_DIR + '/cutout-queue.json', []);
-function persistCutoutQueue() { saveJSON(DATA_DIR + '/cutout-queue.json', cutoutQueue); }
 
 // ===== 同步 CMS 数据到本地缓存 =====
 app.post('/api/cms/sync', async (req, res) => {
@@ -782,8 +873,9 @@ app.post('/api/cms/cutout/notify', express.json(), async (req, res) => {
   }
 });
 
-// ===== 服务端轮询 CMS 新媒体（仅同步缓存，不执行抠图）=====
-// 抠图由本地电脑 Rembg 完成，完成后通过 POST /api/cms/cutout/notify 通知
+// ===== 服务端轮询 CMS 新媒体 =====
+// ENABLE_AUTO_CUTOUT=false（默认服务器）: 仅同步缓存，本地 Rembg 通过 notify 推送
+// ENABLE_AUTO_CUTOUT=true（本地开发）: 自动加入抠图队列处理
 let cmsPollState = { albumId: null, sinceId: 0 };
 async function pollCmsNewMedia() {
   const cache = getCmsCache();
@@ -821,6 +913,12 @@ async function pollCmsNewMedia() {
     for (const m of data) {
       const mid = parseInt(m.mediaId || m.id);
       if (mid > maxId) maxId = mid;
+      if (m.cutoutUrl) continue;
+      if (ENABLE_AUTO_CUTOUT && !cutoutQueue.find(q => String(q.mediaId) === String(mid))) {
+        cutoutQueue.push({ albumId, mediaId: String(mid), mediaUrl: m.mediaUrl, sourceUrl: m.sourceUrl, mediaName: m.mediaName || '', status: 'pending', addedAt: Date.now() });
+        persistCutoutQueue();
+        if (!isProcessingCutout) processCutoutQueue();
+      }
     }
     cmsPollState.sinceId = maxId;
     generateWorksDataJson();
