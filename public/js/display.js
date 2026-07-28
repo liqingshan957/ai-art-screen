@@ -23,6 +23,7 @@ let galleryPaused = false; // 视频插播时暂停画廊
 let videos = [];
 let videoConfig = { interval: 300, repeat: 2, enabled: false };
 let videoTimer = null;
+let videoSafetyTimer = null;
 let videoPlayCount = 0;
 let videoPlayTarget = 2;
 
@@ -200,6 +201,33 @@ socket.on('sync', (data) => {
   allArtworks = data.artworks || [];
   videos = data.videos || [];
   applyBackground(data.background);
+
+  // 重连/初始化时彻底清理所有运行状态，防止卡死
+  clearTimeout(videoTimer);
+  clearTimeout(videoSafetyTimer);
+  videoTimer = null;
+  videoSafetyTimer = null;
+  galleryPaused = false;
+  isSpotlightRunning = false;
+  isPostVideoProcessing = false;
+  spotlightQueue = [];
+  videoEndCallback = null;
+  stopSparkles();
+
+  // 隐藏可能残留的 spotlight / video 层
+  spotlightLayer.classList.remove('active');
+  aurora.classList.remove('active');
+  canvas.classList.remove('dimmed');
+  spotlightInfo.classList.remove('show');
+  announceText.classList.remove('show');
+  queueIndicator.classList.remove('show');
+  videoOverlay.classList.remove('active', 'hidden');
+  showcaseVideo.pause();
+  showcaseVideo.removeAttribute('src');
+  showcaseVideo.load();
+  document.getElementById('title-bar').style.opacity = '';
+  canvas.style.opacity = '';
+
   resetDisplay();
   restartVideoSchedule();
 });
@@ -286,7 +314,11 @@ function scheduleNextVideo() {
 
 function playShowcaseVideo() {
   if (videos.length === 0) return;
-  if (galleryPaused) return;
+  if (galleryPaused) {
+    // 有 spotlight 或其他操作正在进行，延迟 5 秒后重试
+    videoTimer = setTimeout(playShowcaseVideo, 5000);
+    return;
+  }
 
   const video = videos[0];
   videoPlayCount = 0;
@@ -303,7 +335,18 @@ function playShowcaseVideo() {
   videoOverlay.classList.remove('hidden');
   setTimeout(() => videoOverlay.classList.add('active'), 50);
 
-  showcaseVideo.play().catch(e => console.warn('视频自动播放失败:', e));
+  // 安全超时：如果视频卡住或 onended 不触发，最多等 5 分钟自动恢复
+  clearTimeout(videoSafetyTimer);
+  videoSafetyTimer = setTimeout(() => {
+    console.warn('视频播放超时，自动恢复');
+    if (galleryPaused) endVideoShowcase();
+  }, 300000);
+
+  showcaseVideo.play().catch(e => {
+    console.warn('视频自动播放失败:', e);
+    // 播放失败也走结束流程，避免卡死
+    setTimeout(endVideoShowcase, 2000);
+  });
 
   showcaseVideo.onended = () => {
     videoPlayCount++;
@@ -314,9 +357,15 @@ function playShowcaseVideo() {
       endVideoShowcase();
     }
   };
+
+  showcaseVideo.onerror = () => {
+    console.warn('视频加载失败');
+    setTimeout(endVideoShowcase, 1000);
+  };
 }
 
 function endVideoShowcase() {
+  clearTimeout(videoSafetyTimer);
   videoOverlay.classList.remove('active');
   setTimeout(() => {
     videoOverlay.classList.add('hidden');
