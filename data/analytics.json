@@ -41,9 +41,10 @@
     "shareClicks": 0
   },
   "20260728": {
-    "pageViews": 5,
+    "pageViews": 6,
     "visitors": [
-      "::1"
+      "::1",
+      "::ffff:127.0.0.1"
     ],
     "newArtworks": 0,
     "displayViews": 0,

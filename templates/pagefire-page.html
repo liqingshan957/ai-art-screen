@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Jessica的AI艺术作品 · 大象智绘AI科创</title>
-  <meta property="og:title" content="Jessica的敦煌AI艺术作品 | 大象智绘AI科创">
-  <meta property="og:description" content="大象智绘AI科创 · 10年艺术教育经验×AI创新教育。我在广州美术馆用AI创作了一幅敦煌风格作品，快来看看吧！">
-  <meta property="og:image" content="/uploads/artworks/595e002ef67b5ad8.png">
+  <title>{{NAME}} 的 AI 艺术作品 · 大象智绘 AI 科创</title>
+  <meta property="og:title" content="{{NAME}} 的敦煌 AI 艺术作品 | 大象智绘 AI 科创">
+  <meta property="og:description" content="大象智绘 AI 科创 · 20 年艺术教育经验 · AI 创新教育。我在广州美术馆用 AI 创作了一幅敦煌风格作品，快来看看吧！">
+  <meta property="og:image" content="{{URL}}">
   <meta property="og:type" content="website">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#f8f4ee 0%,#efe8dc 100%);color:#4a3f30;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+    body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,#f8f4ee,#efe8dc);color:#4a3f30;min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
     .page{width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;padding-bottom:50px}
     .brand-header{width:100%;padding:18px 20px 14px;display:flex;align-items:center;gap:14px;border-bottom:1px solid rgba(201,169,110,.2)}
     .brand-header .logo{flex-shrink:0}
@@ -20,7 +20,7 @@
     .brand-header .brand-tagline{font-size:11px;color:#8a7a5e;margin-top:2px;letter-spacing:.5px}
     .hero{width:100%;position:relative;cursor:pointer}
     .hero a{display:block;position:relative}
-    .hero img{width:100%;display:block}
+    .hero-img-wrap{display:block;position:relative}
     .hero-label{position:absolute;top:12px;left:12px;background:rgba(74,63,48,.65);color:#f0dda0;font-size:11px;padding:4px 10px;border-radius:12px;letter-spacing:2px;pointer-events:none;z-index:1;backdrop-filter:blur(4px)}
     .hero-tap-hint{position:absolute;bottom:14px;right:14px;background:rgba(74,63,48,.75);color:#f0dda0;font-size:12px;padding:6px 12px;border-radius:18px;pointer-events:none;z-index:1;animation:bounceY 1.5s ease-in-out infinite;display:flex;align-items:center;gap:5px;backdrop-filter:blur(4px)}
     @keyframes bounceY{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -53,18 +53,12 @@
     .dh-qr-section .cta-qr-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
     .dh-qr-section .cta-qr-img{width:200px;height:auto;border-radius:14px;border:2px solid rgba(240,221,160,.25);box-shadow:0 4px 24px rgba(0,0,0,.25);background:#fff;padding:8px}
     .dh-qr-section .urgency{font-size:11px;color:#c9a96e;opacity:.8}
-    
     .wechat-card{width:calc(100% - 40px);max-width:440px;margin:14px 20px 0;padding:18px;background:#fff;border:1px solid #e0d5c5;border-radius:14px;text-align:center;box-shadow:0 2px 8px rgba(74,63,48,.04)}
     .wechat-card h4{font-size:14px;color:#3d3020;font-weight:600;margin-bottom:4px}
     .wechat-card .sub{font-size:12px;color:#8a7a5e;margin-bottom:12px;line-height:1.5}
     .wechat-card .qrcode{display:flex;justify-content:center;margin-bottom:8px}
     .wechat-card .qrcode .qr-placeholder{width:120px;height:120px;background:#f8f4ee;border:2px dashed #d4c5aa;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#a8946c;font-size:11px;gap:4px;line-height:1.4}
     .wechat-card .social-proof{font-size:11px;color:#a8946c;margin-top:4px}
-    .pipeline{width:calc(100% - 40px);max-width:440px;margin:14px 20px 0;padding:18px 16px;background:rgba(201,169,110,.05);border:1px solid #e0d5c5;border-radius:14px;text-align:center}
-    .pipeline h4{font-size:13px;color:#3d3020;font-weight:600;margin-bottom:12px;letter-spacing:1px}
-    .pipeline-steps{display:flex;flex-direction:column;gap:8px}
-    .pipeline .step{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:#5a4f3a}
-    .pipeline .step .arrow{color:#c9a96e;font-size:14px}
     .footer{text-align:center;padding:24px 20px 16px;border-top:1px solid #e0d5c5;width:100%;margin-top:auto}
     .footer .brand{font-size:14px;color:#8a7a5e;letter-spacing:3px;font-weight:600}
     .footer .sub{font-size:11px;color:#a8946c;margin-top:4px}
@@ -74,94 +68,106 @@
 <body>
   <div class="page">
     <div class="brand-header">
-      <div class="logo">
-        <img src="/logo.png" alt="大象智绘AI科创">
-      </div>
+      <div class="logo"><img src="../logo.png" alt="大象智绘 AI 科创"></div>
       <div class="brand-text">
-        <div class="brand-name">大象智绘AI科创</div>
-        <div class="brand-tagline">10年艺术教育经验 · AI创新教育引领者</div>
+        <div class="brand-name">大象智绘 AI 科创</div>
+        <div class="brand-tagline">20 年艺术教育 · AI 创新教育引领者</div>
       </div>
     </div>
-    <div class="hero">
-      <div class="hero-label">AI 共创</div>
-      <a href="/uploads/artworks/595e002ef67b5ad8.png" id="img-link">
-        <img src="/uploads/artworks/595e002ef67b5ad8.png" alt="Jessica的作品" />
-        <div class="hero-tap-hint">👆 长按保存图片</div>
-      </a>
+    <div class="hero" onclick="openLightbox()">
+      <div class="hero-label">✦ AI 共创</div>
+      <div class="hero-img-wrap">
+        <img src="{{URL}}" alt="{{NAME}} 的作品" id="hero-img">
+      </div>
+      <div class="hero-tap-hint">长按保存图片到相册</div>
     </div>
     <div class="info">
-      <div class="child-name">Jessica<span class="sub">的AI艺术作品</span></div>
-      
+      <div class="child-name">{{NAME}}<span class="sub"> 的 AI 艺术作品</span></div>
+      <div class="date-badge">{{DISPLAY_DATE}}</div>
     </div>
-    <div class="save-tip" id="save-tip">👆 长按上方作品图片 → 选择「保存图片」即可存到手机相册</div>
+    <div class="save-tip" id="save-tip">长按或右键点击图片，选择「保存图片」到相册</div>
+    <div style="width:calc(100% - 40px);max-width:440px;margin:12px 20px 0;display:flex;gap:8px">
+      <button id="saveBtn" onclick="saveWorkImage()" style="flex:1;padding:12px 0;background:linear-gradient(135deg,#c9a96e,#a08050);border:none;border-radius:20px;font-size:15px;font-weight:600;color:#1a1410;cursor:pointer;letter-spacing:1px;text-align:center">保存相册</button>
+      <button id="copyBtn" onclick="copyShareLink()" style="padding:12px 16px;background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.25);border-radius:20px;font-size:13px;color:#7a6a52;cursor:pointer;white-space:nowrap">复制链接</button>
+    </div>
     <div class="brand-statement">
-      <div class="icon">🤖</div>
-      <h4>这就是AI+艺术的魔法</h4>
-      <p>大象智绘AI科创，深耕艺术教育十余年，融合AI前沿技术，<br>让孩子用想象力触碰未来。这里展出的每一幅作品，<br>都是孩子创意与AI智能的共同杰作。</p>
+      <div class="icon">✨</div>
+      <h4>这就是 AI+艺术的魔法</h4>
+      <p>大象智绘 AI 科创，深耕艺术教育二十余年，融合 AI 前沿技术<br>让孩子用想象力触碰未来。这里展出的每一幅作品<br>都是孩子创意与 AI 智能的共同杰作</p>
     </div>
     <div class="course-cta">
       <div class="cta-badge">🔥 热门体验 · 二楼专享</div>
-      <h3>🎬 AI微电影创作体验课</h3>
-      <p class="desc">用你刚刚创作的敦煌角色，30分钟变身动画短片主角！<br>专业老师全程指导，零基础也能完成大片</p>
+      <h3>🔥 敦煌新生 AI 动画创作</h3>
+      <p class="desc">带孩子创造属于自己的敦煌动画<br>30 分钟让刚才的角色变成动画短片主角！</p>
       <div class="features">
-        <span>✨ AI角色生成</span>
+        <span>✦ AI 角色生成</span>
         <span>🎨 场景创作</span>
-        <span>📽️ 15秒大片</span>
+        <span>📹 15 秒大片</span>
       </div>
       <div class="price-row">
         <span class="price-current">¥125</span>
         <span class="price-original">¥198</span>
-        <span class="price-tag">今日专享</span>
+        <span class="price-tag">展览专属价</span>
       </div>
-      <a class="cta-btn" href="javascript:;">🎯 立即报名二楼课程</a>
-      <div class="urgency">⏰ 每场仅限12人 · 请到二楼咨询现场老师</div>
+      <a class="cta-btn" href="javascript:;" onclick="showCourseModal()">🎬 立即体验二楼动画课</a>
+      <div class="urgency">名额有限 · 优先预留创作席位</div>
     </div>
     <div class="dh-qr-section">
-      <div class="cta-badge">🪷 热门体验 · 敦煌新生</div>
-      <h3>🪷 敦煌新生 · AI动画创作</h3>
-      <p class="desc">带孩子创造属于自己的敦煌动画<br>掌中敦煌深度体验区 · 让传统文化在数字世界开启新的旅程 ✨</p>
       <div class="cta-qr-wrap">
-        <img src="/dunhuang-qr.png" alt="敦煌新生小程序码" class="cta-qr-img" />
-        <div class="urgency">👆 长按图片识别 · 了解敦煌新生详情</div>
+        <img src="/dunhuang-qr.png" alt="敦煌新生小程序二维码" class="cta-qr-img">
+        <div class="urgency">长按识别 · 了解敦煌新生详情</div>
       </div>
     </div>
-        <div class="wechat-card">
-      <h4>📱 加微信 · 领高清作品图</h4>
-      <p class="sub">扫码添加，在线发送作品高清原图<br>获取更多AI课程资讯与专属福利</p>
+    <div class="wechat-card">
+      <h4>📫 了解更多艺术创作与 AI 课程</h4>
+      <p class="sub">扫码添加微信，获取更多 AI 艺术创作资讯<br>了解课程详情与专属福利</p>
       <div class="qrcode">
         <div class="qr-placeholder">
-          <span style="font-size:28px">📲</span>
+          <span style="font-size:28px">📫</span>
           <span>扫码加微信</span>
           <span style="font-size:10px">请替换为实际二维码</span>
         </div>
       </div>
-      <p class="social-proof">已有 200+ 家长在微信社群交流AI艺术创作心得 💬</p>
-    </div>
-    <div class="pipeline">
-      <h4>🎯 大象智绘 · 课程体系</h4>
-      <div class="pipeline-steps">
-        <div class="step"><span>🆓</span><span>一楼·免费AI体验</span><span class="arrow">▸</span></div>
-        <div class="step"><span>🎬</span><span>二楼·¥125 AI微电影课</span><span class="arrow">▸</span></div>
-        <div class="step"><span>📚</span><span>暑假班/秋季班·系统学习AI创作</span></div>
-      </div>
+      <p class="social-proof">已有 200+ 家长领取专属 AI 艺术学习资料</p>
     </div>
     <div class="footer">
-      <div class="brand">大象智绘AI科创中心</div>
-      <div class="sub">10年专注 · AI赋能艺术教育</div>
-      <div class="contact">📍 广州美术馆二楼研学区 · 现场咨询请联系工作人员</div>
+      <div class="brand">大象智绘</div>
+      <div class="sub">&copy; 2026 大象智绘 AI 科创 · 专注 AI+艺术教育</div>
     </div>
   </div>
   <script>
-  (function(){
-    var ua = navigator.userAgent.toLowerCase();
-    var isWechat = ua.indexOf('micromessenger') > -1;
-    var tip = document.getElementById('save-tip');
-    if (isWechat) {
-      tip.innerHTML = '👆 长按上方作品图片 → 选择「保存图片」即可存到手机相册';
-    } else {
-      tip.innerHTML = '👆 长按上方作品图片 → 选择「保存到相册」即可存到手机';
+    function saveWorkImage(){
+      var img=document.getElementById('hero-img');
+      if(!img){alert('加载中，请稍后');return}
+      window.open(img.src,'_blank');
     }
-  })();
+    function copyShareLink(){
+      var url=window.location.href;
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(function(){
+          var btn=document.getElementById('copyBtn');
+          btn.textContent='已复制';
+          setTimeout(function(){btn.textContent='复制链接'},2000);
+        }).catch(function(){fallbackCopy(url)});
+      } else {fallbackCopy(url)}
+    }
+    function fallbackCopy(text){
+      var ta=document.createElement('textarea');
+      ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy');
+        var btn=document.getElementById('copyBtn');
+        btn.textContent='已复制';
+        setTimeout(function(){btn.textContent='复制链接'},2000);
+      }catch(e){}
+      document.body.removeChild(ta);
+    }
+    function showCourseModal(){
+      document.getElementById('courseModal').style.display='flex';
+    }
+    function hideCourseModal(){
+      document.getElementById('courseModal').style.display='none';
+    }
   </script>
 </body>
 </html>

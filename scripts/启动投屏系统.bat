@@ -14,7 +14,7 @@ timeout /t 2 /nobreak >nul
 
 echo.
 echo [2/6] 启动 Rembg 抠图服务 (端口 7000)...
-start "Rembg (7000)" /min "%~dp0start-rembg.bat"
+start "Rembg (7000)" /min "%~dp0scripts\start-rembg.bat"
 
 echo  等待 Rembg 就绪（首次启动需下载模型，可能需1-2分钟）...
 set REMBG_READY=0
@@ -36,13 +36,13 @@ if %REMBG_READY%==1 (
 
 echo.
 echo [3/6] 启动投屏主服务 (端口 3000)...
-start "Screen (3000)" /min "%~dp0start-screen.bat"
+start "Screen (3000)" /min "%~dp0scripts\start-screen.bat"
 timeout /t 3 /nobreak >nul
 
 echo.
 echo [4/6] 启动收件箱监听 (B电脑监控)...
 if exist "%~dp0..\收件箱监听\inbox-watcher.js" (
-    start "Inbox Watcher" /min "%~dp0start-inbox.bat"
+    start "Inbox Watcher" /min "%~dp0scripts\start-inbox.bat"
     timeout /t 2 /nobreak >nul
 ) else (
     echo  [跳过] 未找到收件箱监听项目

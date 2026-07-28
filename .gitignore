@@ -6,12 +6,10 @@ uploads/
 
 # Environment & secrets
 .env
-.env.local
 .env.*.local
 
 # Logs
 *.log
-npm-debug.log*
 
 # OS files
 .DS_Store
@@ -28,36 +26,17 @@ build/
 # WorkBuddy internal
 .workbuddy/
 
-# Tools / models
-tools/
-
-# Image files - not versioned, generated on deploy
-*.webp
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.bmp
-*.ico
-
-# Deploy outputs (generated, not source)
-deploy-*/
-
-# Generated share pages (regenerate with generate-works-data.ps1)
-public/works/
-public/works-data.json
-
 # AI assistant / agent configs
 .ai-assist/
 .skills/
 
-# Temporary test & preview files
-demo-*.html
-preview-*.html
-test-*.bat
-test-rembg/
-nul
-public/spotlight-test.html
+# Generated share pages
+web/works/
+web/works-data.json
+
+# Deploy outputs
+deploy/pagefire/works/
+deploy/pagefire/artworks/
 
 # Migration package
 迁移新电脑/
