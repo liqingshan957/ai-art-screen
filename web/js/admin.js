@@ -137,19 +137,10 @@ function renderStats() {
 
 function renderCurrentTab() { renderActiveArtworks(); }
 
-// 设置面板 - 独立页面
-function toggleSettings() {
-  var panel = document.getElementById('panel-settings');
-  panel.classList.toggle('hidden');
-  if (!panel.classList.contains('hidden')) { loadCmsConfig(); refreshCutoutStatus(); }
-}
-
 // 检测是否为设置页面
 (function() {
   if (location.pathname === '/admin/settings') {
-    document.getElementById('panel-works').classList.add('hidden');
-    document.getElementById('panel-settings').classList.remove('hidden');
-    document.getElementById('page-title').textContent = '⚙️ 设置';
+    switchPanel('settings');
     loadCmsConfig();
     refreshCutoutStatus();
     var h2 = document.querySelector('.panel.artwork-panel h2');
@@ -820,12 +811,23 @@ function switchSubTab(tab) {
 // ================================================
 let cmsConfigured = false;
 
+function openCmsConfig() {
+  switchPanel('settings');
+  document.getElementById('cms-api-key').focus();
+}
+
+function showCmsConfigBanner(show) {
+  const banner = document.getElementById('cms-config-banner');
+  if (banner) banner.classList.toggle('hidden', !show);
+}
+
 function loadCmsConfig() {
   fetch('/api/cms/config')
     .then(r => r.json())
     .then(d => {
       cmsConfigured = d.configured;
       updateCmsBadge();
+      showCmsConfigBanner(!d.configured);
       if (d.apiBase) document.getElementById('cms-api-base').value = d.apiBase;
       if (d.configured) {
         document.getElementById('cms-status-text').textContent = '✅ 已配置 (密钥: ' + d.apiKeyPrefix + ')';
@@ -856,6 +858,7 @@ function saveCmsConfig() {
       showToast('CMS 配置已保存');
       cmsConfigured = !!key;
       updateCmsBadge();
+      showCmsConfigBanner(!key);
       if (key) testCmsConnection();
     }
   })
@@ -1288,7 +1291,7 @@ function clearCompletedCutout() {
 }
 
 function switchPanel(name) {
-  ['works','cutout'].forEach(function(p) {
+  ['works','cutout','settings'].forEach(function(p) {
     var el = document.getElementById('panel-' + p);
     if (el) el.classList.toggle('hidden', p !== name);
     var tab = document.getElementById('tab-' + p);
@@ -1297,10 +1300,13 @@ function switchPanel(name) {
       tab.style.color = p === name ? '#fff' : '#8a7a5e';
     }
   });
-  document.getElementById('page-title').textContent = name === 'works' ? '🖼️ 作品展示' : '✂️ 抠图队列';
+  document.getElementById('page-title').textContent = name === 'works' ? '🖼️ 作品展示' : name === 'cutout' ? '✂️ 抠图队列' : '⚙️ 设置';
   if (name === 'cutout') {
     refreshCutoutStatus();
     checkRembgHealth();
+  }
+  if (name === 'settings') {
+    loadCmsConfig();
   }
 }
 

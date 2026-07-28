@@ -2,15 +2,12 @@
 
 快速上传网页图片或本地图片到 HKT 活动相册的 Chrome 扩展（MV3）。
 
-## 项目位置
-
-- **源码**：`E:\job\projects\hkt\projects\hkt-picdash\`
-- **打包文件**：`docs/hkt-picdash-v0.1.0.zip`
-
 ## 安装
 
+> 文件：`docs/hkt-picdash-v0.1.0.zip`
+
 ```text
-1. 解压 hkt-picdash-v0.1.0.zip（或直接使用源码目录）
+1. 解压 hkt-picdash-v0.1.0.zip
 2. Chrome 地址栏打开 chrome://extensions
 3. 开启右上角「开发者模式」
 4. 点击「加载已解压的扩展程序」

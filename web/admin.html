@@ -97,13 +97,22 @@
             <span id="page-title">🖼️ 作品展示</span>
             <button class="admin-tab active" id="tab-works" onclick="switchPanel('works')" style="padding:3px 10px;border:none;background:#c9a96e;font-size:11px;font-weight:600;color:#fff;cursor:pointer;border-radius:4px">作品展示</button>
             <button class="admin-tab" id="tab-cutout" onclick="switchPanel('cutout')" style="padding:3px 10px;border:none;background:rgba(201,169,110,.15);font-size:11px;color:#8a7a5e;cursor:pointer;border-radius:4px">抠图队列</button>
+            <button class="admin-tab" id="tab-settings" onclick="switchPanel('settings')" style="padding:3px 10px;border:none;background:rgba(201,169,110,.15);font-size:11px;color:#8a7a5e;cursor:pointer;border-radius:4px">⚙️ 设置</button>
           </span>
           <span style="display:flex;align-items:center;gap:6px">
             <span id="cms-badge" class="count-badge" style="font-size:10px;background:#27ae60">☁️ CMS</span>
             <span id="rembg-badge" class="count-badge" style="background:#999;display:none">✂️ 抠图</span>
-            <a href="/admin/settings" style="text-decoration:none;font-size:16px;cursor:pointer;padding:4px" title="设置">⚙️</a>
           </span>
         </h2>
+
+        <!-- CMS 未配置提示横幅 -->
+        <div id="cms-config-banner" class="config-banner hidden">
+          <div class="config-banner-content">
+            <span class="config-banner-icon">⚠️</span>
+            <span class="config-banner-text">尚未配置 CMS 连接，无法同步活动相册和作品</span>
+            <button class="btn btn-sm" onclick="openCmsConfig()" style="background:#e67e22;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:600">去配置</button>
+          </div>
+        </div>
 
         <div id="panel-works">
           <div style="display:flex;align-items:center;gap:8px;padding:0 0 8px;flex-wrap:wrap">
