@@ -1287,18 +1287,6 @@
     "archivedAt": 1784975041628
   },
   {
-    "id": "91eccf035b86af97",
-    "name": "测试",
-    "date": "20260725",
-    "filename": "91eccf035b86af97.png",
-    "url": "/uploads/artworks/91eccf035b86af97.png",
-    "originalUrl": "/uploads/originals/91eccf035b86af97.png",
-    "status": "archived",
-    "createdAt": 1784950387671,
-    "autoMatting": true,
-    "archivedAt": 1784951240168
-  },
-  {
     "id": "69cb72ce7d7bcc35",
     "name": "炫舞庭飞",
     "date": "20260725",
@@ -1819,6 +1807,38 @@
     "originalUrl": "/uploads/originals/3323550577b6cfb9_c.png",
     "status": "active",
     "createdAt": 1784975637040,
+    "autoMatting": true
+  },
+  {
+    "id": "a63817ad2a245d08",
+    "name": "星诺_AI作品",
+    "date": "20260728",
+    "filename": "a63817ad2a245d08.png",
+    "url": "/uploads/artworks/a63817ad2a245d08.png",
+    "status": "archived",
+    "createdAt": 1785228968479,
+    "archivedAt": 1785229891908
+  },
+  {
+    "id": "adf411d03cdb0893",
+    "name": "test",
+    "date": "20260728",
+    "filename": "adf411d03cdb0893.png",
+    "url": "/uploads/artworks/adf411d03cdb0893.png",
+    "originalUrl": "/uploads/originals/adf411d03cdb0893_c.jpg",
+    "status": "active",
+    "createdAt": 1785231137510,
+    "autoMatting": true
+  },
+  {
+    "id": "29756ea0f2ec519d",
+    "name": "星诺_AI作品",
+    "date": "20260728",
+    "filename": "29756ea0f2ec519d.png",
+    "url": "/uploads/artworks/29756ea0f2ec519d.png",
+    "originalUrl": "/uploads/originals/29756ea0f2ec519d_c.png",
+    "status": "active",
+    "createdAt": 1785231181899,
     "autoMatting": true
   }
 ]

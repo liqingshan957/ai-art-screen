@@ -1577,5 +1577,35 @@
     "createdAt": 1784974264045,
     "autoMatting": true,
     "archivedAt": 1784975308523
+  },
+  {
+    "id": "3f91c0602d1b754c",
+    "name": "test_input_pipa",
+    "date": "20260728",
+    "filename": "3f91c0602d1b754c.jpg",
+    "url": "/uploads/artworks/3f91c0602d1b754c.jpg",
+    "status": "archived",
+    "createdAt": 1785226571819,
+    "archivedAt": 1785227213730
+  },
+  {
+    "id": "44bc6689735b6009",
+    "name": "test_input_pipa",
+    "date": "20260728",
+    "filename": "44bc6689735b6009.jpg",
+    "url": "/uploads/artworks/44bc6689735b6009.jpg",
+    "status": "archived",
+    "createdAt": 1785226952728,
+    "archivedAt": 1785227213940
+  },
+  {
+    "id": "a63817ad2a245d08",
+    "name": "星诺_AI作品",
+    "date": "20260728",
+    "filename": "a63817ad2a245d08.png",
+    "url": "/uploads/artworks/a63817ad2a245d08.png",
+    "status": "archived",
+    "createdAt": 1785228968479,
+    "archivedAt": 1785229891908
   }
 ]
