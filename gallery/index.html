@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="cms-api-key" content="ak_88ntfN52X8NKgtXWyOWCUac6JFfgkNE6zI0mIF7B">
-  <meta name="cms-album-id" content="4">
   <title>敦煌AIGC · 作品欣赏</title>
   <meta property="og:title" id="og-title" content="敦煌 AIGC 作品欣赏">
   <meta property="og:description" id="og-desc" content="大象智绘 AI 科创 · 孩子们用 AI 创作的敦煌风格艺术作品">
@@ -156,12 +155,13 @@
       const m = location.search.match(/[?&]api_key=([^&]*)/);
       return m ? decodeURIComponent(m[1]) : '';
     })();
-    // 展示相册 ID：meta 标签 > 查询参数 > null（=显示全部）
+    // 展示相册 ID：URL 参数 > meta 标签 > null（=显示全部）
     const CMS_ALBUM_ID = (function(){
+      const m = location.search.match(/[?&]album=([^&]*)/);
+      if (m) return decodeURIComponent(m[1]) || null;
       const meta = document.querySelector('meta[name="cms-album-id"]');
       if (meta) return meta.getAttribute('content') || null;
-      const m = location.search.match(/[?&]album=([^&]*)/);
-      return m ? decodeURIComponent(m[1]) : null;
+      return null;
     })();
 
     let artworks = [];

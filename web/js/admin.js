@@ -221,6 +221,8 @@ function populateDisplayAlbumSelect() {
 
 function switchDisplayAlbum(albumId) {
   currentDisplayAlbumId = albumId || null;
+  // 自动更新外部画廊地址
+  updateExternalUrl(currentDisplayAlbumId);
   // 保存到服务端
   fetch('/api/cms/display-album', {
     method: 'PUT',
@@ -594,14 +596,28 @@ function copyWorkLink(id) {
   });
 }
 
-// ===== 外部地址 =====
-const PAGEFIRE_URL = 'https://17xskj-daxiang.pagefire.openhkt.com';
+// ===== 外部地址（PageFire 画廊）=====
+const PAGEFIRE_URL = 'https://dunhuanggallery-brady.pagefire.openhkt.com';
+
+/** 根据当前展示相册自动生成外部画廊 URL */
+function updateExternalUrl(albumId) {
+  const el = document.getElementById('external-base-url');
+  if (!el) return;
+  const base = PAGEFIRE_URL;
+  if (albumId) {
+    el.value = base + (base.includes('?') ? '&' : '?') + 'album=' + albumId;
+  } else {
+    el.value = base;
+  }
+  localStorage.setItem('externalBaseUrl', el.value);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('externalBaseUrl');
   const el = document.getElementById('external-base-url');
   if (!el) return;
-  el.value = saved || PAGEFIRE_URL;
-  if (!saved) localStorage.setItem('externalBaseUrl', PAGEFIRE_URL);
+  // 有保存值就用，否则用 PageFire URL
+  if (saved) el.value = saved;
 });
 document.getElementById('ext-url-save').addEventListener('click', () => {
   const input = document.getElementById('external-base-url');
@@ -729,7 +745,7 @@ function initAlbums() {
     .then(() => fetch('/api/cms/display-album'))
     .then(r => r.json())
     .then(d => {
-      if (d.albumId) { currentDisplayAlbumId = d.albumId; loadWorksFromCms(); }
+      if (d.albumId) { currentDisplayAlbumId = d.albumId; updateExternalUrl(d.albumId); loadWorksFromCms(); }
       else renderActiveArtworks();
     })
     .catch(() => renderActiveArtworks());
