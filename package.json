@@ -2,10 +2,10 @@
   "name": "dunhuang-display",
   "version": "1.0.0",
   "description": "敦煌AIGC艺术展览 - 作品投屏展示系统",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node src/server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",

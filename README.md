@@ -54,7 +54,7 @@
 ```bash
 cd ai-art-screen
 npm install
-node src/server.js
+node server.js
 ```
 
 浏览器打开 `http://localhost:3000/admin` 即可。

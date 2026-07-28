@@ -10,8 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # 启动主服务（必需：Node.js + Express + Socket.IO）
-npm start          # node src/server.js
-npm run dev        # node src/server.js
+npm start          # node server.js
+npm run dev        # node server.js
 
 # 依赖安装
 npm install        # express, socket.io, multer, sharp, form-data
@@ -29,11 +29,13 @@ scripts/启动投屏系统.bat
 
 ```
 ai-art-screen/
-├── src/server.js           # 唯一后端入口。API + Socket.IO + 抠图流水线
+├── server.js               # 唯一后端入口。API + Socket.IO + 抠图流水线
 ├── web/                    # 前端页面（静态文件，Express 直接 serve）
 │   ├── admin.html          # 后台管理（上传/归档/配置）
 │   ├── display.html        # 大屏展示（浮动卡片+粒子特效+视频插播）
-│   └── dashboard.html      # 运营数据看板
+│   ├── gallery.html        # 作品画廊（纯前端，支持 API/静态双数据源）
+│   ├── dashboard.html      # 运营数据看板
+│   └── data/               # 前端静态数据快照（gitignored，运行时生成）
 ├── templates/              # 手机分享页 HTML 模板（{{PLACEHOLDER}} 渲染）
 ├── services/rembg/         # Python 独立抠图服务
 ├── scripts/                # Windows 启动脚本
@@ -56,7 +58,7 @@ ai-art-screen/
 
 | 进程 | 端口 | 启动 | 功能 |
 |------|------|------|------|
-| Node 主服务 | 3000 | `node src/server.js` | API + 页面 + Socket.IO |
+| Node 主服务 | 3000 | `node server.js` | API + 页面 + Socket.IO |
 | Rembg 抠图 | 7000 | `scripts/start-rembg.bat` | Python AI 背景移除 |
 | 收件箱监听 | - | 独立项目 | 轮询 B/C 电脑收件箱 |
 
@@ -68,10 +70,11 @@ ai-art-screen/
   → ② HTTP POST → Rembg 抠图（port 7000）
   → ③ 保存抠图版到 uploads/artworks/
   → ④ 写入 data/artworks.json
-  → ⑤ 生成手机分享页到 web/works/
-  → ⑥ 上传图片到 CDN（img.hkting.com）
-  → ⑦ Socket.IO -> 大屏 display.html 触发特写动画
-  → ⑧ 15s 后 PageFire 公网部署
+  → ⑤ 生成手机分享页到 web/works/{id}.html（纯静态，含OG标签+分析信标）
+  → ⑥ 生成 web/data/works-data.json（画廊页数据快照）
+  → ⑦ 上传图片到 CDN（img.hkting.com）
+  → ⑧ Socket.IO -> 大屏 display.html 触发特写动画
+  → ⑨ 15s 后 PageFire 公网部署
 ```
 
 两种上传路径：
@@ -82,13 +85,16 @@ ai-art-screen/
 
 | 路由 | 功能 |
 |------|------|
-| `GET /display` `GET /admin` `GET /dashboard` | HTML 页面 |
-| `GET /work/:id` | 手机作品分享页（动态渲染模板） |
+| `GET /display` `GET /admin` `GET /dashboard` `GET /gallery` | HTML 页面 |
+| `GET /` | 重定向到 `/gallery` |
+| `GET /work/:id` | 301 重定向到作品静态页 `/works/{id}.html` |
+| `GET /works/{id}.html` | 预生成的手机作品分享页（纯静态） |
 | `GET/POST /api/artworks*` | 作品 CRUD、统计、批量 |
 | `POST /api/auto-matting` | 自动抠图流水线（核心） |
 | `GET/POST/PUT /api/background` | 背景图管理 |
 | `GET/POST/PUT/DELETE /api/videos*` | 视频管理 |
 | `GET /api/analytics/today` | 访问统计 |
+| `GET /api/analytics/beacon` | 1x1 GIF 分析信标（静态页用） |
 | `GET/POST /api/dashboard/today` | 运营看板数据 |
 
 ### Socket.IO 事件

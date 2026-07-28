@@ -18,7 +18,7 @@ const REMBG_PORT = parseInt(process.env.REMBG_PORT || '7000');
 const REMBG_TIMEOUT = 15000;
 const DEDUP_WINDOW = 30000;
 
-const ROOT_DIR = path.resolve(__dirname, '..');
+const ROOT_DIR = path.resolve(__dirname);
 const WEB_DIR = path.join(ROOT_DIR, 'web');
 const UPLOADS_DIR = path.join(ROOT_DIR, 'uploads');
 const ARTWORKS_DIR = path.join(UPLOADS_DIR, 'artworks');
@@ -28,11 +28,13 @@ const VIDEOS_DIR = path.join(UPLOADS_DIR, 'videos');
 const DATA_DIR = path.join(ROOT_DIR, 'data');
 const TEMPLATES_DIR = path.join(ROOT_DIR, 'templates');
 const WEB_WORKS_DIR = path.join(WEB_DIR, 'works');
+const WEB_DATA_DIR = path.join(WEB_DIR, 'data');
+const WORKS_DATA_FILE = path.join(WEB_DATA_DIR, 'works-data.json');
 const PAGEFIRE_DIR = path.join(ROOT_DIR, 'deploy', 'pagefire');
 const PAGEFIRE_WORKS_DIR = path.join(PAGEFIRE_DIR, 'works');
 const PAGEFIRE_ARTWORKS_DIR = path.join(PAGEFIRE_DIR, 'artworks');
 
-[UPLOADS_DIR, ARTWORKS_DIR, ORIGINALS_DIR, BG_DIR, VIDEOS_DIR, WEB_WORKS_DIR, DATA_DIR, PAGEFIRE_DIR, PAGEFIRE_WORKS_DIR, PAGEFIRE_ARTWORKS_DIR].forEach(d => {
+[UPLOADS_DIR, ARTWORKS_DIR, ORIGINALS_DIR, BG_DIR, VIDEOS_DIR, WEB_WORKS_DIR, WEB_DATA_DIR, DATA_DIR, PAGEFIRE_DIR, PAGEFIRE_WORKS_DIR, PAGEFIRE_ARTWORKS_DIR].forEach(d => {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 });
 
@@ -74,13 +76,13 @@ function renderTemplate(tpl, data) {
 }
 function formatDate(d) { return d && d.length >= 8 ? d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8) : ''; }
 function generateWorkPage(a) {
-  const html = renderTemplate(workPageTemplate, { NAME: a.name, SAFE_NAME: a.name.replace(/"/g,'\\"'), URL: a.url, DISPLAY_DATE: formatDate(a.date) });
+  const html = renderTemplate(workPageTemplate, { NAME: a.name, SAFE_NAME: a.name.replace(/"/g,'\\"'), URL: a.url, DISPLAY_DATE: formatDate(a.date), ID: a.id });
   fs.writeFileSync(path.join(WEB_WORKS_DIR, a.id+'.html'), html, 'utf8');
 }
 function generatePagefireWorkPage(a) {
   const cdn = (global.__cdnMap&&global.__cdnMap[a.id])||'';
   const url = cdn||(PAGEFIRE_BASE_URL+'/artworks/'+a.id+'.png');
-  const html = renderTemplate(pagefirePageTemplate, { NAME: a.name, URL: url, DISPLAY_DATE: formatDate(a.date) });
+  const html = renderTemplate(pagefirePageTemplate, { NAME: a.name, URL: url, DISPLAY_DATE: formatDate(a.date), ID: a.id });
   fs.writeFileSync(path.join(PAGEFIRE_WORKS_DIR, a.id+'.html'), html, 'utf8');
 }
 function generateAllWorkPages() {
@@ -88,6 +90,12 @@ function generateAllWorkPages() {
     generateWorkPage(a); generatePagefireWorkPage(a);
     if (!fs.existsSync(path.join(PAGEFIRE_ARTWORKS_DIR, a.id+'.png'))) compressForPagefire(a);
   });
+}
+function generateWorksDataJson() {
+  const list = artworks.filter(a => a.status === 'active').map(a => ({
+    id: a.id, name: a.name, date: a.date, url: a.url
+  }));
+  saveJSON(WORKS_DATA_FILE, list);
 }
 
 // Analytics
@@ -139,7 +147,7 @@ function schedulePagefireDeploy(){
   if(pagefireDeployTimer)clearTimeout(pagefireDeployTimer);
   pagefireDeployTimer=setTimeout(()=>{
     console.log('Auto deploying PageFire...');
-    exec('npx pagefire deploy --dir ../deploy/pagefire',{cwd:__dirname},(err,stdout,stderr)=>{
+    exec('npx pagefire deploy --dir deploy/pagefire',{cwd:__dirname},(err,stdout,stderr)=>{
       if(err)console.error('PageFire deploy failed:',err.message);
       else console.log('PageFire deploy done:',stdout.slice(0,200));
     });
@@ -163,18 +171,20 @@ function compressForPagefire(a){
   }catch(e){console.error('PageFire sync:',e.message);}
 }
 
-app.use(express.static(WEB_DIR));
+app.use(express.static(WEB_DIR, { index: false }));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 app.get('/display',(req,res)=>res.sendFile(path.join(WEB_DIR,'display.html')));
 app.get('/admin',(req,res)=>res.sendFile(path.join(WEB_DIR,'admin.html')));
 app.get('/dashboard',(req,res)=>res.sendFile(path.join(WEB_DIR,'dashboard.html')));
-app.get('/',(req,res)=>res.redirect('/admin'));
+app.get('/gallery',(req,res)=>res.sendFile(path.join(WEB_DIR,'gallery.html')));
+app.get('/',(req,res)=>res.redirect('/gallery'));
 
 app.get('/work/:id',(req,res)=>{
   const a=artworks.find(x=>x.id===req.params.id);
   if(!a)return res.status(404).send('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Not found</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:#999;font-size:18px}</style></head><body>Artwork not found</body></html>');
-  track('pageViews',getClientIP(req));
+  const sp=path.join(WEB_WORKS_DIR,a.id+'.html');
+  if(fs.existsSync(sp))return res.redirect(301,'/works/'+a.id+'.html');
   res.send(renderTemplate(workPageTemplate,{NAME:a.name,SAFE_NAME:a.name.replace(/"/g,'\\"'),URL:a.url,DISPLAY_DATE:formatDate(a.date)}));
 });
 
@@ -185,7 +195,7 @@ app.get('/api/artworks/stats',(req,res)=>{const a=artworks.filter(x=>x.status===
 app.post('/api/artworks/upload',uploadArtwork.single('image'),(req,res)=>{
   if(!req.file)return res.status(400).json({error:'Please select image'});
   const a={id:path.basename(req.file.filename,path.extname(req.file.filename)),name:req.body.name||'Anonymous',date:req.body.date||new Date().toISOString().slice(0,10).replace(/-/g,''),filename:req.file.filename,url:'/uploads/artworks/'+req.file.filename,status:'active',createdAt:Date.now()};
-  artworks.push(a);saveJSON(ARTWORKS_FILE,artworks);track('newArtworks');generateWorkPage(a);compressForPagefire(a);schedulePagefireDeploy();io.emit('artwork:new',a);
+  artworks.push(a);saveJSON(ARTWORKS_FILE,artworks);track('newArtworks');generateWorkPage(a);generateWorksDataJson();compressForPagefire(a);schedulePagefireDeploy();io.emit('artwork:new',a);
   res.json({success:true,artwork:a});
 });
 
@@ -193,7 +203,7 @@ app.post('/api/artworks/batch',uploadArtwork.array('images',50),(req,res)=>{
   if(!req.files||!req.files.length)return res.status(400).json({error:'Please select images'});
   const nl=req.body.names?JSON.parse(req.body.names):[],dl=req.body.dates?JSON.parse(req.body.dates):[],na=[];
   req.files.forEach((f,i)=>{const a={id:path.basename(f.filename,path.extname(f.filename)),name:nl[i]||'Anonymous',date:dl[i]||new Date().toISOString().slice(0,10).replace(/-/g,''),filename:f.filename,url:'/uploads/artworks/'+f.filename,status:'active',createdAt:Date.now()};artworks.push(a);na.push(a);generateWorkPage(a);compressForPagefire(a);});
-  saveJSON(ARTWORKS_FILE,artworks);track('newArtworks',na.length);schedulePagefireDeploy();io.emit('artworks:batch',na);
+  saveJSON(ARTWORKS_FILE,artworks);track('newArtworks',na.length);generateWorksDataJson();schedulePagefireDeploy();io.emit('artworks:batch',na);
   res.json({success:true,count:na.length,artworks:na});
 });
 
@@ -210,7 +220,7 @@ app.post('/api/auto-matting',uploadArtwork.single('image'),async(req,res)=>{
     const md=await callRembg(cp),mf=id+'.png',mp=path.join(ARTWORKS_DIR,mf);fs.writeFileSync(mp,md);
     if(op!==mp)try{fs.unlinkSync(op);}catch(e){}
     const a={id,name:n,date:req.body.date||new Date().toISOString().slice(0,10).replace(/-/g,''),filename:mf,url:'/uploads/artworks/'+mf,originalUrl:'/uploads/originals/'+id+'_c'+oe,status:'active',createdAt:Date.now(),autoMatting:true};
-    artworks.push(a);saveJSON(ARTWORKS_FILE,artworks);track('newArtworks');generateWorkPage(a);compressForPagefire(a);schedulePagefireDeploy();io.emit('artwork:new',a);
+    artworks.push(a);saveJSON(ARTWORKS_FILE,artworks);track('newArtworks');generateWorkPage(a);generateWorksDataJson();compressForPagefire(a);schedulePagefireDeploy();io.emit('artwork:new',a);
     res.json({success:true,matted:true,artwork:a});
   }catch(e){try{fs.unlinkSync(op);}catch(ee){}res.json({success:false,matted:false,error:e.message});}
 });
@@ -219,24 +229,34 @@ app.put('/api/artworks/:id/archive',(req,res)=>{
   const a=artworks.find(x=>x.id===req.params.id);if(!a)return res.status(404).json({error:'Not found'});
   a.status='archived';a.archivedAt=Date.now();saveJSON(ARTWORKS_FILE,artworks);
   if(!archive.find(x=>x.id===a.id)){archive.push({...a});saveJSON(ARCHIVE_FILE,archive);}
+  generateWorksDataJson();
   io.emit('artwork:archive',{id:a.id});res.json({success:true,artwork:a});
 });
 app.put('/api/artworks/:id/restore',(req,res)=>{
   const a=artworks.find(x=>x.id===req.params.id);if(!a)return res.status(404).json({error:'Not found'});
   a.status='active';delete a.archivedAt;archive=archive.filter(x=>x.id!==a.id);saveJSON(ARCHIVE_FILE,archive);saveJSON(ARTWORKS_FILE,artworks);
+  generateWorksDataJson();
   io.emit('artwork:restore',{id:a.id,artwork:a});res.json({success:true,artwork:a});
 });
 app.delete('/api/artworks/:id/purge',(req,res)=>{
   const idx=artworks.findIndex(a=>a.id===req.params.id);if(idx===-1)return res.status(404).json({error:'Not found'});
   const a=artworks[idx];artworks.splice(idx,1);archive=archive.filter(x=>x.id!==a.id);saveJSON(ARTWORKS_FILE,artworks);saveJSON(ARCHIVE_FILE,archive);
   [path.join(WEB_WORKS_DIR,a.id+'.html'),path.join(ARTWORKS_DIR,a.filename),path.join(PAGEFIRE_WORKS_DIR,a.id+'.html'),path.join(PAGEFIRE_ARTWORKS_DIR,a.id+'.jpg'),path.join(PAGEFIRE_ARTWORKS_DIR,a.id+'_c.jpg')].forEach(p=>{try{if(fs.existsSync(p))fs.unlinkSync(p);}catch(e){}});
+  generateWorksDataJson();
   io.emit('artwork:purge',{id:a.id});res.json({success:true});
 });
-app.post('/api/regenerate-pages',(req,res)=>{generateAllWorkPages();schedulePagefireDeploy();res.json({success:true,message:'Done'});});
+app.post('/api/regenerate-pages',(req,res)=>{generateAllWorkPages();generateWorksDataJson();schedulePagefireDeploy();res.json({success:true,message:'Done'});});
 
 app.get('/api/analytics/today',(req,res)=>{
   const t=ensureToday();const y=new Date(Date.now()-86400000);const yk=''+y.getFullYear()+String(y.getMonth()+1).padStart(2,'0')+String(y.getDate()).padStart(2,'0');const ys=analytics[yk]||{pageViews:0,visitors:[],newArtworks:0,displayViews:0,shareClicks:0};
   res.json({today:{pageViews:t.pageViews,uniqueVisitors:t.visitors.length,newArtworks:t.newArtworks,displayViews:t.displayViews,shareClicks:t.shareClicks},yesterday:{pageViews:ys.pageViews,uniqueVisitors:ys.visitors.length,newArtworks:ys.newArtworks,displayViews:ys.displayViews,shareClicks:ys.shareClicks}});
+});
+// Analytics beacon — used by static pre-generated work pages (no SSR needed)
+app.get('/api/analytics/beacon',(req,res)=>{
+  const t=ensureToday();
+  t.pageViews++;if(req.ip&&!t.visitors.includes(req.ip))t.visitors.push(req.ip);
+  saveJSON(ANALYTICS_FILE,analytics);
+  res.set('Content-Type','image/gif');res.send(Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7','base64'));
 });
 
 app.get('/api/dashboard',(req,res)=>{res.json({records:Object.entries(dashboardData).map(([d,x])=>({date:d,...x})).sort((a,b)=>b.date.localeCompare(a.date))});});
@@ -278,6 +298,7 @@ io.on('connection',(socket)=>{
 app.use((err,req,res,next)=>{if(err){console.error(err.message);if(err.code==='LIMIT_FILE_SIZE')return res.status(400).json({error:'File too large'});return res.status(400).json({error:err.message||'Upload failed'});}next();});
 
 generateAllWorkPages();
+generateWorksDataJson();
 server.listen(PORT,()=>{
   const os=require('os'),ifs=os.networkInterfaces();let ip='localhost';
   for(const i of Object.values(ifs))for(const a of i)if(a.family==='IPv4'&&!a.internal){ip=a.address;break;}
@@ -287,6 +308,7 @@ server.listen(PORT,()=>{
   console.log('========================================');
   console.log('  Display: http://localhost:'+PORT+'/display');
   console.log('  Admin:   http://localhost:'+PORT+'/admin');
+  console.log('  Gallery: http://localhost:'+PORT+'/gallery');
   console.log('  Mobile:  http://'+ip+':'+PORT+'/work/{id}');
   console.log('========================================');
 });

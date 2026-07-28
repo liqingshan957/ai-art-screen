@@ -30,9 +30,9 @@ build/
 .ai-assist/
 .skills/
 
-# Generated share pages
+# Generated share pages & data
 web/works/
-web/works-data.json
+web/data/
 
 # Deploy outputs
 deploy/pagefire/works/
