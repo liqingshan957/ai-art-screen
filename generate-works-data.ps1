@@ -7,7 +7,7 @@ foreach($a in $data) {
     if(Test-Path $cropFile) {
         $result += [PSCustomObject]@{
             id = $a.id; name = $a.name; date = $a.date
-            url = "/uploads/originals/$($a.id)_c.png"
+            url = "artworks/$($a.id)_c.jpg"
             status = $a.status; isActive = ($a.status -eq 'active')
         }
     }

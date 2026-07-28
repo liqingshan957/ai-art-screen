@@ -27,8 +27,26 @@
     "visitors": [
       "::1"
     ],
-    "newArtworks": 61,
+    "newArtworks": 63,
     "displayViews": 28,
+    "shareClicks": 0
+  },
+  "20260727": {
+    "pageViews": 13,
+    "visitors": [
+      "::1"
+    ],
+    "newArtworks": 0,
+    "displayViews": 0,
+    "shareClicks": 0
+  },
+  "20260728": {
+    "pageViews": 5,
+    "visitors": [
+      "::1"
+    ],
+    "newArtworks": 0,
+    "displayViews": 0,
     "shareClicks": 0
   }
 }

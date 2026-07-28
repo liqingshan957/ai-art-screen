@@ -34,7 +34,7 @@ async function main() {
   const template = fs.readFileSync(TEMPLATE, "utf-8");
   let pageCount = 0;
   const outputs = [
-    { dir: DEPLOY_WORKS, imgPath: id => "../artworks/" + id + "_c.jpg" },
+    { dir: DEPLOY_WORKS, imgPath: id => "/artworks/" + id + "_c.jpg" },
     { dir: PUBLIC_WORKS, imgPath: id => "/uploads/originals/" + id + "_c.png" }
   ];
   
@@ -76,6 +76,7 @@ async function main() {
   const currentIds = withCrop.map(a => a.id);
   let cleaned = 0;
   fs.readdirSync(DEPLOY_ART).forEach(f => {
+    if (f.startsWith('.')) return;
     const id = f.replace(/\.(jpg|png|webp)$/i, "").replace("_c", "");
     if (!currentIds.includes(id) || !f.endsWith("_c.jpg")) {
       fs.unlinkSync(path.join(DEPLOY_ART, f));
@@ -93,4 +94,5 @@ async function main() {
 }
 
 main().catch(e => { console.error("❌", e.message); process.exit(1); });
+
 

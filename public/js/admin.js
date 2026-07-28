@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 管理后台逻辑 v2
  * - 统计看板（总数/在展/归档）
  * - Tab 切换（在展中 / 历史归档）
@@ -495,7 +495,7 @@ function copyWorkLink(id) {
 }
 
 // ===== 外部地址 =====
-const PAGEFIRE_URL = 'https://gzart-o8114r7d.pagefire.openhkt.com';
+const PAGEFIRE_URL = 'https://17xskj-daxiang.pagefire.openhkt.com';
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('externalBaseUrl');
   const el = document.getElementById('external-base-url');

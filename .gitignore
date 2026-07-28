@@ -1,4 +1,4 @@
-﻿# Dependencies
+# Dependencies
 node_modules/
 
 # Uploads (user-generated content, not versioned)
@@ -41,9 +41,20 @@ tools/
 *.ico
 
 # Deploy outputs (generated, not source)
-deploy-pagefire/
-deploy-test/
+deploy-*/
 
 # Generated share pages (regenerate with generate-works-data.ps1)
 public/works/
 public/works-data.json
+
+# AI assistant / agent configs
+.ai-assist/
+.skills/
+
+# Temporary test & preview files
+demo-*.html
+preview-*.html
+test-*.bat
+test-rembg/
+nul
+public/spotlight-test.html

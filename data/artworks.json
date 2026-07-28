@@ -866,8 +866,9 @@
     "date": "20260724",
     "filename": "d3866d967c1ded4b.png",
     "url": "/uploads/artworks/d3866d967c1ded4b.png",
-    "status": "active",
-    "createdAt": 1784860717887
+    "status": "archived",
+    "createdAt": 1784860717887,
+    "archivedAt": 1784975045929
   },
   {
     "id": "1fcf37731152808f",
@@ -919,9 +920,10 @@
     "date": "20260724",
     "filename": "5db395f7f25f700d.png",
     "url": "/uploads/artworks/5db395f7f25f700d.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784863797776,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975294161
   },
   {
     "id": "5cfe81af5de15d7a",
@@ -1137,9 +1139,10 @@
     "date": "20260725",
     "filename": "d0c4f6c0fed40689.png",
     "url": "/uploads/artworks/d0c4f6c0fed40689.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784945559442,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975043895
   },
   {
     "id": "b837b1ffad7c9dd1",
@@ -1207,9 +1210,10 @@
     "filename": "f922d7b0fbf4cac2.png",
     "url": "/uploads/artworks/f922d7b0fbf4cac2.png",
     "originalUrl": "/uploads/originals/f922d7b0fbf4cac2.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784948306659,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975071885
   },
   {
     "id": "3c901c4d6143086a",
@@ -1229,9 +1233,10 @@
     "filename": "a985dbe274b724fc.png",
     "url": "/uploads/artworks/a985dbe274b724fc.png",
     "originalUrl": "/uploads/originals/a985dbe274b724fc.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784949277541,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975055137
   },
   {
     "id": "ac7c79478e8b0672",
@@ -1240,9 +1245,10 @@
     "filename": "ac7c79478e8b0672.png",
     "url": "/uploads/artworks/ac7c79478e8b0672.png",
     "originalUrl": "/uploads/originals/ac7c79478e8b0672.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784949408597,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975053468
   },
   {
     "id": "585cbf5d47671398",
@@ -1251,9 +1257,10 @@
     "filename": "585cbf5d47671398.png",
     "url": "/uploads/artworks/585cbf5d47671398.png",
     "originalUrl": "/uploads/originals/585cbf5d47671398.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784949735653,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975038649
   },
   {
     "id": "31ceb74011ff4c83",
@@ -1262,9 +1269,10 @@
     "filename": "31ceb74011ff4c83.png",
     "url": "/uploads/artworks/31ceb74011ff4c83.png",
     "originalUrl": "/uploads/originals/31ceb74011ff4c83.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784949887736,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975037024
   },
   {
     "id": "51d28e56c5d3fa38",
@@ -1273,9 +1281,10 @@
     "filename": "51d28e56c5d3fa38.png",
     "url": "/uploads/artworks/51d28e56c5d3fa38.png",
     "originalUrl": "/uploads/originals/51d28e56c5d3fa38.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784950056430,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975041628
   },
   {
     "id": "91eccf035b86af97",
@@ -1308,9 +1317,10 @@
     "filename": "77c87ad5e2b579b5.png",
     "url": "/uploads/artworks/77c87ad5e2b579b5.png",
     "originalUrl": "/uploads/originals/77c87ad5e2b579b5.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784951928623,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975080840
   },
   {
     "id": "63b3a293442b4452",
@@ -1318,8 +1328,9 @@
     "date": "20260725",
     "filename": "63b3a293442b4452.png",
     "url": "/uploads/artworks/63b3a293442b4452.png",
-    "status": "active",
-    "createdAt": 1784955373230
+    "status": "archived",
+    "createdAt": 1784955373230,
+    "archivedAt": 1784975033175
   },
   {
     "id": "cf407f44f5934086",
@@ -1340,9 +1351,10 @@
     "filename": "f9cc315c2fddc99a.png",
     "url": "/uploads/artworks/f9cc315c2fddc99a.png",
     "originalUrl": "/uploads/originals/f9cc315c2fddc99a.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784955708352,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975030351
   },
   {
     "id": "d045d8c10cab6e2c",
@@ -1351,9 +1363,10 @@
     "filename": "d045d8c10cab6e2c.png",
     "url": "/uploads/artworks/d045d8c10cab6e2c.png",
     "originalUrl": "/uploads/originals/d045d8c10cab6e2c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784956402620,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975033986
   },
   {
     "id": "ac4ca11876582dcc",
@@ -1362,9 +1375,10 @@
     "filename": "ac4ca11876582dcc.png",
     "url": "/uploads/artworks/ac4ca11876582dcc.png",
     "originalUrl": "/uploads/originals/ac4ca11876582dcc_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784956944509,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975082966
   },
   {
     "id": "57446b7f9c121744",
@@ -1396,9 +1410,10 @@
     "filename": "771c464314aaab47.png",
     "url": "/uploads/artworks/771c464314aaab47.png",
     "originalUrl": "/uploads/originals/771c464314aaab47_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784958732172,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975028522
   },
   {
     "id": "c7a5f3d6324e1c5d",
@@ -1429,9 +1444,10 @@
     "filename": "a8a66bbb3ba4013e.png",
     "url": "/uploads/artworks/a8a66bbb3ba4013e.png",
     "originalUrl": "/uploads/originals/a8a66bbb3ba4013e_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784960397269,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975283175
   },
   {
     "id": "ffc724e4422b7411",
@@ -1440,9 +1456,10 @@
     "filename": "ffc724e4422b7411.png",
     "url": "/uploads/artworks/ffc724e4422b7411.png",
     "originalUrl": "/uploads/originals/ffc724e4422b7411_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784960515103,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975296115
   },
   {
     "id": "127edceade97107b",
@@ -1451,9 +1468,10 @@
     "filename": "127edceade97107b.png",
     "url": "/uploads/artworks/127edceade97107b.png",
     "originalUrl": "/uploads/originals/127edceade97107b_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784961166492,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975286134
   },
   {
     "id": "2d05895cdc0ecaf3",
@@ -1661,9 +1679,10 @@
     "filename": "a93ba1bdf9d46a43.png",
     "url": "/uploads/artworks/a93ba1bdf9d46a43.png",
     "originalUrl": "/uploads/originals/a93ba1bdf9d46a43_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784972189114,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975067078
   },
   {
     "id": "fb38543cbb7b210d",
@@ -1684,9 +1703,10 @@
     "filename": "72add478db631cf6.png",
     "url": "/uploads/artworks/72add478db631cf6.png",
     "originalUrl": "/uploads/originals/72add478db631cf6_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784972939833,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975068627
   },
   {
     "id": "61a5515f6e490f16",
@@ -1695,9 +1715,10 @@
     "filename": "61a5515f6e490f16.png",
     "url": "/uploads/artworks/61a5515f6e490f16.png",
     "originalUrl": "/uploads/originals/61a5515f6e490f16_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784973182760,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975064158
   },
   {
     "id": "06b5c141d49568ac",
@@ -1728,9 +1749,10 @@
     "filename": "c0067d3d530e5d5a.png",
     "url": "/uploads/artworks/c0067d3d530e5d5a.png",
     "originalUrl": "/uploads/originals/c0067d3d530e5d5a_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784974169736,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975301328
   },
   {
     "id": "792d0abb0ede29df",
@@ -1739,9 +1761,10 @@
     "filename": "792d0abb0ede29df.png",
     "url": "/uploads/artworks/792d0abb0ede29df.png",
     "originalUrl": "/uploads/originals/792d0abb0ede29df_c.png",
-    "status": "active",
+    "status": "archived",
     "createdAt": 1784974264045,
-    "autoMatting": true
+    "autoMatting": true,
+    "archivedAt": 1784975308523
   },
   {
     "id": "1c7edb49ebb6767e",
@@ -1774,6 +1797,28 @@
     "originalUrl": "/uploads/originals/b4040fe1511121cc_c.png",
     "status": "active",
     "createdAt": 1784974921108,
+    "autoMatting": true
+  },
+  {
+    "id": "28986c5c040edf0b",
+    "name": "甜甜",
+    "date": "20260725",
+    "filename": "28986c5c040edf0b.png",
+    "url": "/uploads/artworks/28986c5c040edf0b.png",
+    "originalUrl": "/uploads/originals/28986c5c040edf0b_c.png",
+    "status": "active",
+    "createdAt": 1784975227954,
+    "autoMatting": true
+  },
+  {
+    "id": "3323550577b6cfb9",
+    "name": "格格",
+    "date": "20260725",
+    "filename": "3323550577b6cfb9.png",
+    "url": "/uploads/artworks/3323550577b6cfb9.png",
+    "originalUrl": "/uploads/originals/3323550577b6cfb9_c.png",
+    "status": "active",
+    "createdAt": 1784975637040,
     "autoMatting": true
   }
 ]
