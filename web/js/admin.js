@@ -968,8 +968,9 @@ function syncAlbums() {
         showToast('同步完成: ' + d.albumsCount + ' 个相册');
       } else showToast('同步失败: ' + d.error);
       loadAlbums();
+      loadWorksFromCms();  // ← 同步后自动刷新作品列表+数量
     })
-    .catch(err => { showToast('同步失败: ' + err.message); loadAlbums(); });
+    .catch(err => { showToast('同步失败: ' + err.message); loadAlbums(); loadWorksFromCms(); });
 }
 
 // ===== 相册详情 =====

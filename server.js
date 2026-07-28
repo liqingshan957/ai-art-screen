@@ -15,6 +15,7 @@ const PORT = 3000;
 const REMBG_HOST = process.env.REMBG_HOST || 'localhost';
 const REMBG_PORT = parseInt(process.env.REMBG_PORT || '7000');
 const REMBG_TIMEOUT = 15000;
+const CMS_POLL_INTERVAL = parseInt(process.env.CMS_POLL_INTERVAL || '5000');
 const DEDUP_WINDOW = 30000;
 
 const ROOT_DIR = path.resolve(__dirname);
@@ -636,7 +637,8 @@ async function processCutoutQueue() {
         item.status = 'error';
         item.error = e.message;
         item.doneAt = Date.now();
-        console.error('[Cutout] 失败:', item.mediaName || item.mediaId, e.message);
+        if (item.retryCount === undefined) item.retryCount = 0;
+        console.error('[Cutout] 失败:', item.mediaName || item.mediaId, '(' + (item.retryCount + 1) + '次)', e.message);
       })
     ));
     persistCutoutQueue();
@@ -848,6 +850,10 @@ app.post('/api/videos/upload',uploadVideo.single('video'),async (req,res)=>{
 app.delete('/api/videos/:id',(req,res)=>{const idx=videos.findIndex(v=>v.id===req.params.id);if(idx===-1)return res.status(404).json({error:'Not found'});const v=videos[idx];videos.splice(idx,1);saveJSON(VIDEOS_FILE,videos);io.emit('videos:update',videos);const fp=path.join(VIDEOS_DIR,v.filename);if(fs.existsSync(fp))try{fs.unlinkSync(fp);}catch(e){}res.json({success:true});});
 app.put('/api/videos/config',express.json(),(req,res)=>{videoConfig.interval=req.body.interval||300;videoConfig.repeat=req.body.repeat||2;saveJSON(VIDEOS_CONFIG_FILE,videoConfig);const cfg={interval:videoConfig.interval,repeat:videoConfig.repeat,enabled:videos.length>0};io.emit('videos:config',cfg);res.json({success:true,config:cfg});});
 
+// ===== 自动重试间隔（失败条目至少等 60s 再重试，最多重试 10 次）=====
+const CUTOUT_RETRY_INTERVAL = 60000;
+const CUTOUT_MAX_RETRIES = 10;
+
 // ===== 服务端定时轮询 CMS 新增媒体 =====
 let cmsPollState = { albumId: null, sinceId: 0 };
 async function pollCmsNewMedia() {
@@ -855,15 +861,52 @@ async function pollCmsNewMedia() {
   const albumId = cache.displayAlbumId || null;
   if (!albumId) return;
   if (cmsPollState.albumId !== albumId) { cmsPollState.albumId = albumId; cmsPollState.sinceId = 0; }
+
+  // 同步：将从 CMS 拉取的最新媒体列表写入缓存，admin UI 即时可见
+  async function syncCacheMedia(albumId, medias) {
+    const c = getCmsCache();
+    let album = c.albums.find(a => String(a.albumId) === albumId);
+    if (!album) { album = { albumId, medias: [] }; c.albums.push(album); }
+    for (const m of medias) {
+      const mediaId = String(m.mediaId || m.id);
+      const existing = album.medias.find(mm => String(mm.mediaId) === mediaId);
+      if (!existing) {
+        album.medias.push({
+          mediaId, mediaUrl: m.mediaUrl, sourceUrl: m.sourceUrl,
+          mediaName: m.mediaName || '', enabled: true, createTime: m.createTime || new Date().toISOString()
+        });
+      } else {
+        // 更新 URL（CMS 可能后续产生了 cutoutUrl）
+        if (m.cutoutUrl) existing.cutoutUrl = m.cutoutUrl;
+        if (m.mediaUrl) existing.mediaUrl = m.mediaUrl;
+      }
+    }
+    saveCmsCache(c);
+  }
+
   try {
     const data = await cmsRequest(`/activity-albums/${albumId}/media/check?sinceId=${cmsPollState.sinceId}&limit=20`);
     if (!data || !data.length) return;
+    await syncCacheMedia(albumId, data); // ← 同步缓存，让后台即时看到
+
     let maxId = cmsPollState.sinceId;
     for (const m of data) {
       const mid = parseInt(m.mediaId || m.id);
       if (mid > maxId) maxId = mid;
-      if (!m.cutoutUrl && !cutoutQueue.find(q => String(q.mediaId) === String(mid))) {
+      if (m.cutoutUrl) continue; // 已有抠图结果，跳过
+
+      const existing = cutoutQueue.find(q => String(q.mediaId) === String(mid));
+      if (!existing) {
+        // 全新媒体 → 加入队列
         cutoutQueue.push({ albumId, mediaId: String(mid), mediaUrl: m.mediaUrl, sourceUrl: m.sourceUrl, mediaName: m.mediaName || '', status: 'pending', addedAt: Date.now() });
+        persistCutoutQueue();
+        if (!isProcessingCutout) processCutoutQueue();
+      } else if (existing.status === 'error' && (existing.retryCount || 0) < CUTOUT_MAX_RETRIES && Date.now() - (existing.doneAt || 0) > CUTOUT_RETRY_INTERVAL) {
+        // 失败条目且未超重试上限、已过重试间隔 → 重置为 pending 重试
+        existing.status = 'pending';
+        delete existing.error;
+        existing.addedAt = Date.now();
+        existing.retryCount = (existing.retryCount || 0) + 1;
         persistCutoutQueue();
         if (!isProcessingCutout) processCutoutQueue();
       }
@@ -872,7 +915,7 @@ async function pollCmsNewMedia() {
     generateWorksDataJson();
   } catch (e) { /* silent */ }
 }
-setInterval(pollCmsNewMedia, 45000);
+setInterval(pollCmsNewMedia, CMS_POLL_INTERVAL);
 
 // ===== Socket.IO =====
 io.on('connection',(socket)=>{
