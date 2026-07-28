@@ -840,8 +840,10 @@ function loadCmsConfig() {
 function updateCmsBadge() {
   const badge = document.getElementById('cms-badge');
   if (!badge) return;
+  badge.style.display = '';
   badge.textContent = cmsConfigured ? '☁️ CMS 已连接' : '☁️ CMS 未配置';
-  badge.style.background = cmsConfigured ? '#27ae60' : '#999';
+  badge.style.background = cmsConfigured ? 'rgba(39,174,96,0.15)' : 'rgba(153,153,153,0.12)';
+  badge.style.color = cmsConfigured ? '#27ae60' : '#999';
 }
 
 function saveCmsConfig() {
@@ -1140,13 +1142,19 @@ function checkRembgHealth() {
       if (dot) { dot.className = 'health-dot ' + cls; statusText.textContent = txt; }
       if (hDot) { hDot.className = 'header-health-dot ' + cls; hText.textContent = txt; }
       if (cDot) { cDot.className = 'cms-rembg-dot ' + cls; cText.textContent = txt; cText.style.color = cls === 'ready' ? '#4caf50' : cls === 'loading' ? '#ff9800' : '#f44336'; }
-      if (badge) { badge.style.display = ''; badge.style.background = cls === 'ready' ? '#27ae60' : cls === 'loading' ? '#ff9800' : '#f44336'; badge.textContent = cls === 'ready' ? '✂️ 抠图 已连接' : '✂️ 抠图 离线'; }
+      if (badge) {
+        badge.style.display = '';
+        badge.textContent = cls === 'ready' ? '✂️ 抠图 已连接' : '✂️ 抠图 离线';
+        if (cls === 'ready') { badge.style.background = 'rgba(39,174,96,0.15)'; badge.style.color = '#27ae60'; }
+        else if (cls === 'loading') { badge.style.background = 'rgba(255,152,0,0.15)'; badge.style.color = '#ff9800'; }
+        else { badge.style.background = 'rgba(244,67,54,0.12)'; badge.style.color = '#f44336'; }
+      }
     })
     .catch(function() {
       if (dot) dot.className = 'health-dot unavailable';
       if (hDot) { hDot.className = 'header-health-dot unavailable'; hText.textContent = '不可用'; }
       if (cDot) { cDot.className = 'cms-rembg-dot unavailable'; cText.textContent = '不可用'; cText.style.color = '#f44336'; }
-      if (badge) { badge.style.display = ''; badge.style.background = '#f44336'; badge.textContent = '✂️ 抠图'; }
+      if (badge) { badge.style.display = ''; badge.textContent = '✂️ 抠图 离线'; badge.style.background = 'rgba(244,67,54,0.12)'; badge.style.color = '#f44336'; }
     });
 }
 function refreshCutoutStatus() {
