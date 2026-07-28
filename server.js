@@ -574,84 +574,12 @@ app.delete('/api/cms/cutout/queue', (req, res) => {
   res.json({ success: true, remaining: cutoutQueue.length });
 });
 
-// ===== 抠图并发控制 =====
-const MAX_CONCURRENT_CUTOUT = 3;
+// ===== 抠图队列（仅管理接口，处理由本地 Rembg 完成）=====
+let isProcessingCutout = false;
+let cutoutQueue = loadJSON(DATA_DIR + '/cutout-queue.json', []);
+function persistCutoutQueue() { saveJSON(DATA_DIR + '/cutout-queue.json', cutoutQueue); }
 
-/** 处理单个抠图任务 */
-async function processOneCutout(item) {
-  console.log('[Cutout] 处理:', item.mediaName || item.mediaId);
-  // 从 CMS 刷新最新媒体信息（确保 URL 不过期、跳过已抠图的）
-  let mediaInfo;
-  try { mediaInfo = await cmsRequest('/activity-albums/media/' + item.mediaId); } catch (e) {}
-  if (mediaInfo) {
-    if (mediaInfo.cutoutUrl) { item.status = 'done'; item.resultUrl = mediaInfo.cutoutUrl; item.doneAt = Date.now(); console.log('[Cutout] 跳过(已有抠图):', item.mediaName || item.mediaId); return; }
-    item.mediaUrl = mediaInfo.mediaUrl || item.mediaUrl;
-    item.sourceUrl = mediaInfo.sourceUrl || item.sourceUrl;
-  }
-  const downloadUrl = item.mediaUrl || item.sourceUrl;
-  if (!downloadUrl) throw new Error('没有可下载的图片 URL');
-  const resp = await fetch(downloadUrl);
-  if (!resp.ok) throw new Error('下载失败 HTTP ' + resp.status);
-  const buf = Buffer.from(await resp.arrayBuffer());
-  const ext = path.extname(new URL(downloadUrl).pathname) || '.jpg';
-  const tmpFile = path.join(CUTOUT_DIR, item.mediaId + ext);
-  fs.writeFileSync(tmpFile, buf);
-  let mattedBuffer;
-  try { mattedBuffer = await callRembg(tmpFile); } catch (e) {
-    const img = sharp(tmpFile);
-    mattedBuffer = await img.png().toBuffer();
-    console.warn('[Cutout] Rembg 不可用，使用原图:', e.message);
-  }
-  const cutoutFile = { originalname: 'cutout_' + item.mediaId + '.png', buffer: mattedBuffer, mimetype: 'image/png', size: mattedBuffer.length };
-  const uploadResult = await cmsFileUpload(cutoutFile);
-  await cmsRequest(`/activity-albums/${item.albumId}/media/${item.mediaId}`, {
-    method: 'PUT', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cutoutUrl: uploadResult.url })
-  });
-  const cCache = getCmsCache();
-  const cAlbum = cCache.albums.find(a => String(a.albumId) === item.albumId);
-  if (cAlbum && cAlbum.medias) {
-    const cMedia = cAlbum.medias.find(m => String(m.mediaId) === item.mediaId);
-    if (cMedia) cMedia.cutoutUrl = uploadResult.url;
-  }
-  saveCmsCache(cCache);
-  const workId = 'cms_' + item.mediaId;
-  io.emit('artwork:new', { id: workId, name: item.mediaName || '', date: new Date().toISOString().slice(0,10).replace(/-/g,''), url: uploadResult.url, originalUrl: item.mediaUrl, status: 'active', isCms: true });
-  item.status = 'done';
-  item.resultUrl = uploadResult.url;
-  item.doneAt = Date.now();
-  console.log('[Cutout] 完成:', item.mediaName || item.mediaId, '→', uploadResult.url);
-}
-
-/** 后台处理抠图队列（并发 3 张） */
-async function processCutoutQueue() {
-  if (isProcessingCutout) return;
-  isProcessingCutout = true;
-  while (true) {
-    const batch = cutoutQueue.filter(q => q.status === 'pending').slice(0, MAX_CONCURRENT_CUTOUT);
-    if (batch.length === 0) break;
-    batch.forEach(item => { item.status = 'processing'; });
-    persistCutoutQueue();
-    await Promise.allSettled(batch.map(item =>
-      processOneCutout(item).catch(e => {
-        item.status = 'error';
-        item.error = e.message;
-        item.doneAt = Date.now();
-        if (item.retryCount === undefined) item.retryCount = 0;
-        console.error('[Cutout] 失败:', item.mediaName || item.mediaId, '(' + (item.retryCount + 1) + '次)', e.message);
-      })
-    ));
-    persistCutoutQueue();
-  }
-  generateWorksDataJson();
-  isProcessingCutout = false;
-}
-// 启动时检查队列（恢复未完成的抠图）
-(function resumeCutoutQueue() {
-  cutoutQueue.forEach(q => { if (q.status === 'processing') q.status = 'pending'; });
-  persistCutoutQueue();
-  if (cutoutQueue.find(q => q.status === 'pending')) setTimeout(processCutoutQueue, 2000);
-})();
+// 抠图处理由本地 Rembg 完成，服务器仅提供队列管理接口
 
 // ===== 同步 CMS 数据到本地缓存 =====
 app.post('/api/cms/sync', async (req, res) => {
@@ -850,11 +778,40 @@ app.post('/api/videos/upload',uploadVideo.single('video'),async (req,res)=>{
 app.delete('/api/videos/:id',(req,res)=>{const idx=videos.findIndex(v=>v.id===req.params.id);if(idx===-1)return res.status(404).json({error:'Not found'});const v=videos[idx];videos.splice(idx,1);saveJSON(VIDEOS_FILE,videos);io.emit('videos:update',videos);const fp=path.join(VIDEOS_DIR,v.filename);if(fs.existsSync(fp))try{fs.unlinkSync(fp);}catch(e){}res.json({success:true});});
 app.put('/api/videos/config',express.json(),(req,res)=>{videoConfig.interval=req.body.interval||300;videoConfig.repeat=req.body.repeat||2;saveJSON(VIDEOS_CONFIG_FILE,videoConfig);const cfg={interval:videoConfig.interval,repeat:videoConfig.repeat,enabled:videos.length>0};io.emit('videos:config',cfg);res.json({success:true,config:cfg});});
 
-// ===== 自动重试间隔（失败条目至少等 60s 再重试，最多重试 10 次）=====
-const CUTOUT_RETRY_INTERVAL = 60000;
-const CUTOUT_MAX_RETRIES = 10;
+// ===== 本地抠图通知（方案 B：本地 Rembg 完成后通知服务器推大屏）=====
+app.post('/api/cms/cutout/notify', express.json(), async (req, res) => {
+  try {
+    const { albumId, mediaId, mediaName, cutoutUrl, mediaUrl } = req.body;
+    if (!mediaId) return res.json({ success: false, error: 'mediaId 必填' });
+    // 更新本地缓存
+    const cache = getCmsCache();
+    const album = cache.albums.find(a => String(a.albumId) === String(albumId || cache.displayAlbumId));
+    if (album && album.medias) {
+      const m = album.medias.find(mm => String(mm.mediaId) === String(mediaId));
+      if (m) { if (cutoutUrl) m.cutoutUrl = cutoutUrl; if (mediaName) m.mediaName = mediaName; }
+    }
+    saveCmsCache(cache);
+    // 推送给大屏
+    const workId = 'cms_' + mediaId;
+    io.emit('artwork:new', {
+      id: workId,
+      name: mediaName || '',
+      date: new Date().toISOString().slice(0,10).replace(/-/g,''),
+      url: cutoutUrl || mediaUrl,
+      originalUrl: mediaUrl,
+      status: 'active',
+      isCms: true
+    });
+    // 更新静态数据
+    generateWorksDataJson();
+    res.json({ success: true, workId });
+  } catch (e) {
+    res.json({ success: false, error: e.message });
+  }
+});
 
-// ===== 服务端定时轮询 CMS 新增媒体 =====
+// ===== 服务端轮询 CMS 新媒体（仅同步缓存，不执行抠图）=====
+// 抠图由本地电脑 Rembg 完成，完成后通过 POST /api/cms/cutout/notify 通知
 let cmsPollState = { albumId: null, sinceId: 0 };
 async function pollCmsNewMedia() {
   const cache = getCmsCache();
@@ -862,7 +819,7 @@ async function pollCmsNewMedia() {
   if (!albumId) return;
   if (cmsPollState.albumId !== albumId) { cmsPollState.albumId = albumId; cmsPollState.sinceId = 0; }
 
-  // 同步：将从 CMS 拉取的最新媒体列表写入缓存，admin UI 即时可见
+  // 同步缓存
   async function syncCacheMedia(albumId, medias) {
     const c = getCmsCache();
     let album = c.albums.find(a => String(a.albumId) === albumId);
@@ -876,7 +833,6 @@ async function pollCmsNewMedia() {
           mediaName: m.mediaName || '', enabled: true, createTime: m.createTime || new Date().toISOString()
         });
       } else {
-        // 更新 URL（CMS 可能后续产生了 cutoutUrl）
         if (m.cutoutUrl) existing.cutoutUrl = m.cutoutUrl;
         if (m.mediaUrl) existing.mediaUrl = m.mediaUrl;
       }
@@ -887,29 +843,12 @@ async function pollCmsNewMedia() {
   try {
     const data = await cmsRequest(`/activity-albums/${albumId}/media/check?sinceId=${cmsPollState.sinceId}&limit=20`);
     if (!data || !data.length) return;
-    await syncCacheMedia(albumId, data); // ← 同步缓存，让后台即时看到
+    await syncCacheMedia(albumId, data);
 
     let maxId = cmsPollState.sinceId;
     for (const m of data) {
       const mid = parseInt(m.mediaId || m.id);
       if (mid > maxId) maxId = mid;
-      if (m.cutoutUrl) continue; // 已有抠图结果，跳过
-
-      const existing = cutoutQueue.find(q => String(q.mediaId) === String(mid));
-      if (!existing) {
-        // 全新媒体 → 加入队列
-        cutoutQueue.push({ albumId, mediaId: String(mid), mediaUrl: m.mediaUrl, sourceUrl: m.sourceUrl, mediaName: m.mediaName || '', status: 'pending', addedAt: Date.now() });
-        persistCutoutQueue();
-        if (!isProcessingCutout) processCutoutQueue();
-      } else if (existing.status === 'error' && (existing.retryCount || 0) < CUTOUT_MAX_RETRIES && Date.now() - (existing.doneAt || 0) > CUTOUT_RETRY_INTERVAL) {
-        // 失败条目且未超重试上限、已过重试间隔 → 重置为 pending 重试
-        existing.status = 'pending';
-        delete existing.error;
-        existing.addedAt = Date.now();
-        existing.retryCount = (existing.retryCount || 0) + 1;
-        persistCutoutQueue();
-        if (!isProcessingCutout) processCutoutQueue();
-      }
     }
     cmsPollState.sinceId = maxId;
     generateWorksDataJson();

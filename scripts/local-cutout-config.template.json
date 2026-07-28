@@ -1,0 +1,16 @@
+{
+  "说明": "复制此文件为 local-cutout-config.json 后修改，已 gitignored",
+  "cms": {
+    "apiKey": "ak_xxx...",
+    "apiBase": "https://vapi.hkting.com/api/open-api/v1"
+  },
+  "server": {
+    "notifyUrl": "https://art.hkting.com/api/cms/cutout/notify",
+    "displayAlbumUrl": "https://art.hkting.com/api/cms/display-album"
+  },
+  "rembg": {
+    "host": "localhost",
+    "port": 7000
+  },
+  "pollInterval": 15000
+}

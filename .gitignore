@@ -55,3 +55,6 @@ docs/deploy/*.pem
 docs/deploy/ssh.txt
 docs/deploy/*.secret
 docs/deploy/DEPLOY_PRIVATE.md
+
+# Local cutout worker config
+scripts/local-cutout-config.json
