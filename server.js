@@ -19,7 +19,7 @@ const CMS_POLL_INTERVAL = parseInt(process.env.CMS_POLL_INTERVAL || '5000');
 const DEDUP_WINDOW = 30000;
 
 const ROOT_DIR = path.resolve(__dirname);
-const WEB_DIR = path.join(ROOT_DIR, 'web');
+const WEB_DIR = path.join(ROOT_DIR, 'web-admin');
 const UPLOADS_DIR = path.join(ROOT_DIR, 'uploads');
 const ARTWORKS_DIR = path.join(UPLOADS_DIR, 'artworks');
 const ORIGINALS_DIR = path.join(UPLOADS_DIR, 'originals');
@@ -27,7 +27,7 @@ const BG_DIR = path.join(UPLOADS_DIR, 'background');
 const VIDEOS_DIR = path.join(UPLOADS_DIR, 'videos');
 const DATA_DIR = path.join(ROOT_DIR, 'data');
 
-const GALLERY_DIR = path.join(ROOT_DIR, 'gallery');
+const GALLERY_DIR = path.join(ROOT_DIR, 'web-gallery');
 const GALLERY_WORKS_DIR = path.join(GALLERY_DIR, 'works');
 const GALLERY_DATA_DIR = path.join(GALLERY_DIR, 'data');
 const WORKS_DATA_FILE = path.join(GALLERY_DATA_DIR, 'works-data.json');
@@ -694,8 +694,8 @@ app.get('/dashboard',(req,res)=>res.sendFile(path.join(WEB_DIR,'dashboard.html')
 app.get('/',(req,res)=>res.redirect('/admin'));
 
 // 画廊 SPA（同时支持独立部署到 PageFire）
-app.use('/gallery', express.static(path.join(ROOT_DIR, 'gallery'), { redirect: false, index: 'index.html' }));
-app.get('/gallery*', (req, res) => res.sendFile(path.join(ROOT_DIR, 'gallery', 'index.html')));
+app.use('/gallery', express.static(path.join(ROOT_DIR, 'web-gallery'), { redirect: false, index: 'index.html' }));
+app.get('/gallery*', (req, res) => res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'index.html')));
 
 app.get('/api/artworks',(req,res)=>res.json(getAllArtworks(true)));
 app.get('/api/artworks/all',(req,res)=>res.json(getAllArtworks(false)));

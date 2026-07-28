@@ -33,8 +33,8 @@ start-rembg.bat    # Python 服务，端口 7000，模型 u2net
   → ② HTTP POST → Rembg 抠图（port 7000）
   → ③ 保存抠图版到 uploads/artworks/
   → ④ 写入 data/artworks.json
-  → ⑤ 生成手机分享页到 gallery/works/{id}.html（纯静态，含OG标签+分析信标）
-  → ⑥ 生成 gallery/data/works-data.json（画廊页数据快照，离线降级用）
+  → ⑤ 生成手机分享页到 web-gallery/works/{id}.html（纯静态，含OG标签+分析信标）
+  → ⑥ 生成 web-gallery/data/works-data.json（画廊页数据快照，离线降级用）
   → ⑦ Socket.IO -> 大屏 display.html 触发特写动画
 ```
 
@@ -52,8 +52,8 @@ CMS 远程相册 (OpenAPI)         本地文件 (artworks.json)
    getAllArtworks() 合并去重（CMS 优先）
        │
        ├── display.html (大屏)
-       ├── gallery/index.html (画廊 SPA)
-       ├── admin.html (后台管理)
+       ├── web-gallery/index.html (画廊 SPA)
+       ├── web-admin/admin.html (后台管理)
        └── works-data.json (静态快照)
 ```
 
@@ -62,7 +62,7 @@ CMS 远程相册 (OpenAPI)         本地文件 (artworks.json)
 - `data/cms-config.json`：API Key（XOR 混淆存储，运行时解混淆）
 - 管理后台可设置"展示相册"，只显示该相册作品
 
-### 画廊 SPA 三层加载策略（gallery/index.html）
+### 画廊 SPA 三层加载策略（web-gallery/index.html）
 
 | 优先级 | 数据源 | 条件 |
 |--------|--------|------|
@@ -77,13 +77,13 @@ CMS 远程相册 (OpenAPI)         本地文件 (artworks.json)
 ```
 ai-art-screen/
 ├── server.js               # 唯一后端入口（~700行）。API + Socket.IO + 抠图流水线 + CMS 代理
-├── gallery/                # 🖼️ 作品画廊（纯前端 SPA，可独立部署到任何静态托管）
+├── web-gallery/             # 🖼️ 作品画廊（纯前端 SPA，可独立部署到任何静态托管）
 │   ├── index.html          #     画廊首页（三层加载：CMS 直连→静态快照→离线）
 │   ├── work.html           #     作品详情页模板（预生成时服务端渲染填充）
 │   ├── works/              #     预生成手机作品页（含 OG 标签+分析信标，gitignored）
 │   └── data/               #     作品列表快照（由抠图流水线生成）
 │       └── works-data.json
-├── web/                    # 前端页面（Express 直接 serve）
+├── web-admin/               # 后台管理 + 大屏前端（Express 直接 serve）
 │   ├── admin.html          #     后台管理（上传/相册/CMS 配置/抠图队列）
 │   ├── display.html        #     大屏展示（浮动卡片+粒子特效+视频插播）
 │   ├── dashboard.html      #     运营数据看板
@@ -146,7 +146,7 @@ ai-art-screen/
 - 上 8/152（5.26%），下 32/152（21.05%）
 - 可见区域：86mm × 112mm
 
-### 大屏展示引擎（web/js/display.js）
+### 大屏展示引擎（web-admin/js/display.js）
 
 - 6 张浮动卡片始终在屏幕，10-20 秒轮换
 - Canvas 粒子背景系统（星点+飘浮粒子）
@@ -157,8 +157,8 @@ ai-art-screen/
 
 ### 静态部署说明
 
-`gallery/` 目录是纯前端 SPA，可独立部署到任何静态托管（CDN / OSS / PageFire / GitHub Pages）：
-- 上传 `gallery/` 目录即可
+`web-gallery/` 目录是纯前端 SPA，可独立部署到任何静态托管（CDN / OSS / PageFire / GitHub Pages）：
+- 上传 `web-gallery/` 目录即可
 - 需要 `data/works-data.json` 作为数据源（由后端抠图流水线自动生成）
 - 可选：在 HTML 中嵌入 `<meta name="cms-api-key">` 以启用 CMS 直连模式
 

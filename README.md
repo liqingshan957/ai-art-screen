@@ -69,7 +69,7 @@ node server.js
 ai-art-screen/
 ├── src/
 │   └── server.js                 # 主服务（API + Socket + 抠图流水线）
-├── web/                          # 前端页面
+├── web-admin/                      # 后台管理 + 大屏前端
 │   ├── admin.html                # 后台管理
 │   ├── display.html              # 大屏展示
 │   ├── dashboard.html            # 数据看板
@@ -166,7 +166,7 @@ ai-art-screen/
 | interval | 300 | 播放间隔(秒) |
 | repeat | 2 | 每次循环次数 |
 
-### 大屏参数（改 web/js/display.js）
+### 大屏参数（改 web-admin/js/display.js）
 
 | 常量 | 默认 | 说明 |
 |------|------|------|

@@ -31,7 +31,7 @@ build/
 .skills/
 
 # Generated gallery snapshot
-gallery/data/
+web-gallery/data/
 
 # Migration package
 迁移新电脑/
