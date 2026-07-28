@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 
 const http = require('http');
 
@@ -2583,16 +2583,16 @@ btn.textContent = '鈴?澶勭悊涓?..';
 function generateAllWorkPages() {
 
   artworks.forEach(a => {
-
-    generateWorkPage(a);
-
-    generatePagefireWorkPage(a);
-
-    const pfPngPath = path.join(PAGEFIRE_ARTWORKS_DIR, a.id + '.png');
-
-    if (!fs.existsSync(pfPngPath)) compressForPagefire(a);
-
+    try {
+      generateWorkPage(a);
+      generatePagefireWorkPage(a);
+      const pfPngPath = path.join(PAGEFIRE_ARTWORKS_DIR, a.id + '.png');
+      if (!fs.existsSync(pfPngPath)) compressForPagefire(a);
+    } catch (e) { console.error('[启动] 作品处理跳过: ' + a.id + ' - ' + e.message); }
   });
+
+
+
 
 }
 
@@ -3218,15 +3218,15 @@ function schedulePagefireDeploy() {
   pagefireDeployTimer = setTimeout(() => {
 
     console.log('鑷姩閮ㄧ讲 PageFire...');
+    try {
+      exec('npx pagefire deploy --dir deploy-pagefire', { cwd: __dirname }, (err, stdout, stderr) => {
 
-    exec('npx pagefire deploy --dir deploy-pagefire', { cwd: __dirname }, (err, stdout, stderr) => {
+        if (err) console.error('PageFire 部署失败:', err.message);
 
-      if (err) console.error('PageFire 閮ㄧ讲澶辫触:', err.message);
+        else console.log('PageFire 部署完成:', stdout.slice(0, 200));
 
-      else console.log('PageFire 閮ㄧ讲瀹屾垚:', stdout.slice(0, 200));
-
-    });
-
+      });
+    } catch (e) { console.error('PageFire 部署执行失败:', e.message); }
   }, 15000);
 
 }

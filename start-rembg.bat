@@ -14,9 +14,11 @@ echo   ??: U2-Net (????: %U2NET_HOME%)
 echo ==========================================
 echo.
 
+set PYTHON_EXE=C:\Users\12549\.workbuddy\binaries\python\envs\default\Scripts\python.exe
+
 :loop
 echo [%time%] ?? Python rembg ??...
-python "%~dp0test-rembg\rembg-server.py"
+"%PYTHON_EXE%" "%~dp0test-rembg\rembg-server.py"
 echo.
 echo [%time%] ?????3??????...
 timeout /t 3 /nobreak >nul
