@@ -30,13 +30,9 @@ build/
 .ai-assist/
 .skills/
 
-# Generated share pages & data
-web/works/
-web/data/
-
-# Deploy outputs
-deploy/pagefire/works/
-deploy/pagefire/artworks/
+# Generated gallery pages & data
+web/gallery/works/
+web/gallery/data/
 
 # Migration package
 迁移新电脑/

@@ -14,7 +14,7 @@ npm start          # node server.js
 npm run dev        # node server.js
 
 # 依赖安装
-npm install        # express, socket.io, multer, sharp, form-data
+npm install        # express, socket.io, multer, sharp
 
 # 启动 Rembg 抠图服务（可选，自动抠图需要）
 scripts/start-rembg.bat    # Python 服务，端口 7000
@@ -30,18 +30,20 @@ scripts/启动投屏系统.bat
 ```
 ai-art-screen/
 ├── server.js               # 唯一后端入口。API + Socket.IO + 抠图流水线
-├── web/                    # 前端页面（静态文件，Express 直接 serve）
+├── web/                    # 前端页面（Express 直接 serve）
 │   ├── admin.html          # 后台管理（上传/归档/配置）
 │   ├── display.html        # 大屏展示（浮动卡片+粒子特效+视频插播）
-│   ├── gallery.html        # 作品画廊（纯前端，支持 API/静态双数据源）
 │   ├── dashboard.html      # 运营数据看板
-│   └── data/               # 前端静态数据快照（gitignored，运行时生成）
-├── templates/              # 手机分享页 HTML 模板（{{PLACEHOLDER}} 渲染）
+│   └── gallery/            # 🆕 作品展示（纯前端，可独立部署到任何静态托管）
+│       ├── index.html      #     作品画廊（支持 API/静态双数据源）
+│       ├── works/          #     预生成手机作品页（纯静态，含OG标签+分析信标）
+│       │   └── {id}.html
+│       └── data/           #     作品列表快照（gitignored，运行时生成）
+│           └── works-data.json
 ├── services/rembg/         # Python 独立抠图服务
 ├── scripts/                # Windows 启动脚本
-├── data/                   # 运行时 JSON 数据文件（动态生成）
-├── uploads/                # 用户上传的图片/视频（gitignored）
-└── deploy/pagefire/        # PageFire 公网部署产物（gitignored）
+├── data/                   # 后端运行时 JSON 数据文件（动态生成）
+└── uploads/                # 用户上传的图片/视频（gitignored）
 ```
 
 ### 关键依赖
@@ -52,7 +54,6 @@ ai-art-screen/
 | socket.io | WebSocket 实时推送（新作品→大屏即时显示） |
 | multer | 文件上传（图片/视频） |
 | sharp | 图片裁剪、格式转换 |
-| form-data | CDN 上传 multipart 构造 |
 
 ### 三个独立进程
 
@@ -70,11 +71,9 @@ ai-art-screen/
   → ② HTTP POST → Rembg 抠图（port 7000）
   → ③ 保存抠图版到 uploads/artworks/
   → ④ 写入 data/artworks.json
-  → ⑤ 生成手机分享页到 web/works/{id}.html（纯静态，含OG标签+分析信标）
-  → ⑥ 生成 web/data/works-data.json（画廊页数据快照）
-  → ⑦ 上传图片到 CDN（img.hkting.com）
-  → ⑧ Socket.IO -> 大屏 display.html 触发特写动画
-  → ⑨ 15s 后 PageFire 公网部署
+  → ⑤ 生成手机分享页到 web/gallery/works/{id}.html（纯静态，含OG标签+分析信标）
+  → ⑥ 生成 web/gallery/data/works-data.json（画廊页数据快照）
+  → ⑦ Socket.IO -> 大屏 display.html 触发特写动画
 ```
 
 两种上传路径：
@@ -85,10 +84,12 @@ ai-art-screen/
 
 | 路由 | 功能 |
 |------|------|
-| `GET /display` `GET /admin` `GET /dashboard` `GET /gallery` | HTML 页面 |
+| `GET /display` `GET /admin` `GET /dashboard` | HTML 页面 |
+| `GET /gallery` | 作品画廊（`web/gallery/index.html`） |
+| `GET /gallery/works/{id}.html` | 预生成手机作品分享页（纯静态） |
+| `GET /gallery/data/works-data.json` | 作品列表快照（纯静态，离线降级用） |
 | `GET /` | 重定向到 `/gallery` |
-| `GET /work/:id` | 301 重定向到作品静态页 `/works/{id}.html` |
-| `GET /works/{id}.html` | 预生成的手机作品分享页（纯静态） |
+| `GET /work/:id` | 301 重定向到 `/gallery/works/{id}.html` |
 | `GET/POST /api/artworks*` | 作品 CRUD、统计、批量 |
 | `POST /api/auto-matting` | 自动抠图流水线（核心） |
 | `GET/POST/PUT /api/background` | 背景图管理 |
@@ -121,3 +122,13 @@ ai-art-screen/
 - 左/右各 8/102（7.84%）
 - 上 8/152（5.26%），下 32/152（21.05%）
 - 可见区域：86mm × 112mm
+
+### 静态部署说明
+
+`web/gallery/` 目录是纯前端，可独立部署到任何静态托管：
+
+```
+# 部署到 CDN / OSS / PageFire / GitHub Pages 等
+# 只需上传 web/gallery/ 目录即可
+# 依赖：works-data.json（需在服务端上传作品后生成最新快照）
+# 可选：API 回退（works-data.json 不可用时，有后端则在线读取）

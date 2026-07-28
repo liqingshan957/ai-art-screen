@@ -3,50 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>{{NAME}} 的 AI 艺术作品 · 敦煌 AIGC 艺术展</title>
-  <meta property="og:title" content="{{NAME}} 的敦煌 AI 艺术作品 | 大象智绘 AI 科创">
-  <meta property="og:description" content="大象智绘 AI 科创 · 20 年艺术教育经验 · AI 创新教育。我在广州美术馆用 AI 创作了一幅敦煌风格作品，快来看看吧！">
-  <meta property="og:image" content="{{URL}}">
+  <title>AI 艺术作品 · 敦煌 AIGC 艺术展</title>
+  <!-- OG tags injected by server (/work/:id) -->
   <meta property="og:type" content="website">
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    :root{
-      --gold:#c9a96e;
-      --gold-light:#f0dda0;
-      --brown:#3d3020;
-      --brown-light:#8a7a5e;
-      --cream:#f8f4ee;
-      --cream-dark:#efe8dc;
-      --purple:#a855f7;
-      --purple-dark:#7c3aed;
-      --card-radius:16px;
-      --ease-out-expo:cubic-bezier(0.16,1,0.3,1);
-      --ease-spring:cubic-bezier(0.34,1.56,0.64,1);
-    }
+    :root{--gold:#c9a96e;--gold-light:#f0dda0;--brown:#3d3020;--brown-light:#8a7a5e;--cream:#f8f4ee;--cream-dark:#efe8dc;--purple:#a855f7;--card-radius:16px;--ease-out-expo:cubic-bezier(0.16,1,0.3,1);--ease-spring:cubic-bezier(0.34,1.56,0.64,1)}
     html{scroll-behavior:smooth}
-    body{
-      font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
-      background:var(--cream);
-      color:var(--brown);
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      overflow-x:hidden;
-      -webkit-font-smoothing:antialiased;
-    }
-    #progress-bar{
-      position:fixed;top:0;left:0;height:3px;
-      background:linear-gradient(90deg,var(--gold),var(--purple));
-      z-index:9999;
-      width:0%;
-      transition:width .1s linear;
-      box-shadow:0 0 8px rgba(168,85,247,.3);
-    }
+    body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--cream);color:var(--brown);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+    #progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--purple));z-index:9999;width:0%;transition:width .1s linear;box-shadow:0 0 8px rgba(168,85,247,.3)}
     .page{width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;padding-bottom:60px;position:relative}
     .reveal{opacity:0;transform:translateY(30px);transition:opacity .8s var(--ease-out-expo),transform .8s var(--ease-out-expo)}
     .reveal.visible{opacity:1;transform:translateY(0)}
-    .reveal-delay-1{transition-delay:.1s}.reveal-delay-2{transition-delay:.2s}.reveal-delay-3{transition-delay:.3s}.reveal-delay-4{transition-delay:.4s}.reveal-delay-5{transition-delay:.5s}
     .hero-entrance{animation:heroZoom 1.2s var(--ease-out-expo) forwards;opacity:0}
     @keyframes heroZoom{0%{opacity:0;transform:scale(.92);filter:blur(4px)}100%{opacity:1;transform:scale(1);filter:blur(0)}}
     .brand-header{width:100%;padding:18px 20px 14px;display:flex;align-items:center;gap:14px;border-bottom:1px solid rgba(201,169,110,.15);background:rgba(248,244,238,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:sticky;top:3px;z-index:100}
@@ -141,123 +109,20 @@
     .course-modal-box{background:linear-gradient(135deg,#fff,#faf6ef);max-width:340px;width:88%;border-radius:20px;padding:26px 18px 20px;text-align:center;position:relative;box-shadow:0 12px 40px rgba(0,0,0,.2);transform:scale(.9);transition:transform .35s var(--ease-spring)}
     .course-modal-overlay.active .course-modal-box{transform:scale(1)}
     .course-modal-close{position:absolute;top:10px;right:14px;border:none;background:none;font-size:20px;color:#aaa;cursor:pointer;padding:4px;line-height:1}
+    .loading{text-align:center;padding:60px 20px;color:var(--brown-light);font-size:14px}
+    .loading .spinner{display:inline-block;width:28px;height:28px;border:3px solid rgba(201,169,110,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .not-found{text-align:center;padding:80px 20px;color:var(--brown-light);font-size:16px}
   </style>
 </head>
 <body>
   <div id="progress-bar"></div>
-  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
-    <img id="lightbox-img" src="{{URL}}" alt="作品预览">
-    <button class="lightbox-save" onclick="saveImage()">保存到相册</button>
+  <div id="app">
+    <div class="loading"><div class="spinner"></div><br>加载中...</div>
   </div>
-  <button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&uarr;</button>
-  <div class="page">
-    <div class="brand-header">
-      <div class="logo-wrap">
-        <img src="/logo-brand.png" alt="大象智绘 AI 科创" style="width:100%;height:100%;object-fit:contain;">
-      </div>
-      <div>
-        <div class="brand-name">大象智绘 AI 科创</div>
-        <div class="brand-tagline">20 年艺术教育 · AI 创新教育引领者</div>
-      </div>
-    </div>
-    <div class="brand-story reveal reveal-delay-3">
-      <span class="icon">✨</span>
-      <h4>这就是 AI+艺术的魔法</h4>
-      <p>大象智绘 AI 科创，深耕艺术教育二十余年，融合 AI 前沿技术，<br>让孩子用想象力触碰未来。这里展出的每一幅作品，<br>都是孩子创意与 <em>AI 智能</em> 的共同杰作。</p>
-    </div>
-    <div class="share-bar reveal visible">
-      <span class="share-hint">分享给好友欣赏</span>
-      <button class="share-btn" onclick="sharePage()" title="分享">📱</button>
-    </div>
-    <div class="hero hero-entrance">
-      <div class="hero-inner">
-        <div class="hero-badge">✦ AI 共创</div>
-        <a href="{{URL}}" id="img-link">
-          <img src="{{URL}}" alt="{{NAME}} 的作品" id="hero-img" x-webkit-airdrop="save">
-        </a>
-        <div class="hero-tap-hint" id="hero-hint">长按保存图片</div>
-        <button onclick="saveImage()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(135deg,#c9a96e,#a08050);border:none;border-radius:12px;color:#1a1410;font-size:14px;font-weight:600;cursor:pointer">保存图片到相册</button>
-      </div>
-    </div>
-    <div class="info reveal" style="transition-delay:0.3s">
-      <div class="child-name">{{NAME}}<span class="sub"> 的 AI 艺术作品</span></div>
-      <div class="date-badge">{{DISPLAY_DATE}}</div>
-    </div>
-    <div class="tech-tags reveal reveal-delay-2">
-      <span class="tag purple">✨ AI 文生图</span>
-      <span class="tag gold">🎨 敦煌风格</span>
-      <span class="tag green">✦ 即时生成</span>
-    </div>
-    <div class="section-divider reveal reveal-delay-2">
-      <div class="line"></div>
-      <div class="dot">✦</div>
-      <div class="line"></div>
-    </div>
-    <div class="ai-reveal reveal reveal-delay-3">
-      <div class="icon">🤖</div>
-      <div class="title">悄悄告诉你</div>
-      <div class="body">
-        本次活动的全部呈现内容——包括投屏展示、这个作品页、<br>以及你看到的每一幅作品——均由 <span class="high">AI</span> 实时生成。<br>
-        AI 创作没有那么难。<br>
-        来二楼，从一支 <span class="high">AI 短片</span> 开始。
-      </div>
-      <div class="arrow">&darr;</div>
-    </div>
-    <div class="course-cta reveal reveal-delay-4">
-      <div class="bg-glow"></div>
-      <div class="bg-glow2"></div>
-      <div class="cta-badge">🔥 热门体验 · 二楼专享</div>
-      <h3>🔥 敦煌新生 · AI 动画创作</h3>
-      <p class="desc">带孩子创造属于自己的敦煌动画<br>掌中敦煌深度体验包</p>
-      <div class="feature-grid">
-        <div class="feature-item"><div class="fi-icon">🔥</div><div class="fi-label">AIGC 敦煌微动画</div></div>
-        <div class="feature-item"><div class="fi-icon">💡</div><div class="fi-label">输入你的创意</div></div>
-        <div class="feature-item"><div class="fi-icon">🎁</div><div class="fi-label">创造敦煌角色</div></div>
-      </div>
-      <p class="desc" style="font-size:12px;color:#c9a96e;margin-top:-6px;margin-bottom:18px;">让传统文化在数字世界开启新的旅程 ✦</p>
-      <div class="cta-qr-wrap">
-        <img src="/dunhuang-qr.png" alt="敦煌新生小程序码" class="cta-qr-img">
-        <div class="urgency">长按图片识别 · 了解敦煌新生详情</div>
-      </div>
-    </div>
-    <div class="section-divider reveal reveal-delay-4">
-      <div class="line"></div>
-      <div class="dot">✦</div>
-      <div class="line"></div>
-    </div>
-    <div class="brand-story reveal reveal-delay-4" style="margin-top:20px;">
-      <div class="icon" style="font-size:22px;">🏛</div>
-      <h4>关于大象艺术</h4>
-      <p style="text-align:left;font-size:12px;">
-        大象艺术和一念敦煌展方深度合作，为展览研发的《掌中敦煌·AI 动画创作》课程已同步官方小程序。课程探索"敦煌+人工智能+艺术教育"的融合模式，让千年文化以动画、影像等年轻化方式重新表达，打造面向未来青少年的数字文化研学新方向。
-      </p>
-      <div style="height:10px;"></div>
-      <p style="text-align:left;font-size:12px;">
-        · 专注为青少年提供融合全球视野的前瞻性"艺术+科技"教育<br>
-        · 拥有自主研发的 AI 艺术创作教学体系<br>
-        · 扎根广州的专业艺术机构 10+ 年<br>
-        · 以画载道，承载理想
-      </p>
-    </div>
-    <div class="wechat-card reveal reveal-delay-5" style="margin-bottom:30px;">
-      <h4>📫 了解更多艺术创作与 AI 课程</h4>
-      <p class="sub">扫码添加微信，获取更多 AI 艺术创作资讯<br>了解课程详情与专属福利</p>
-      <div class="qr-wrap">
-        <div class="qr-placeholder">
-          <span style="font-size:26px">📫</span>
-          <span>扫码加微信</span>
-          <span style="font-size:10px">请替换为实际二维码</span>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="gallery-link">
-    <a href="/gallery"><span class="arrow">←</span> 浏览全部作品</a>
-  </div>
-  <div class="course-modal-overlay" id="courseModal" onclick="hideCourseModal()">
+  <div class="course-modal-overlay" id="courseModal" onclick="document.getElementById('courseModal').classList.remove('active')">
     <div class="course-modal-box" onclick="event.stopPropagation()">
-      <button class="course-modal-close" onclick="hideCourseModal()">&times;</button>
+      <button class="course-modal-close" onclick="document.getElementById('courseModal').classList.remove('active')">&times;</button>
       <div style="font-size:40px;margin-bottom:8px">🎀</div>
       <h3 style="font-size:18px;color:var(--brown);margin-bottom:4px">二楼 · AI 微电影课</h3>
       <p style="font-size:13px;color:#7a6a52;margin-bottom:12px;line-height:1.6">30 分钟，让刚才创作的角色<br>变成动画短片主角！</p>
@@ -280,56 +145,211 @@
       <p style="font-size:11px;color:#a8946c">发送作品编号 · 优先预留名额</p>
     </div>
   </div>
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightbox-img" src="" alt="作品预览">
+    <button class="lightbox-save" onclick="saveImage()">保存到相册</button>
+  </div>
+  <button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&uarr;</button>
+
   <script>
-    window.addEventListener('scroll',function(){
-      var h=document.documentElement.scrollHeight-window.innerHeight;
-      var p=h>0?(window.scrollY/h)*100:0;
-      document.getElementById('progress-bar').style.width=p+'%';
-    });
-    var observer=new IntersectionObserver(function(e){
-      e.forEach(function(e){if(e.isIntersecting)e.target.classList.add('visible')});
-    },{threshold:.1,rootMargin:'0px 0px -40px 0px'});
-    document.querySelectorAll('.reveal').forEach(function(e){observer.observe(e)});
-    window.addEventListener('scroll',function(){
-      var b=document.getElementById('back-top');
-      window.scrollY>500?b.classList.add('show'):b.classList.remove('show');
-    });
-    function openLightbox(){
-      document.getElementById('lightbox-img').src=document.getElementById('hero-img').src;
+    var workData = null;
+
+    function loadData() {
+      // Priority 1: Embedded data from server (/work/:id)
+      if (window.__WORK_DATA__) {
+        workData = window.__WORK_DATA__;
+        render();
+        return;
+      }
+      // Priority 2: Parse id from URL and fetch
+      var id = getParam('id');
+      if (!id) { showNotFound(); return; }
+      window.__WORK_ID__ = id;
+      fetch('/api/artworks?' + Date.now())
+        .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+        .then(function(list) {
+          workData = list.find(function(a) { return a.id === id; });
+          if (workData) { render(); return; }
+          throw new Error('not found');
+        })
+        .catch(function() {
+          // Priority 3: Fall back to static data
+          fetch('data/works-data.json?' + Date.now())
+            .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+            .then(function(list) {
+              workData = list.find(function(a) { return a.id === id; });
+              if (workData) { render(); return; }
+              showNotFound();
+            })
+            .catch(showNotFound);
+        });
+    }
+
+    function getParam(name) {
+      var m = location.search.match(new RegExp('[?&]' + name + '=([^&]*)'));
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+
+    function render() {
+      if (!workData) { showNotFound(); return; }
+      var a = workData;
+      var name = esc(a.name);
+      var url = a.url;
+      var dateStr = formatDate(a.date);
+      var title = name + ' 的 AI 艺术作品';
+
+      document.title = title + ' · 敦煌 AIGC 艺术展';
+
+      document.getElementById('app').innerHTML =
+        '<div class="page">'
+        + '<div class="brand-header">'
+        +   '<div class="logo-wrap"><img src="/logo-brand.png" alt="大象智绘 AI 科创" style="width:100%;height:100%;object-fit:contain;"></div>'
+        +   '<div><div class="brand-name">大象智绘 AI 科创</div><div class="brand-tagline">20 年艺术教育 · AI 创新教育引领者</div></div>'
+        + '</div>'
+        + '<div class="brand-story reveal"><span class="icon">✨</span><h4>这就是 AI+艺术的魔法</h4>'
+        + '<p>大象智绘 AI 科创，深耕艺术教育二十余年，融合 AI 前沿技术，<br>让孩子用想象力触碰未来。这里展出的每一幅作品，<br>都是孩子创意与 <em>AI 智能</em> 的共同杰作。</p></div>'
+        + '<div class="share-bar"><span class="share-hint">分享给好友欣赏</span><button class="share-btn" onclick="sharePage()" title="分享">📱</button></div>'
+        + '<div class="hero hero-entrance">'
+        +   '<div class="hero-inner">'
+        +     '<div class="hero-badge">✦ AI 共创</div>'
+        +     '<a href="' + url + '" id="img-link"><img src="' + url + '" alt="' + name + ' 的作品" id="hero-img" x-webkit-airdrop="save"></a>'
+        +     '<div class="hero-tap-hint" id="hero-hint">长按保存图片</div>'
+        +     '<button onclick="saveImage()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(135deg,#c9a96e,#a08050);border:none;border-radius:12px;color:#1a1410;font-size:14px;font-weight:600;cursor:pointer">保存图片到相册</button>'
+        +   '</div>'
+        + '</div>'
+        + '<div class="info"><div class="child-name">' + name + '<span class="sub"> 的 AI 艺术作品</span></div><div class="date-badge">' + dateStr + '</div></div>'
+        + '<div class="tech-tags"><span class="tag purple">✨ AI 文生图</span><span class="tag gold">🎨 敦煌风格</span><span class="tag green">✦ 即时生成</span></div>'
+        + '<div class="section-divider"><div class="line"></div><div class="dot">✦</div><div class="line"></div></div>'
+        + '<div class="ai-reveal">'
+        +   '<div class="icon">🤖</div><div class="title">悄悄告诉你</div>'
+        +   '<div class="body">本次活动的全部呈现内容——包括投屏展示、这个作品页、<br>以及你看到的每一幅作品——均由 <span class="high">AI</span> 实时生成。<br>AI 创作没有那么难。<br>来二楼，从一支 <span class="high">AI 短片</span> 开始。</div>'
+        +   '<div class="arrow">&darr;</div>'
+        + '</div>'
+        + '<div class="course-cta">'
+        +   '<div class="bg-glow"></div><div class="bg-glow2"></div>'
+        +   '<div class="cta-badge">🔥 热门体验 · 二楼专享</div>'
+        +   '<h3>🔥 敦煌新生 · AI 动画创作</h3>'
+        +   '<p class="desc">带孩子创造属于自己的敦煌动画<br>掌中敦煌深度体验包</p>'
+        +   '<div class="feature-grid"><div class="feature-item"><div class="fi-icon">🔥</div><div class="fi-label">AIGC 敦煌微动画</div></div><div class="feature-item"><div class="fi-icon">💡</div><div class="fi-label">输入你的创意</div></div><div class="feature-item"><div class="fi-icon">🎁</div><div class="fi-label">创造敦煌角色</div></div></div>'
+        +   '<p class="desc" style="font-size:12px;color:#c9a96e;margin-top:-6px;margin-bottom:18px;">让传统文化在数字世界开启新的旅程 ✦</p>'
+        +   '<div class="cta-qr-wrap">'
+        +     '<img src="/dunhuang-qr.png" alt="敦煌新生小程序码" class="cta-qr-img">'
+        +     '<div class="urgency">长按图片识别 · 了解敦煌新生详情</div>'
+        +   '</div>'
+        + '</div>'
+        + '<div class="section-divider"><div class="line"></div><div class="dot">✦</div><div class="line"></div></div>'
+        + '<div class="brand-story" style="margin-top:20px;">'
+        +   '<div class="icon" style="font-size:22px;">🏛</div><h4>关于大象艺术</h4>'
+        +   '<p style="text-align:left;font-size:12px;">大象艺术和一念敦煌展方深度合作，为展览研发的《掌中敦煌·AI 动画创作》课程已同步官方小程序。课程探索"敦煌+人工智能+艺术教育"的融合模式，让千年文化以动画、影像等年轻化方式重新表达，打造面向未来青少年的数字文化研学新方向。</p>'
+        +   '<div style="height:10px;"></div>'
+        +   '<p style="text-align:left;font-size:12px;">· 专注为青少年提供融合全球视野的前瞻性"艺术+科技"教育<br>· 拥有自主研发的 AI 艺术创作教学体系<br>· 扎根广州的专业艺术机构 10+ 年<br>· 以画载道，承载理想</p>'
+        + '</div>'
+        + '<div class="wechat-card" style="margin-bottom:30px;">'
+        +   '<h4>📫 了解更多艺术创作与 AI 课程</h4>'
+        +   '<p class="sub">扫码添加微信，获取更多 AI 艺术创作资讯<br>了解课程详情与专属福利</p>'
+        +   '<div class="qr-wrap"><div class="qr-placeholder"><span style="font-size:26px">📫</span><span>扫码加微信</span><span style="font-size:10px">请替换为实际二维码</span></div></div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="gallery-link"><a href="/gallery"><span class="arrow">←</span> 浏览全部作品</a></div>';
+
+      // Observe reveals
+      var obs = new IntersectionObserver(function(es) {
+        es.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('visible'); });
+      }, { threshold: .1, rootMargin: '0px 0px -40px 0px' });
+      document.querySelectorAll('.reveal').forEach(function(e) { obs.observe(e); });
+
+      // Init lightbox click
+      document.getElementById('hero-img').addEventListener('click', function(e) {
+        e.preventDefault();
+        openLightbox();
+      });
+
+      // WeChat hint
+      if (navigator.userAgent.toLowerCase().indexOf('micromessenger') > -1) {
+        var h = document.getElementById('hero-hint');
+        if (h) h.innerHTML = '长按保存图片';
+      }
+
+      // Analytics beacon
+      fetch('/api/analytics/beacon?id=' + (window.__WORK_DATA__ ? window.__WORK_DATA__.id : (window.__WORK_ID__ || ''))).catch(function(){});
+    }
+
+    function showNotFound() {
+      document.getElementById('app').innerHTML = '<div class="not-found">😕 作品不存在</div>';
+    }
+
+    function openLightbox() {
+      var img = document.getElementById('hero-img');
+      if (!img) return;
+      document.getElementById('lightbox-img').src = img.src;
       document.getElementById('lightbox').classList.add('active');
     }
-    function closeLightbox(){document.getElementById('lightbox').classList.remove('active')}
-    function saveImage(){
-      var img=document.getElementById('hero-img');
-      if(!img){showToast('无法找到图片');return}
-      window.open(img.src,'_blank');
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+    }
+
+    function saveImage() {
+      var img = document.getElementById('hero-img');
+      if (!img) { showToast('无法找到图片'); return; }
+      window.open(img.src, '_blank');
       showToast('已在新窗口打开，长按或右键保存');
     }
-    function sharePage(){
-      if(navigator.share){
-        navigator.share({title:'{{NAME}} 的 AI 艺术作品',text:'快来欣赏我用 AI 创作的敦煌风格作品！',url:window.location.href}).catch(function(){});
+
+    function sharePage() {
+      if (navigator.share) {
+        navigator.share({ title: document.title, text: '快来欣赏我用 AI 创作的敦煌风格作品！', url: window.location.href }).catch(function(){});
       } else {
-        var inp=document.createElement('input');
-        inp.value=window.location.href;
-        document.body.appendChild(inp);inp.select();
-        document.execCommand('copy');document.body.removeChild(inp);
+        var inp = document.createElement('input');
+        inp.value = window.location.href;
+        document.body.appendChild(inp); inp.select();
+        document.execCommand('copy'); document.body.removeChild(inp);
         showToast('链接已复制');
       }
     }
-    function showCourseModal(){document.getElementById('courseModal').classList.add('active')}
-    function hideCourseModal(){document.getElementById('courseModal').classList.remove('active')}
-    function showToast(msg){
-      var t=document.createElement('div');
-      t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(61,48,32,.85);color:#f0dda0;padding:10px 22px;border-radius:22px;font-size:13px;z-index:99999;backdrop-filter:blur(8px);animation:fadeInOut 2s ease forwards';
-      t.textContent=msg;document.body.appendChild(t);
-      setTimeout(function(){t.remove()},2000);
+
+    function showToast(msg) {
+      var t = document.createElement('div');
+      t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(61,48,32,.85);color:#f0dda0;padding:10px 22px;border-radius:22px;font-size:13px;z-index:99999;backdrop-filter:blur(8px);animation:fadeInOut 2s ease forwards';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(function() { t.remove(); }, 2000);
     }
-    var s=document.createElement('style');
-    s.textContent='@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}';
-    document.head.appendChild(s);
-    (function(){var u=navigator.userAgent.toLowerCase();if(u.indexOf('micromessenger')>-1){var h=document.getElementById('hero-hint');if(h)h.innerHTML='长按保存图片'}})();
-    // Analytics beacon (works in static deployment too — no-op if server unreachable)
-    fetch('/api/analytics/beacon?id={{ID}}').catch(function(){});
+
+    function formatDate(d) {
+      if (!d || d.length < 8) return '';
+      return d.slice(0,4) + '年' + parseInt(d.slice(4,6)) + '月' + parseInt(d.slice(6,8)) + '日';
+    }
+
+    function esc(s) {
+      var d = document.createElement('div');
+      d.textContent = String(s);
+      return d.innerHTML;
+    }
+
+    // Progress bar
+    window.addEventListener('scroll', function() {
+      var h = document.documentElement.scrollHeight - window.innerHeight;
+      document.getElementById('progress-bar').style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+    });
+
+    // Back to top
+    window.addEventListener('scroll', function() {
+      var b = document.getElementById('back-top');
+      if (window.scrollY > 500) b.classList.add('show'); else b.classList.remove('show');
+    });
+
+    // Keyboard close
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeLightbox(); } });
+
+    // Toast animation
+    var st = document.createElement('style');
+    st.textContent = '@keyframes fadeInOut{0%{opacity:0;transform:translateX(-50%) translateY(10px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}85%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}';
+    document.head.appendChild(st);
+
+    // Go!
+    loadData();
   </script>
 </body>
 </html>
