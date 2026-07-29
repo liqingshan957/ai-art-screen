@@ -686,7 +686,16 @@ app.get('/',(req,res)=>res.redirect('/admin'));
 
 // 画廊 SPA（同时支持独立部署到 PageFire）
 app.use('/gallery', express.static(path.join(ROOT_DIR, 'web-gallery'), { redirect: false, index: 'index.html' }));
-app.get('/gallery*', (req, res) => res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'index.html')));
+app.get('/gallery*', (req, res) => {
+  // 注入服务端配置的 API Key（覆盖 html 中写死的）
+  const cfg = getCmsConfig();
+  if (cfg.apiKey) {
+    const html = fs.readFileSync(path.join(ROOT_DIR, 'web-gallery', 'index.html'), 'utf8');
+    res.send(html.replace(/<meta name="cms-api-key"[^>]+>/, '<meta name="cms-api-key" content="' + cfg.apiKey + '">'));
+  } else {
+    res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'index.html'));
+  }
+});
 // 手机作品分享页 SSR（work.html?work=xxx → 服务端渲染 OG 标签）
 app.get('/work.html', async (req, res) => {
   const workId = req.query.work;
