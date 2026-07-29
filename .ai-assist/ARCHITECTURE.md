@@ -38,7 +38,7 @@ C 电脑 (172.16.29.65:8765) --+ 每 2 秒
 | 服务 | 端口 | 启动方式 | 功能 |
 |------|------|----------|------|
 | 主服务器 | 3000 | node server.js | API + 页面 + Socket.IO |
-| Rembg 抠图 | 7000 | start-rembg.bat | Python 背景移除 |
+| Rembg 抠图 | 7000 | 启动Rembg抠图服务.bat | Python 背景移除 |
 | 收件箱监听 | - | node inbox-watcher.js | 轮询 B/C 电脑 |
 
 ## 目录结构

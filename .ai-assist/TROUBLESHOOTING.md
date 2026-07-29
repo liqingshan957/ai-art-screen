@@ -14,7 +14,7 @@
 
 原因: Rembg 服务没启动 (port 7000)
 
-修复: 双击 start-rembg.bat
+修复: 双击 启动Rembg抠图服务.bat
 
 ### 3. 文件在 watch-folder 不动
 

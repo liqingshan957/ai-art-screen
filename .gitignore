@@ -30,8 +30,9 @@ build/
 .ai-assist/
 .skills/
 
-# Generated gallery snapshot
+# Generated gallery files
 web-gallery/data/
+web-gallery/works/
 
 # Migration package
 迁移新电脑/

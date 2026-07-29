@@ -11,23 +11,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# 启动主服务（必需：Node.js + Express + Socket.IO）
-npm start          # node server.js (port 3000)
+npm install              # 安装依赖（express, socket.io, multer, sharp）
+npm start                # node server.js
+npm run dev              # node server.js（同 start）
 
-# 本地开发（含自动抠图，需要 Rembg 服务）
-ENABLE_AUTO_CUTOUT=true node server.js     # 默认，开启自动抠图
+# 手动启动主服务（端口 3000）
+node server.js
 
-# 纯服务模式（不抠图，等远程 notify 推送大屏）
-ENABLE_AUTO_CUTOUT=false node server.js    # 服务器部署用
+# 手动启动带自动抠图的主服务
+ENABLE_AUTO_CUTOUT=true node server.js
+```
 
-# 启动 Rembg 抠图服务（Python，自动抠图需要）
-start-rembg.bat    # Python 服务，端口 7000，模型 u2net
+### 启动脚本
 
-# 本地抠图工作脚本（配合远程服务器，独立运行）
-node scripts/local-cutout-worker.js
+| 脚本 | 场景 | 启动内容 |
+|------|------|----------|
+| `启动投屏系统（不抠图）.bat` | 🎪 **展览现场** | 清端口 → Rembg → 主服务 → 验证 |
+| `启动本地投屏系统（自动抠图）.bat` | 💻 **本地开发** | Rembg + 自动抠图主服务 |
+| `启动CMS自动抠图.bat` | 🔧 **抠图员电脑** | Rembg + Worker 轮询 CMS 抠图 |
+| `启动Rembg抠图服务.bat` | 🧩 **底层服务** | 仅 Python Rembg 抠图 |
 
-# 安装依赖
-npm install        # express, socket.io, multer, sharp
+```bash
+# 展览现场：一键启动全部
+启动投屏系统（不抠图）.bat
+
+# 本地开发调试（自动抠图）
+启动本地投屏系统（自动抠图）.bat
+
+# 抠图员电脑（配合远程服务器）
+启动CMS自动抠图.bat
+
+# 或手动分段启动
+启动Rembg抠图服务.bat              # Python 抠图服务
+ENABLE_AUTO_CUTOUT=true node server.js  # 主服务 + 自动抠图
+node scripts/local-cutout-worker.js     # 独立抠图工作脚本
+```
+
+### 原始命令（手动模式）
+
+```bash
+npm install        # 安装依赖
+node server.js     # 启动主服务 (port 3000)
 ```
 
 ## Architecture
@@ -121,8 +145,11 @@ ai-art-screen/
 ├── examples/               # 示例作品图片
 ├── data/                   # 后端运行时 JSON 数据文件（artworks.json, analytics.json 等）
 ├── docs/
+│   ├── DEPLOY.md           #     部署指南（总览/SPA/Worker）
 │   ├── openapi.md          #     OpenAPI 接口文档（第三方系统集成用）
-│   └── deploy/             #     部署文档、SSH 密钥、证书管理
+│   ├── timers-and-listeners.md  #  所有定时任务 & 监听器清单
+│   ├── picdash/            #     📎 PicDash Chrome 插件（上传图片到 CMS 相册）
+│   └── deploy/             #     服务器详细部署（PM2/Nginx/SSL/证书）
 └── uploads/                # 用户上传的图片/视频（gitignored）
     ├── artworks/           #     抠图版（透明背景 PNG）
     ├── originals/          #     原图 + 裁剪版
@@ -139,12 +166,64 @@ ai-art-screen/
 | multer | 文件上传（图片/视频） |
 | sharp | 图片裁剪、格式转换、缩略图生成 |
 
-### 三个独立进程
+### 环境变量
 
-| 进程 | 端口 | 启动 | 功能 |
-|------|------|------|------|
-| Node 主服务 | 3000 | `node server.js` | API + 页面 + Socket.IO + CMS 代理 |
-| Rembg 抠图 | 7000 | `start-rembg.bat` | Python AI 背景移除（u2net/u2net_human） |
+| 变量 | 默认值 | 说明 |
+|------|:------:|------|
+| `PORT` | 3000 | 服务端口 |
+| `ENABLE_AUTO_CUTOUT` | `false` | 是否启用服务端自动抠图队列 |
+| `CMS_POLL_INTERVAL` | 5000 | CMS 增量轮询间隔（毫秒） |
+| `REMBG_HOST` | localhost | Rembg 服务地址 |
+| `REMBG_PORT` | 7000 | Rembg 服务端口 |
+| `REMBG_TIMEOUT` | 15000 | Rembg 请求超时（毫秒） |
+
+### 核心数据合并流程
+
+`getAllArtworks()`（server.js）是中心合并函数，所有展示端都通过它获取数据：
+
+```
+CMS 缓存 (cms-cache.json)         本地作品 (artworks.json)
+         │                                │
+         │  map → cms_{mediaId}            │  map → uuid
+         ▼                                ▼
+    getAllArtworks() 合并去重
+         │  CMS 优先（同 ID 时覆盖本地）
+         │  status=active 过滤
+         ▼
+    ┌─── display.html（大屏浮动卡片）
+    ├─── web-admin/admin.html（后台列表）
+    ├─── web-gallery/index.html（画廊 SPA）
+    └─── web-gallery/data/works-data.json（静态快照）
+```
+
+### 关键函数调用链
+
+```
+服务启动
+  ├─ setInterval(pollCmsNewMedia, 5000)     # CMS 增量轮询
+  │     └─ cmsRequest('/media/check')        # 查新作品
+  │     └─ syncCacheMedia()                  # 更新本地缓存
+  │     └─ processCutoutQueue()              # [auto cutout] 入队列
+  ├─ setInterval(全量刷新, 300000)            # 5min 全量兜底
+  ├─ io.on('connection')                     # Socket.IO 连接
+  └─ resumeCutoutQueue()                     # 恢复未完成抠图任务
+
+抠图完成 → POST /api/cms/cutout/notify
+  ├─ 更新 cms-cache.json
+  ├─ io.emit('artwork:new')                  # 推大屏
+  └─ generateWorksDataJson()                 # 更新静态快照
+```
+
+> 完整的定时任务和监听器清单见 `docs/timers-and-listeners.md`
+
+### 四个独立进程 / 启动方式
+
+| 进程 | 端口 | 启动脚本 | 功能 |
+|------|:----:|----------|------|
+| Node 主服务 | 3000 | `启动本地投屏系统（自动抠图）.bat` / `启动投屏系统（不抠图）.bat` | API + 页面 + Socket.IO + CMS 代理 |
+| Rembg 抠图 | 7000 | `启动Rembg抠图服务.bat` | Python AI 背景移除（u2net） |
+| 抠图工作机 | - | `启动CMS自动抠图.bat` | 轮询 CMS → 抠图 → 上传（独立电脑运行） |
+| 🎪 **投屏大屏** | - | **`启动投屏系统（不抠图）.bat`** | **一键启动主服务 + 大屏验证** |
 | 收件箱监听 | - | 独立项目 | 轮询 B/C 电脑收件箱（172.16.29.64:8765） |
 
 ### 核心数据文件（data/）
@@ -208,7 +287,7 @@ ai-art-screen/
 | `GET /gallery` | 作品画廊 SPA |
 | `GET /gallery/works/{id}.html` | 预生成手机分享页 |
 | `GET /gallery/data/works-data.json` | 作品列表快照 |
-| `GET /` → redirect `/gallery` | 根路径重定向 |
+| `GET /` → redirect `/admin` | 根路径重定向到后台管理 |
 | `GET /work/:id` → 301 redirect | 短链跳转分享页 |
 | `GET/POST /api/artworks*` | 作品 CRUD、统计、批量上传 |
 | `POST /api/auto-matting` | 自动抠图流水线（核心） |

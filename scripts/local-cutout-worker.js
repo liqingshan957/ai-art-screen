@@ -10,7 +10,7 @@
  * 使用方法：
  *   1. 复制 local-cutout-config.template.json → local-cutout-config.json
  *   2. 填写 API Key 等配置
- *   3. 启动 Rembg 服务：start-rembg.bat
+ *   3. 启动 Rembg 服务：启动Rembg抠图服务.bat
  *   4. 运行脚本：node scripts/local-cutout-worker.js
  */
 
@@ -32,7 +32,7 @@ const NOTIFY_URL = config.server.notifyUrl;
 const DISPLAY_ALBUM_URL = config.server.displayAlbumUrl;
 const REMBG_HOST = config.rembg.host;
 const REMBG_PORT = config.rembg.port;
-const POLL_INTERVAL = config.pollInterval || 15000;
+const POLL_INTERVAL = config.pollInterval || 5000;
 
 // ===== CMS API 请求 =====
 async function cmsFetch(path, options = {}) {
@@ -127,7 +127,7 @@ async function notifyServer(albumId, mediaId, mediaName, cutoutUrl, mediaUrl) {
 // ===== 处理单个媒体 =====
 async function processMedia(albumId, media) {
   const mediaId = String(media.mediaId || media.id);
-  const mediaUrl = media.cutoutUrl || media.mediaUrl || media.sourceUrl;
+  const mediaUrl = media.mediaUrl || media.sourceUrl;
 
   console.log(`[Worker] 开始抠图: ${media.mediaName || mediaId}`);
 
@@ -148,8 +148,9 @@ async function processMedia(albumId, media) {
     mattedBuffer = await callRembg(tmpFile);
     console.log(`[Worker] Rembg 完成: ${media.mediaName || mediaId}`);
   } catch (e) {
-    console.warn(`[Worker] Rembg 失败，使用原图:`, e.message);
-    mattedBuffer = buf;
+    console.warn(`[Worker] Rembg 不可用，跳过 ${media.mediaName || mediaId}:`, e.message);
+    try { fs.unlinkSync(tmpFile); } catch (e2) {}
+    return; // 跳过，不写 cutoutUrl，下次轮询继续
   }
 
   // 4. 上传抠图结果到 CMS
@@ -171,47 +172,124 @@ async function processMedia(albumId, media) {
   console.log(`[Worker] ✅ ${media.mediaName || mediaId} → ${uploadResult.url}`);
 }
 
-// ===== 主循环 =====
+// ===== 增量轮询状态（持久化，重启不丢进度）=====
+const POLL_STATE_FILE = path.join(__dirname, 'temp', 'poll-state.json');
+function loadPollState() {
+  try { return JSON.parse(fs.readFileSync(POLL_STATE_FILE, 'utf8')); } catch (e) { return { albumId: null, sinceId: 0 }; }
+}
+function savePollState(state) {
+  try {
+    if (!fs.existsSync(path.join(__dirname, 'temp'))) fs.mkdirSync(path.join(__dirname, 'temp'), { recursive: true });
+    fs.writeFileSync(POLL_STATE_FILE, JSON.stringify(state));
+  } catch (e) { /* 写文件失败不影响运行 */ }
+}
+let pollState = loadPollState();
+
+// ===== 互斥锁 + 去重 =====
+let isRunning = false;                 // 防止增量/全量同时跑
+const processingIds = new Set();      // 正在处理的 mediaId，避免重复
+
+// ===== 处理一批待抠图媒体（去重 + 逐个处理）=====
+async function processBatch(albumId, mediaList) {
+  for (const media of mediaList) {
+    const mediaId = String(media.mediaId || media.id);
+    if (processingIds.has(mediaId)) continue; // 已在处理中，跳过
+    processingIds.add(mediaId);
+    try {
+      await processMedia(albumId, media);
+    } catch (e) {
+      console.error(`[Worker] ❌ ${media.mediaName || mediaId}: ${e.message}`);
+    } finally {
+      processingIds.delete(mediaId);
+    }
+  }
+}
+
+// ===== 主循环（增量 5s）=====
 async function mainLoop() {
+  if (isRunning) return;
+  isRunning = true;
   try {
     const albumId = await getDisplayAlbumId();
-    if (!albumId) {
-      console.log('[Worker] 未设置展示相册，等待...');
-      return;
+    if (!albumId) return;
+
+    // 切换相册时重置 sinceId
+    if (pollState.albumId !== albumId) {
+      pollState.albumId = albumId;
+      pollState.sinceId = 0;
+      savePollState(pollState);
+      console.log('[Worker] 切换到相册 #' + albumId);
     }
 
-    console.log(`[Worker] 检查展示相册 #${albumId}...`);
+    // 增量拉取新媒体
+    const data = await cmsFetch(`/activity-albums/${albumId}/media/check?sinceId=${pollState.sinceId}&limit=20`);
+    if (!data || !data.length) return;
 
-    // 获取相册所有媒体
+    // 更新 sinceId（取本次最大 ID）
+    let maxId = pollState.sinceId;
+    for (const m of data) {
+      const mid = parseInt(m.mediaId || m.id);
+      if (mid > maxId) maxId = mid;
+    }
+    pollState.sinceId = maxId;
+    savePollState(pollState);
+
+    // 筛选需要抠图的
+    const needsCutout = data.filter(m => !m.cutoutUrl);
+    if (needsCutout.length === 0) return;
+
+    console.log(`[Worker][增量] 发现 ${needsCutout.length} 个待抠图媒体`);
+    await processBatch(albumId, needsCutout);
+  } catch (e) {
+    // 静默处理（网络波动等）
+  } finally {
+    isRunning = false;
+  }
+}
+
+// ===== 全量兜底扫描（5 分钟）=====
+async function fullScan() {
+  if (isRunning) return;
+  isRunning = true;
+  try {
+    const albumId = await getDisplayAlbumId();
+    if (!albumId) return;
+
+    console.log('[Worker][全量] 开始对账...');
+
+    // 全量拉取当前相册所有媒体
     const data = await cmsFetch(`/activity-albums/${albumId}/media?pageSize=200`);
     const rows = data.rows || data || [];
 
-    // 筛选没有扣图结果的
-    const needsCutout = rows.filter(m => !m.cutoutUrl);
-
-    if (needsCutout.length === 0) return;
-
-    console.log(`[Worker] 发现 ${needsCutout.length} 个待抠图媒体`);
-
-    // 逐个处理
-    for (const media of needsCutout) {
-      try {
-        await processMedia(albumId, media);
-      } catch (e) {
-        console.error(`[Worker] ❌ ${media.mediaName || media.mediaId}: ${e.message}`);
-      }
+    // 找到还没有抠图的
+    const missing = rows.filter(m => !m.cutoutUrl);
+    if (missing.length === 0) {
+      console.log('[Worker][全量] 全部已抠图，无需补漏');
+      return;
     }
 
-    console.log(`[Worker] 本轮完成`);
+    // 去重：只处理不在 processingIds 中的
+    const todo = missing.filter(m => !processingIds.has(String(m.mediaId || m.id)));
+    if (todo.length === 0) {
+      console.log('[Worker][全量] 发现 ' + missing.length + ' 个待抠图，但都在处理中');
+      return;
+    }
+
+    console.log(`[Worker][全量] 补漏 ${todo.length} 个（增量遗漏）`);
+    await processBatch(albumId, todo);
+    console.log('[Worker][全量] 对账完成');
   } catch (e) {
-    // 静默处理（网络波动等）
+    // 静默
+  } finally {
+    isRunning = false;
   }
 }
 
 // ===== 启动 =====
 console.log('========================================');
 console.log('  Local Cutout Worker');
-console.log('  轮询间隔: ' + (POLL_INTERVAL / 1000) + 's');
+console.log('  增量轮询: ' + (POLL_INTERVAL / 1000) + 's');
+console.log('  全量兜底: 5min');
 console.log('  Rembg: ' + REMBG_HOST + ':' + REMBG_PORT);
 console.log('  通知: ' + NOTIFY_URL);
 console.log('========================================');
@@ -219,5 +297,8 @@ console.log('========================================');
 // 首次立即执行
 mainLoop();
 
-// 定时轮询
+// 定时增量轮询
 setInterval(mainLoop, POLL_INTERVAL);
+
+// 定时全量兜底（5 分钟）
+setInterval(fullScan, 300000);

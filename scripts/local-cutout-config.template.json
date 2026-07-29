@@ -12,5 +12,5 @@
     "host": "localhost",
     "port": 7000
   },
-  "pollInterval": 15000
+  "pollInterval": 5000
 }

@@ -548,9 +548,9 @@ async function processOneCutout(item) {
   fs.writeFileSync(tmpFile, buf);
   let mattedBuffer;
   try { mattedBuffer = await callRembg(tmpFile); } catch (e) {
-    const img = sharp(tmpFile);
-    mattedBuffer = await img.png().toBuffer();
-    console.warn('[Cutout] Rembg 不可用，使用原图:', e.message);
+    console.warn('[Cutout] Rembg 不可用，跳过', item.mediaName || item.mediaId, ':', e.message);
+    try { fs.unlinkSync(tmpFile); } catch (e2) {}
+    throw new Error('Rembg 不可用，跳过'); // 跳到 catch 标记 error，下次重试
   }
   const cutoutFile = { originalname: 'cutout_' + item.mediaId + '.png', buffer: mattedBuffer, mimetype: 'image/png', size: mattedBuffer.length };
   const uploadResult = await cmsFileUpload(cutoutFile);
@@ -581,9 +581,14 @@ async function processCutoutQueue() {
     persistCutoutQueue();
     await Promise.allSettled(batch.map(item =>
       processOneCutout(item).catch(e => {
-        item.status = 'error'; item.error = e.message; item.doneAt = Date.now();
         item.retryCount = (item.retryCount || 0) + 1;
-        console.error('[Cutout] 失败:', item.mediaName || item.mediaId, '(' + item.retryCount + '次)', e.message);
+        if (item.retryCount >= 5) {
+          item.status = 'error'; item.error = e.message; item.doneAt = Date.now();
+          console.error('[Cutout] 已达最大重试次数:', item.mediaName || item.mediaId, '(' + item.retryCount + '次)', e.message);
+        } else {
+          item.status = 'pending'; item.error = e.message;
+          console.warn('[Cutout] 失败，稍后重试:', item.mediaName || item.mediaId, '(' + item.retryCount + '/5)', e.message);
+        }
       })
     ));
     persistCutoutQueue();
