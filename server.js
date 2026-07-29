@@ -818,6 +818,8 @@ function buildWorkHtml(workId, name, imgUrl, date, origin) {
 app.get('/work.html', async (req, res) => {
   const workId = req.query.work;
   if (!workId) return res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'work.html'));
+  // SSR 页面每个 work ID 内容不同，禁止代理/CDN 缓存，确保每次都拿到最新 OG meta
+  res.setHeader('Cache-Control', 'no-store');
   const origin = getSiteOrigin(req);
   // 优先 CMS 查询
   if (workId.startsWith('cms_')) {
