@@ -1,7 +1,9 @@
 # 部署文档 — AI Art Screen（投屏展示系统）
 
-> 服务器具体信息（IP、SSH 命令等）在 `DEPLOY_PRIVATE.md`（不提交 Git），
-> 首次部署请参考该文件填写模板。
+> **服务器实际信息（IP、域名、SSH 命令等）请在 `DEPLOY_PRIVATE.md` 中查看，**  
+> 本文件仅包含通用参考配置。
+
+---
 
 ## 准备工作
 
@@ -10,39 +12,28 @@
 - Nginx（需配置 WebSocket 代理）
 - 域名 SSL 证书（推荐 Let's Encrypt）
 
-## 部署步骤
+## 部署方式
 
-```bash
-# 1. 上传项目到服务器
-tar czf /tmp/ai-art-screen.tar.gz \
-  --exclude=node_modules --exclude=uploads --exclude=.git \
-  --exclude=.mcp.json --exclude=data/cms-*.json \
-  --exclude=data/cutout-queue.json --exclude=scripts/temp \
-  --exclude=test_batch2 --exclude=services/rembg/model_cache \
-  .
-scp -i <密钥> /tmp/ai-art-screen.tar.gz <用户>@<IP>:/opt/ai-art-screen/
+详细部署命令（含服务器 IP、SSH 密钥路径等）→ **[`DEPLOY_PRIVATE.md`](DEPLOY_PRIVATE.md)**
 
-# 2. 服务器端安装启动
-ssh -i <密钥> <用户>@<IP> "
-  cd /opt/ai-art-screen
-  tar xzf ai-art-screen.tar.gz
-  rm ai-art-screen.tar.gz
-  mkdir -p web-gallery/data web-gallery/works
-  npm install --production
-  pm2 start server.js --name ai-art-screen
-  pm2 save
-"
-```
+两种方式：
+
+| 方式 | 适用场景 |
+|------|----------|
+| Git Pull | 日常更新（服务器上 `git pull` + `pm2 restart`） |
+| 全量上传 | 首次部署或 Git 不可用时（tar + scp） |
+
+---
 
 ## Nginx 配置参考
 
 ```nginx
 server {
     listen 443 ssl;
-    server_name <域名>;
+    server_name <你的域名>;
 
-    ssl_certificate /etc/letsencrypt/live/<域名>/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/<域名>/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/<你的域名>/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/<你的域名>/privkey.pem;
 
     client_max_body_size 50M;
 
@@ -69,10 +60,12 @@ server {
 
 server {
     listen 80;
-    server_name <域名>;
+    server_name <你的域名>;
     return 301 https://$host$request_uri;
 }
 ```
+
+---
 
 ## 服务管理
 
@@ -88,7 +81,7 @@ pm2 startup                    # 开机自启
 
 ```bash
 # 申请证书（首次）
-certbot --nginx -d <域名>
+certbot --nginx -d <你的域名>
 
 # 查看证书到期
 bash docs/deploy/cert-manage.sh status
