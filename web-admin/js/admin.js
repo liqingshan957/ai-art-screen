@@ -601,6 +601,9 @@ function updateExternalUrl(albumId) {
     el.value = base;
   }
   localStorage.setItem('externalBaseUrl', el.value);
+  // 同步更新"作品欣赏"链接
+  const gl = document.getElementById('gallery-link');
+  if (gl) gl.href = albumId ? '/gallery?album=' + albumId : '/gallery';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
