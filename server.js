@@ -685,9 +685,16 @@ app.get('/dashboard',(req,res)=>res.sendFile(path.join(WEB_DIR,'dashboard.html')
 app.get('/',(req,res)=>res.redirect('/admin'));
 
 // 画廊 SPA（同时支持独立部署到 PageFire）
-app.use('/gallery', express.static(path.join(ROOT_DIR, 'web-gallery'), { redirect: false, index: 'index.html' }));
-app.get('/gallery*', (req, res) => {
-  // 注入服务端配置的 API Key（覆盖 html 中写死的）
+// 先拦截 /gallery 和 /gallery/ 做 API Key 注入，再 fallback 静态文件
+app.get('/gallery', (req, res) => serveGallery(res));
+app.get('/gallery/', (req, res) => serveGallery(res));
+app.use('/gallery', express.static(path.join(ROOT_DIR, 'web-gallery'), { redirect: false, index: false }));
+app.get('/gallery/*', (req, res) => {
+  // SPA fallback：未知路径返回 index.html
+  serveGallery(res);
+});
+
+function serveGallery(res) {
   const cfg = getCmsConfig();
   if (cfg.apiKey) {
     const html = fs.readFileSync(path.join(ROOT_DIR, 'web-gallery', 'index.html'), 'utf8');
@@ -695,7 +702,7 @@ app.get('/gallery*', (req, res) => {
   } else {
     res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'index.html'));
   }
-});
+}
 // 手机作品分享页 SSR（work.html?work=xxx → 服务端渲染 OG 标签）
 app.get('/work.html', async (req, res) => {
   const workId = req.query.work;
