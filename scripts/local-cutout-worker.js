@@ -105,16 +105,22 @@ async function cmsFileUpload(fileBuffer, filename) {
   return data.data;
 }
 
-// ===== 通知服务器推大屏 =====
+// ===== 通知服务器推大屏（失败重试 3 次）=====
 async function notifyServer(albumId, mediaId, mediaName, cutoutUrl, mediaUrl) {
-  try {
-    await fetch(NOTIFY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ albumId, mediaId, mediaName, cutoutUrl, mediaUrl })
-    });
-  } catch (e) {
-    console.warn('[Worker] 通知服务器失败:', e.message);
+  for (var i = 0; i < 3; i++) {
+    try {
+      var r = await fetch(NOTIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ albumId, mediaId, mediaName, cutoutUrl, mediaUrl })
+      });
+      if (r.ok) return;
+      console.warn('[Worker] 通知服务器返回异常 (' + r.status + ')，重试 ' + (i + 1) + '/3');
+    } catch (e) {
+      if (i < 2) console.warn('[Worker] 通知服务器失败 (' + e.message + ')，重试 ' + (i + 1) + '/3');
+      else console.error('[Worker] 通知服务器失败已达上限:', e.message);
+    }
+    await new Promise(r => setTimeout(r, 2000));
   }
 }
 

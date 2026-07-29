@@ -970,6 +970,28 @@ async function pollCmsNewMedia() {
   } catch (e) { /* silent */ }
 }
 setInterval(pollCmsNewMedia, CMS_POLL_INTERVAL);
+// 兜底：每 5 分钟全量刷新缓存，防止 notify 失败导致 cache 遗漏
+setInterval(async () => {
+  const cache = getCmsCache();
+  const albumId = cache.displayAlbumId;
+  if (!albumId) return;
+  try {
+    const data = await cmsRequest(`/activity-albums/${albumId}/media?pageSize=200`);
+    const rows = data.rows || data || [];
+    const c = getCmsCache();
+    let album = c.albums.find(a => String(a.albumId) === albumId);
+    if (!album) return;
+    for (const m of rows) {
+      const mid = String(m.mediaId || m.id);
+      const existing = album.medias.find(mm => String(mm.mediaId) === mid);
+      if (existing && m.cutoutUrl && existing.cutoutUrl !== m.cutoutUrl) {
+        existing.cutoutUrl = m.cutoutUrl;
+        console.log('[Cache] 补漏 cutoutUrl:', m.mediaName || mid);
+      }
+    }
+    saveCmsCache(c);
+  } catch (e) { /* silent */ }
+}, 300000);
 
 // ===== Socket.IO =====
 io.on('connection',(socket)=>{
