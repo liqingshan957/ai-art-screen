@@ -120,7 +120,10 @@ if (!fs.existsSync(SETTINGS_FILE)) {
   if (Object.keys(_s).length) saveJSON(SETTINGS_FILE, _s);
 }
 const _settings = loadJSON(SETTINGS_FILE, {});
+const _DEFAULT_BG_URL = '/default-bg.jpg';
 let bgConfig = { filename: null, position: 'center', scale: 'cover', url: null, cmsUrl: null, ...(_settings.background || {}) };
+// 未配置背景图时，使用 web-admin/default-bg.jpg 作为默认背景
+if (!bgConfig.url) bgConfig.url = _DEFAULT_BG_URL;
 let videoConfig = { interval: 300, repeat: 2, ...(_settings.videoConfig || {}) };
 let dashboardData = _settings.dashboard || {};
 

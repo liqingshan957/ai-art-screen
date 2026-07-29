@@ -479,7 +479,8 @@ function renderBackground() {
     bgPreview.style.backgroundImage = `url('${bgConfig.url}')`;
     bgPreview.style.backgroundSize = bgConfig.scale || 'cover';
     bgPreview.style.backgroundPosition = bgConfig.position || 'center';
-    const name = bgConfig.cmsUrl ? '☁️ CMS' : (bgConfig.filename || '');
+    const isDefault = bgConfig.url === '/default-bg.jpg' && !bgConfig.filename && !bgConfig.cmsUrl;
+    const name = bgConfig.cmsUrl ? '☁️ CMS' : (bgConfig.filename || (isDefault ? '默认背景' : ''));
     bgPreview.innerHTML = name ? '<div class="bg-label" style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.5);color:#fff;padding:2px 10px;border-radius:4px;font-size:11px">' + escapeHtml(name) + '</div>' : '';
   } else {
     bgPreview.style.backgroundImage = '';
