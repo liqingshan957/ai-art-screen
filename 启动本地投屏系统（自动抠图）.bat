@@ -1,32 +1,31 @@
 @echo off
 cd /d "%~dp0"
-chcp 65001 >nul 2>nul
-title AI Art æœ¬åœ°è°ƒè¯•
+title AI Art ±¾µØµ÷ÊÔ
 
 echo.
 echo ==========================================
-echo   æœ¬åœ°è°ƒè¯•çŽ¯å¢ƒ
-echo   Rembg :7000 + ä¸»æœåŠ¡ :3000 (è‡ªåŠ¨æŠ å›¾)
+echo   ±¾µØµ÷ÊÔ»·¾³
+echo   Rembg :7000 + Ö÷·þÎñ :3000 (×Ô¶¯¿ÙÍ¼)
 echo ==========================================
 echo.
-echo [0/2] æ¸…ç†æ—§è¿›ç¨‹...
+echo [0/2] ÇåÀí¾É½ø³Ì...
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000" ^| findstr "LISTENING"') do taskkill /F /PID %%a 2>nul
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":7000" ^| findstr "LISTENING"') do taskkill /F /PID %%a 2>nul
 timeout /t 1 /nobreak >nul
 
 echo.
-echo [1/2] å¯åŠ¨ Rembg æŠ å›¾æœåŠ¡...
-start "Rembg (7000)" /min cmd /c "%~dp0å¯åŠ¨RembgæŠ å›¾æœåŠ¡.bat"
+echo [1/2] Æô¶¯ Rembg ¿ÙÍ¼·þÎñ...
+start "Rembg(7000)" /min cmd /c "%~dp0Æô¶¯Rembg¿ÙÍ¼·þÎñ.bat"
 
 timeout /t 5 /nobreak >nul
 
 echo.
-echo [2/2] å¯åŠ¨ä¸»æœåŠ¡ï¼ˆè‡ªåŠ¨æŠ å›¾æ¨¡å¼ï¼‰...
+echo [2/2] Æô¶¯Ö÷·þÎñ£¨×Ô¶¯¿ÙÍ¼Ä£Ê½£©...
 echo.
 
 set ENABLE_AUTO_CUTOUT=true
 node server.js
 
 echo.
-echo æœåŠ¡å·²åœæ­¢ã€‚
+echo ·þÎñÒÑÍ£Ö¹¡£
 pause

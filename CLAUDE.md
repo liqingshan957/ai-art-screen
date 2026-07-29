@@ -139,8 +139,8 @@ ai-art-screen/
 ├── services/rembg/         # Python 独立抠图服务（基于 rembg + http.server）
 │   └── rembg-server.py     #     零外部依赖，POST /api/remove 接收图片返回 PNG
 ├── scripts/                # 工具脚本
-│   ├── init-album-data.js  #     初始化活动相册数据
 │   ├── local-cutout-worker.js          #     本地 Rembg 抠图工作脚本（配合远程服务器）
+│   ├── setup-config.js                 #     交互式配置向导（CMS 自动抠图首次使用）
 │   └── local-cutout-config.template.json  #     抠图工作脚本配置模板
 ├── examples/               # 示例作品图片
 ├── data/                   # 后端运行时 JSON 数据文件（artworks.json, analytics.json 等）

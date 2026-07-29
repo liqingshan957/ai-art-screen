@@ -1,25 +1,49 @@
 @echo off
 cd /d "%~dp0"
-chcp 65001 >nul 2>nul
-title CMS è‡ªåŠ¨æŠ å›¾
+title CMS ×Ô¶¯¿ÙÍ¼
+
+if not exist "scriptslocal-cutout-config.json" (
+    echo.
+    echo ==============================================
+    echo   ? Ê×´ÎÊ¹ÓÃÐèÒªÅäÖÃ
+    echo.
+    echo   ÕýÔÚÆô¶¯ÅäÖÃÏòµ¼...
+    echo ==============================================
+    echo.
+    node scripts/setup-config.js
+    if errorlevel 1 (
+        echo.
+        echo ÅäÖÃÎ´Íê³É£¬°´ÈÎÒâ¼üÍË³ö¡£
+        pause >nul
+        exit /b 1
+    )
+    if not exist "scriptslocal-cutout-config.json" (
+        echo.
+        echo ÅäÖÃÒÑÈ¡Ïû£¬°´ÈÎÒâ¼üÍË³ö¡£
+        pause >nul
+        exit /b 1
+    )
+    echo.
+)
 
 echo.
 echo ==========================================
-echo   CMS è‡ªåŠ¨æŠ å›¾æœº
-echo   Rembg :7000 + Worker (è½®è¯¢ CMS æŠ å›¾)
+echo   CMS ×Ô¶¯¿ÙÍ¼»ú
+echo   Rembg :7000 + Worker (ÂÖÑ¯ CMS ¿ÙÍ¼)
 echo ==========================================
 echo.
-echo [1/2] å¯åŠ¨ Rembg æŠ å›¾æœåŠ¡...
-start "Rembg (7000)" /min cmd /c "%~dp0å¯åŠ¨RembgæŠ å›¾æœåŠ¡.bat"
+
+echo [1/2] Æô¶¯ Rembg ¿ÙÍ¼·þÎñ...
+start "Rembg(7000)" /min cmd /c "%~dp0Æô¶¯Rembg¿ÙÍ¼·þÎñ.bat"
 
 timeout /t 5 /nobreak >nul
 
 echo.
-echo [2/2] å¯åŠ¨æŠ å›¾å·¥ä½œè„šæœ¬ï¼ˆè½®è¯¢ CMS å¾…æŠ å›¾ä½œå“ï¼‰...
+echo [2/2] Æô¶¯¿ÙÍ¼¹¤×÷½Å±¾£¨ÂÖÑ¯ CMS ´ý¿ÙÍ¼×÷Æ·£©...
 echo.
 
 node scripts/local-cutout-worker.js
 
 echo.
-echo æŠ å›¾æœºå·²åœæ­¢ã€‚
+echo ¿ÙÍ¼»úÒÑÍ£Ö¹¡£
 pause

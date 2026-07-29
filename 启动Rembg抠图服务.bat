@@ -1,22 +1,27 @@
 @echo off
 cd /d "%~dp0"
-chcp 65001 >nul 2>nul
-title Rembg 鎶犲浘鏈嶅姟 (7000)
+title Rembg 抠图服务 (7000)
 
 set U2NET_HOME=%CD%\services\rembg\model_cache
 
+if not exist "%CD%\logs" mkdir "%CD%\logs"
+
 echo.
 echo ==========================================
-echo   Rembg Python 鎶犲浘鏈嶅姟
-echo   绔彛: 7000
-echo   妯″瀷: u2net
+echo   Rembg Python 抠图服务
+echo   端口: 7000
+echo   模型: u2net
+echo   日志: logs\rembg.log
 echo ==========================================
 echo.
 
+echo [%date% %time%] ===== Rembg 服务启动 ===== >> "%CD%\logs\rembg.log"
+
 :loop
-echo [%time%] 鍚姩 Python rembg 鏈嶅姟...
-python "%CD%\services\rembg\rembg-server.py"
-echo.
-echo [%time%] 鏈嶅姟寮傚父閫�鍑猴紝3 绉掑悗閲嶅惎...
+echo [%time%] 启动 Python rembg 服务...
+echo [%date% %time%] 启动中... >> "%CD%\logs\rembg.log"
+python "%CD%\services\rembg\rembg-server.py" >> "%CD%\logs\rembg.log" 2>&1
+echo [%time%] 服务异常退出，3 秒后重启...
+echo [%date% %time%] 异常退出，重启中... >> "%CD%\logs\rembg.log"
 timeout /t 3 /nobreak >nul
 goto loop

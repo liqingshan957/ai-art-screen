@@ -105,7 +105,7 @@ ai-art-screen/
 ├── scripts/                   # 工具脚本
 │   ├── local-cutout-worker.js #     本地 Rembg 抠图工作脚本
 │   ├── local-cutout-config.template.json  # Worker 配置模板
-│   └── init-album-data.js     #     初始化活动相册数据
+│   └── setup-config.js        #     CMS 自动抠图交互式配置向导
 ├── data/                      # 后端运行时 JSON 数据文件
 │   ├── artworks.json          #     本地作品数据
 │   ├── artworks_archive.json  #     归档作品
