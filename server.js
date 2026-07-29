@@ -710,7 +710,7 @@ app.get('/work.html', async (req, res) => {
         '<meta name="twitter:title" content="' + title.replace(/"/g, '&quot;') + '">' +
         '<meta name="twitter:description" content="' + desc + '">' +
         '<meta name="twitter:image" content="' + imgUrl.replace(/"/g, '&quot;') + '">')
-      .replace('var workData = null;', 'var workData = ' + JSON.stringify({ id: workId, name, url: imgUrl, date }) + ';');
+      .replace('var workData = null;', 'var workData = ' + JSON.stringify({ id: workId, name, url: imgUrl, date }) + '; window.__WORK_DATA__ = workData;');
     res.send(html);
   } catch (e) {
     res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'work.html'));
