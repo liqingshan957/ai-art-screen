@@ -155,18 +155,41 @@
   <script>
     var workData = null;
 
+    // ========== CMS 直连配置 ==========
+    const CMS_API_BASE = 'https://vapi.hkting.com/api/open-api/v1';
+    const CMS_API_KEY = (function(){
+      var m = document.querySelector('meta[name="cms-api-key"]');
+      if (m) return m.getAttribute('content');
+      m = location.search.match(/[?&]api_key=([^&]*)/);
+      return m ? decodeURIComponent(m[1]) : '';
+    })();
+
+    async function cmsFetch(path) {
+      if (!CMS_API_KEY) throw new Error('CMS_API_KEY 未配置');
+      var r = await fetch(CMS_API_BASE + path, { headers: { 'X-Api-Key': CMS_API_KEY } });
+      var d = await r.json();
+      if (d.code !== 0) throw new Error(d.message || 'CMS error (code=' + d.code + ')');
+      return d.data;
+    }
+
     function loadData() {
-      // Priority 1: Embedded data from server (/work/:id)
-      if (window.__WORK_DATA__) {
-        workData = window.__WORK_DATA__;
-        render();
-        return;
-      }
-      // Priority 2: Parse id from URL
+      if (window.__WORK_DATA__) { workData = window.__WORK_DATA__; render(); return; }
       var id = getParam('work') || getParam('id');
       if (!id) { showNotFound(); return; }
       window.__WORK_ID__ = id;
-      // Priority 3: Fall back to static data
+      if (CMS_API_KEY) {
+        cmsFetch('/activity-albums/media/' + id.replace(/^cms_/, ''))
+          .then(function(m) {
+            workData = { id: id, name: m.mediaName || '', url: m.cutoutUrl || m.mediaUrl, date: m.createTime ? m.createTime.slice(0,10).replace(/-/g,'/') : '' };
+            if (workData.url) { render(); return; }
+            throw new Error('no image');
+          })
+          .catch(function() { loadFromStatic(id); });
+        return;
+      }
+      loadFromStatic(id);
+    }
+    function loadFromStatic(id) {
       fetch('data/works-data.json?' + Date.now())
         .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
         .then(function(list) {
