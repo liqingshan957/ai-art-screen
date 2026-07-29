@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const https = require('https');
 const { Server } = require('socket.io');
 const multer = require('multer');
 const fs = require('fs');
@@ -33,7 +34,7 @@ const GALLERY_WORKS_DIR = path.join(GALLERY_DIR, 'works');
 const GALLERY_DATA_DIR = path.join(GALLERY_DIR, 'data');
 const WORKS_DATA_FILE = path.join(GALLERY_DATA_DIR, 'works-data.json');
 
-[UPLOADS_DIR, ARTWORKS_DIR, ORIGINALS_DIR, BG_DIR, VIDEOS_DIR, DATA_DIR].forEach(d => {
+[UPLOADS_DIR, ARTWORKS_DIR, ORIGINALS_DIR, BG_DIR, VIDEOS_DIR, DATA_DIR, GALLERY_DATA_DIR, GALLERY_WORKS_DIR].forEach(d => {
   if (!fs.existsSync(d)) fs.mkdirSync(d, { recursive: true });
 });
 
@@ -725,33 +726,128 @@ function serveGallery(res) {
   }
 }
 // 手机作品分享页 SSR（work.html?work=xxx → 服务端渲染 OG 标签）
+// 获取请求的站点域名（含 protocol），用于将相对路径转为绝对 URL
+function getSiteOrigin(req) {
+  const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const host = req.headers['x-forwarded-host'] || req.headers.host || 'art.hkting.com';
+  return proto + '://' + host;
+}
+function toAbsoluteUrl(url, origin) {
+  if (!url) return '';
+  if (/^https?:\/\//.test(url)) return url;
+  return origin + (url.startsWith('/') ? url : '/' + url);
+}
+const DEFAULT_OG_IMAGE = 'https://img.hkting.com/api/profile/upload/2026/07/29/b2f0dda6b85340f493a91a98175dc7df-c.jpg';
+const OG_IMAGE_MAX_BYTES = 300 * 1024; // 微信要求 < 300KB
+const OG_SIZE_CACHE_TTL = 60 * 60 * 1000; // 缓存 1 小时，同一图片不重复 HEAD 检查
+const OG_SIZE_CACHE_MAX = 500;            // 最多缓存 500 条，防止无限增长
+const ogSizeCache = new Map(); // url -> { ok: bool, ts: number }
+
+// HEAD 请求检查图片文件大小，结果缓存 1 小时，超限返回 false
+async function isOgImageSizeOk(url) {
+  if (!url) return false;
+  const cached = ogSizeCache.get(url);
+  if (cached && Date.now() - cached.ts < OG_SIZE_CACHE_TTL) return cached.ok;
+  try {
+    const parsed = new URL(url);
+    const mod = parsed.protocol === 'https:' ? https : http;
+    const ok = await new Promise((resolve) => {
+      const req = mod.request(
+        { hostname: parsed.hostname, port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+          path: parsed.pathname + parsed.search, method: 'HEAD' },
+        (res) => {
+          const len = parseInt(res.headers['content-length'] || '0', 10);
+          // content-length 缺失（值为 0）时保守放行，让微信自己判断
+          resolve(len === 0 || len <= OG_IMAGE_MAX_BYTES);
+        }
+      );
+      req.setTimeout(3000, () => { req.destroy(); resolve(true); }); // 超时保守放行
+      req.on('error', () => resolve(true)); // 网络错误保守放行
+      req.end();
+    });
+    // 超出上限时删除最早的一条（Map 按插入顺序迭代）
+    if (ogSizeCache.size >= OG_SIZE_CACHE_MAX) ogSizeCache.delete(ogSizeCache.keys().next().value);
+    ogSizeCache.set(url, { ok, ts: Date.now() });
+    return ok;
+  } catch (e) {
+    return true; // URL 解析失败保守放行
+  }
+}
+
+// work.html 模板缓存（避免每次请求都读磁盘）
+let workHtmlTemplate = null;
+function getWorkHtmlTemplate() {
+  if (!workHtmlTemplate) workHtmlTemplate = fs.readFileSync(path.join(ROOT_DIR, 'web-gallery', 'work.html'), 'utf8');
+  return workHtmlTemplate;
+}
+
+function buildWorkHtml(workId, name, imgUrl, date, origin) {
+  const templateHtml = getWorkHtmlTemplate();
+  const title = (name || '小画家') + ' · 敦煌AIGC艺术作品';
+  const desc = '大象智绘 AI 科创 · 孩子们用 AI 创作的敦煌风格艺术作品';
+  const usingDefault = !imgUrl;
+  const absImg = usingDefault ? DEFAULT_OG_IMAGE : toAbsoluteUrl(imgUrl, origin);
+  const pageUrl = origin + '/work.html?work=' + encodeURIComponent(workId);
+  const imgAlt = (name || '小画家') + '的 AI 艺术作品 · 敦煌 AIGC 艺术展';
+  const q = s => String(s).replace(/"/g, '&quot;');
+  // 替换模板中已有的默认占位标签，避免产生重复 meta
+  let html = templateHtml
+    .replace('<title>AI 艺术作品 · 敦煌 AIGC 艺术展</title>', '<title>' + q(title) + '</title>')
+    .replace(/(<meta property="og:title" content=")[^"]*(")/g, '$1' + q(title) + '$2')
+    .replace(/(<meta property="og:image" content=")[^"]*(")/g, '$1' + q(absImg) + '$2')
+    .replace(/(<meta name="twitter:image" content=")[^"]*(")/g, '$1' + q(absImg) + '$2')
+    .replace(/(<meta property="og:image:alt" content=")[^"]*(")/g, '$1' + q(imgAlt) + '$2')
+    .replace(/(<meta name="twitter:image:alt" content=")[^"]*(")/g, '$1' + q(imgAlt) + '$2')
+    .replace(/(<meta property="og:description" content=")[^"]*(")/g, '$1' + q(desc) + '$2')
+    .replace(/<meta property="og:type"[^>]*>/, m =>
+      m +
+      '\n  <meta property="og:url" content="' + q(pageUrl) + '">' +
+      '\n  <meta name="twitter:title" content="' + q(title) + '">' +
+      '\n  <meta name="twitter:description" content="' + q(desc) + '">'
+    );
+  // 作品图是实际 PNG，尺寸未知——移除模板中的固定 width/height/type，避免误导爬虫
+  if (!usingDefault) {
+    html = html
+      .replace(/<meta property="og:image:type"[^>]*>\n?/g, '')
+      .replace(/<meta property="og:image:width"[^>]*>\n?/g, '')
+      .replace(/<meta property="og:image:height"[^>]*>\n?/g, '');
+  }
+  return html.replace('var workData = null;',
+    'var workData = ' + JSON.stringify({ id: workId, name, url: imgUrl, date }) + '; window.__WORK_DATA__ = workData;');
+}
 app.get('/work.html', async (req, res) => {
   const workId = req.query.work;
   if (!workId) return res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'work.html'));
-  try {
-    const mediaId = workId.replace(/^cms_/, '');
-    const info = await cmsRequest('/activity-albums/media/' + mediaId);
-    const name = info.mediaName || '';
-    const imgUrl = info.cutoutUrl || info.mediaUrl || '';
-    const date = info.createTime ? info.createTime.slice(0, 10).replace(/-/g, '/') : '';
-    const title = name + ' · 敦煌AIGC艺术作品';
-    const desc = '大象智绘 AI 科创 · 孩子们用 AI 创作的敦煌风格艺术作品';
-    const html = fs.readFileSync(path.join(ROOT_DIR, 'web-gallery', 'work.html'), 'utf8')
-      .replace('<title>AI 艺术作品 · 敦煌 AIGC 艺术展</title>',
-        '<title>' + title + '</title>' +
-        '<meta property="og:title" content="' + title.replace(/"/g, '&quot;') + '">' +
-        '<meta property="og:description" content="' + desc + '">' +
-        '<meta property="og:image" content="' + imgUrl.replace(/"/g, '&quot;') + '">' +
-        '<meta property="og:url" content="' + 'https://art.hkting.com/work.html?work=' + workId + '">' +
-        '<meta name="twitter:card" content="summary_large_image">' +
-        '<meta name="twitter:title" content="' + title.replace(/"/g, '&quot;') + '">' +
-        '<meta name="twitter:description" content="' + desc + '">' +
-        '<meta name="twitter:image" content="' + imgUrl.replace(/"/g, '&quot;') + '">')
-      .replace('var workData = null;', 'var workData = ' + JSON.stringify({ id: workId, name, url: imgUrl, date }) + '; window.__WORK_DATA__ = workData;');
-    res.send(html);
-  } catch (e) {
-    res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'work.html'));
+  const origin = getSiteOrigin(req);
+  // 优先 CMS 查询
+  if (workId.startsWith('cms_')) {
+    try {
+      const mediaId = workId.replace(/^cms_/, '');
+      const info = await cmsRequest('/activity-albums/media/' + mediaId);
+      const name = info.mediaName || '';
+      const rawImg = info.cutoutUrl || info.mediaUrl || '';
+      const date = info.createTime ? info.createTime.slice(0, 10).replace(/-/g, '/') : '';
+      const absImg = rawImg ? toAbsoluteUrl(rawImg, origin) : '';
+      const sizeOk = await isOgImageSizeOk(absImg);
+      const imgUrl = sizeOk ? rawImg : ''; // 超限时传空，buildWorkHtml 自动用默认图
+      return res.send(buildWorkHtml(workId, name, imgUrl, date, origin));
+    } catch (e) {
+      // CMS 失败时继续尝试本地
+    }
   }
+  // 本地作品查询
+  const local = artworks.find(a => a.id === workId);
+  if (local) {
+    const name = local.name || '';
+    const rawImg = local.url || '';
+    const date = local.date ? local.date.replace(/(\d{4})(\d{2})(\d{2})/, '$1/$2/$3') : '';
+    const absImg = rawImg ? toAbsoluteUrl(rawImg, origin) : '';
+    const sizeOk = await isOgImageSizeOk(absImg);
+    const imgUrl = sizeOk ? rawImg : ''; // 超限时传空，buildWorkHtml 自动用默认图
+    return res.send(buildWorkHtml(workId, name, imgUrl, date, origin));
+  }
+  // 兜底：返回无 SSR 的原始模板（前端 JS 会继续加载）
+  res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'work.html'));
 });
 
 app.get('/api/artworks',(req,res)=>res.json(getAllArtworks(true)));
