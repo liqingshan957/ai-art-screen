@@ -687,6 +687,8 @@ app.get('/',(req,res)=>res.redirect('/admin'));
 // 画廊 SPA（同时支持独立部署到 PageFire）
 app.use('/gallery', express.static(path.join(ROOT_DIR, 'web-gallery'), { redirect: false, index: 'index.html' }));
 app.get('/gallery*', (req, res) => res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'index.html')));
+// 手机作品分享页模板（work.html?work=xxx）
+app.get('/work.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'work.html')));
 
 app.get('/api/artworks',(req,res)=>res.json(getAllArtworks(true)));
 app.get('/api/artworks/all',(req,res)=>res.json(getAllArtworks(false)));
