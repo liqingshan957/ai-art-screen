@@ -38,6 +38,8 @@ web-gallery/works/
 迁移新电脑/
 
 # Temp / test / cache
+temp/
+**/temp/
 scripts/temp/
 test_batch2/
 services/rembg/model_cache/
