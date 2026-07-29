@@ -1,0 +1,4 @@
+# Rembg 抠图服务依赖（Python 3.8+）
+# 安装: pip install -r requirements.txt
+
+rembg>=2.0.0

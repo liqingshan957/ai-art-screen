@@ -680,9 +680,8 @@ function finishSpotlight(art, pos, targetSize) {
 // ===== 背景 =====
 function applyBackground(bg) {
   if (!bg || !bg.url) {
-    bgLayer.style.backgroundImage = 'url(/default-bg.jpg)';
-    bgLayer.style.backgroundSize = 'cover';
-    bgLayer.style.backgroundPosition = 'center';
+    // 无背景图时使用 CSS 背景色（#2a1f15 已在 display.css 中定义）
+    bgLayer.style.backgroundImage = '';
     return;
   }
   bgLayer.style.backgroundImage = 'url(\'' + bg.url + '\')';

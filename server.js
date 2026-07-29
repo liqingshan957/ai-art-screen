@@ -38,12 +38,9 @@ const WORKS_DATA_FILE = path.join(GALLERY_DATA_DIR, 'works-data.json');
 });
 
 const ARTWORKS_FILE = path.join(DATA_DIR, 'artworks.json');
-const BG_FILE = path.join(DATA_DIR, 'background.json');
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const VIDEOS_FILE = path.join(DATA_DIR, 'videos.json');
-const VIDEOS_CONFIG_FILE = path.join(DATA_DIR, 'videos_config.json');
 const ANALYTICS_FILE = path.join(DATA_DIR, 'analytics.json');
-const DASHBOARD_FILE = path.join(DATA_DIR, 'dashboard.json');
-const ARCHIVE_FILE = path.join(DATA_DIR, 'artworks_archive.json');
 
 // ===== CMS 配置 =====
 const CMS_CONFIG_FILE = path.join(DATA_DIR, 'cms-config.json');
@@ -97,15 +94,34 @@ function loadJSON(file, fallback) {
   return fallback;
 }
 function saveJSON(file, data) { fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8'); }
+/** 保存 settings.json 的某个分区（background / videoConfig / dashboard） */
+function saveSettingsJSON(section, data) {
+  const s = loadJSON(SETTINGS_FILE, {});
+  s[section] = data;
+  saveJSON(SETTINGS_FILE, s);
+}
 
 let artworks = loadJSON(ARTWORKS_FILE, []);
-let bgConfig = loadJSON(BG_FILE, { filename: null, position: 'center', scale: 'cover' });
 let videos = loadJSON(VIDEOS_FILE, []);
-let videoConfig = loadJSON(VIDEOS_CONFIG_FILE, { interval: 300, repeat: 2 });
 let analytics = loadJSON(ANALYTICS_FILE, {});
-let dashboardData = loadJSON(DASHBOARD_FILE, {});
-let archive = loadJSON(ARCHIVE_FILE, []);
 artworks = artworks.map(a => ({ ...a, status: a.status || 'active' }));
+
+// 从 settings.json 统一加载背景、视频配置、看板数据
+// 兼容旧版：若 settings.json 不存在但旧文件存在，则迁移
+const OLD_BG_FILE = path.join(DATA_DIR, 'background.json');
+const OLD_VC_FILE = path.join(DATA_DIR, 'videos_config.json');
+const OLD_DB_FILE = path.join(DATA_DIR, 'dashboard.json');
+if (!fs.existsSync(SETTINGS_FILE)) {
+  const _s = {};
+  if (fs.existsSync(OLD_BG_FILE)) _s.background = loadJSON(OLD_BG_FILE, {});
+  if (fs.existsSync(OLD_VC_FILE)) _s.videoConfig = loadJSON(OLD_VC_FILE, {});
+  if (fs.existsSync(OLD_DB_FILE)) _s.dashboard = loadJSON(OLD_DB_FILE, {});
+  if (Object.keys(_s).length) saveJSON(SETTINGS_FILE, _s);
+}
+const _settings = loadJSON(SETTINGS_FILE, {});
+let bgConfig = { filename: null, position: 'center', scale: 'cover', url: null, cmsUrl: null, ...(_settings.background || {}) };
+let videoConfig = { interval: 300, repeat: 2, ...(_settings.videoConfig || {}) };
+let dashboardData = _settings.dashboard || {};
 
 // ===== 合并 CMS 缓存中的作品，按展示相册过滤 =====
 function getAllArtworks(filterEnabled = true) {
@@ -788,7 +804,6 @@ app.put('/api/artworks/:id/archive',(req,res)=>{
   }
   const a=artworks.find(x=>x.id===id);if(!a)return res.status(404).json({error:'Not found'});
   a.status='archived';a.archivedAt=Date.now();saveJSON(ARTWORKS_FILE,artworks);
-  if(!archive.find(x=>x.id===a.id)){archive.push({...a});saveJSON(ARCHIVE_FILE,archive);}
   generateWorksDataJson();
   io.emit('artwork:archive',{id});res.json({success:true,artwork:a});
 });
@@ -804,9 +819,9 @@ app.put('/api/artworks/:id/restore',(req,res)=>{
     return res.json({success:true,restored:true,isCms:true});
   }
   const a=artworks.find(x=>x.id===id);if(!a)return res.status(404).json({error:'Not found'});
-  a.status='active';delete a.archivedAt;archive=archive.filter(x=>x.id!==a.id);saveJSON(ARCHIVE_FILE,archive);saveJSON(ARTWORKS_FILE,artworks);
+  a.status='active';delete a.archivedAt;saveJSON(ARTWORKS_FILE,artworks);
   generateWorksDataJson();
-  io.emit('artwork:restore',{id,artwork:a});res.json({success:true,artwork:a});
+  io.emit('artwork:restore',{id, artwork:a});res.json({success:true,restored:true,artwork:a});
 });
 app.delete('/api/artworks/:id/purge',(req,res)=>{
   const id = req.params.id;
@@ -819,7 +834,7 @@ app.delete('/api/artworks/:id/purge',(req,res)=>{
     return res.json({success:true, purged:true, isCms:true});
   }
   const idx=artworks.findIndex(a=>a.id===id);if(idx===-1)return res.status(404).json({error:'Not found'});
-  const a=artworks[idx];artworks.splice(idx,1);archive=archive.filter(x=>x.id!==a.id);saveJSON(ARTWORKS_FILE,artworks);saveJSON(ARCHIVE_FILE,archive);
+  artworks.splice(idx,1);saveJSON(ARTWORKS_FILE,artworks);
   generateWorksDataJson();
   io.emit('artwork:purge',{id});res.json({success:true});
 });
@@ -843,7 +858,7 @@ app.get('/api/dashboard/today',(req,res)=>{const k=todayKey(),d=dashboardData[k]
 app.post('/api/dashboard/today',express.json(),(req,res)=>{
   const k=todayKey();if(!dashboardData[k])dashboardData[k]={};
   ['experienceVisitors','groupJoins','wechatAdds','courseSignups','notes'].forEach(f=>{if(req.body[f]!==undefined)dashboardData[k][f]=f==='notes'?String(req.body[f]):Number(req.body[f])||0;});
-  dashboardData[k].updatedAt=Date.now();saveJSON(DASHBOARD_FILE,dashboardData);res.json({success:true,data:dashboardData[k]});
+  dashboardData[k].updatedAt=Date.now();saveSettingsJSON('dashboard',dashboardData);res.json({success:true,data:dashboardData[k]});
 });
 
 // ===== Background（支持 CMS + 本地）=====
@@ -859,7 +874,7 @@ app.post('/api/background/upload',uploadBg.single('image'),async (req,res)=>{
     bgConfig.filename = req.file.filename;
     bgConfig.url = uploadResult.url;
     bgConfig.cmsUrl = uploadResult.url;
-    saveJSON(BG_FILE,bgConfig); io.emit('background:update',bgConfig);
+    saveSettingsJSON('background',bgConfig); io.emit('background:update',bgConfig);
     // 清理旧本地文件
     if(oldFile&&oldFile!==req.file.filename){const p=path.join(BG_DIR,oldFile);if(fs.existsSync(p))try{fs.unlinkSync(p);}catch(e){}}
     res.json({success:true,background:bgConfig,cmsUrl:uploadResult.url});
@@ -867,11 +882,11 @@ app.post('/api/background/upload',uploadBg.single('image'),async (req,res)=>{
     // CMS 上传失败，回退本地
     console.warn('[BG] CMS 上传失败，使用本地:', e.message);
     if(bgConfig.filename&&bgConfig.filename!==req.file.filename){const p=path.join(BG_DIR,bgConfig.filename);if(fs.existsSync(p))try{fs.unlinkSync(p);}catch(e){}}
-    bgConfig.filename=req.file.filename;bgConfig.url='/uploads/background/'+req.file.filename;saveJSON(BG_FILE,bgConfig);io.emit('background:update',bgConfig);
+    bgConfig.filename=req.file.filename;bgConfig.url='/uploads/background/'+req.file.filename;saveSettingsJSON('background',bgConfig);io.emit('background:update',bgConfig);
     res.json({success:true,background:bgConfig});
   }
 });
-app.put('/api/background',express.json(),(req,res)=>{if(req.body.position)bgConfig.position=req.body.position;if(req.body.scale)bgConfig.scale=req.body.scale;saveJSON(BG_FILE,bgConfig);io.emit('background:update',bgConfig);res.json({success:true,background:bgConfig});});
+app.put('/api/background',express.json(),(req,res)=>{if(req.body.position)bgConfig.position=req.body.position;if(req.body.scale)bgConfig.scale=req.body.scale;saveSettingsJSON('background',bgConfig);io.emit('background:update',bgConfig);res.json({success:true,background:bgConfig});});
 
 // ===== Videos（支持 CMS + 本地）=====
 app.get('/api/videos',(req,res)=>res.json(videos));
@@ -889,7 +904,7 @@ app.post('/api/videos/upload',uploadVideo.single('video'),async (req,res)=>{
   videos.push(v);saveJSON(VIDEOS_FILE,videos);io.emit('videos:update',videos);res.json({success:true,video:v});
 });
 app.delete('/api/videos/:id',(req,res)=>{const idx=videos.findIndex(v=>v.id===req.params.id);if(idx===-1)return res.status(404).json({error:'Not found'});const v=videos[idx];videos.splice(idx,1);saveJSON(VIDEOS_FILE,videos);io.emit('videos:update',videos);const fp=path.join(VIDEOS_DIR,v.filename);if(fs.existsSync(fp))try{fs.unlinkSync(fp);}catch(e){}res.json({success:true});});
-app.put('/api/videos/config',express.json(),(req,res)=>{videoConfig.interval=req.body.interval||300;videoConfig.repeat=req.body.repeat||2;saveJSON(VIDEOS_CONFIG_FILE,videoConfig);const cfg={interval:videoConfig.interval,repeat:videoConfig.repeat,enabled:videos.length>0};io.emit('videos:config',cfg);res.json({success:true,config:cfg});});
+app.put('/api/videos/config',express.json(),(req,res)=>{videoConfig.interval=req.body.interval||300;videoConfig.repeat=req.body.repeat||2;saveSettingsJSON('videoConfig',videoConfig);const cfg={interval:videoConfig.interval,repeat:videoConfig.repeat,enabled:videos.length>0};io.emit('videos:config',cfg);res.json({success:true,config:cfg});});
 
 // ===== 本地抠图通知（方案 B：本地 Rembg 完成后通知服务器推大屏）=====
 app.post('/api/cms/cutout/notify', express.json(), async (req, res) => {

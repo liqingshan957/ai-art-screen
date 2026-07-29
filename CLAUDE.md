@@ -230,14 +230,11 @@ CMS 缓存 (cms-cache.json)         本地作品 (artworks.json)
 
 | 文件 | 用途 | 说明 |
 |------|------|------|
-| `artworks.json` | 本地作品数据 | 数组，每项含 id/name/url/date/status |
-| `artworks_archive.json` | 归档作品 | 下架的作品移到此处 |
-| `background.json` | 背景图配置 | filename, position, scale |
+| `artworks.json` | 本地作品数据 | 含 active/archived 状态，归档不另存文件 |
+| `settings.json` | 统一配置 | 合并 background + videoConfig + dashboard |
 | `videos.json` | 视频列表 | 插播视频 URL |
-| `videos_config.json` | 视频播放配置 | interval(秒), repeat(次数) |
 | `analytics.json` | 访问统计 | 按日期统计 PV/访客 |
-| `dashboard.json` | 运营看板 | 手动填写的运营数据 |
-| `cms-config.json` | CMS 配置 | API Key(XOR 混淆), API Base |
+| `cms-config.json` | CMS 配置 | API Key(XOR 混淆), API Base（gitignored） |
 | `cms-cache.json` | CMS 缓存 | 拉取的远程相册数据（gitignored） |
 | `cutout-queue.json` | 抠图队列 | 异步抠图任务（gitignored） |
 

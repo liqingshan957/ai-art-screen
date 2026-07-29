@@ -1,0 +1,14 @@
+{
+  "background": {
+    "filename": null,
+    "position": "center",
+    "scale": "cover",
+    "url": null,
+    "cmsUrl": null
+  },
+  "videoConfig": {
+    "interval": 300,
+    "repeat": 2
+  },
+  "dashboard": {}
+}

@@ -556,17 +556,22 @@ function closePreview(e) {
 }
 // 键盘左右键切换预览
 document.addEventListener("keydown", function(e) {
-  var modal = document.getElementById("preview-modal");
-  if (modal.classList.contains("hidden")) return;
-  if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-    var tabs = document.querySelectorAll("#preview-tabs .preview-tab");
-    var active = document.querySelector("#preview-tabs .preview-tab.active");
-    if (!tabs.length || !active) return;
-    var idx = Array.from(tabs).indexOf(active);
-    if (e.key === "ArrowLeft" && idx > 0) tabs[idx - 1].click();
-    if (e.key === "ArrowRight" && idx < tabs.length - 1) tabs[idx + 1].click();
+  var preview = document.getElementById("preview-modal");
+  if (preview && !preview.classList.contains("hidden")) {
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      var tabs = document.querySelectorAll("#preview-tabs .preview-tab");
+      var active = document.querySelector("#preview-tabs .preview-tab.active");
+      if (!tabs.length || !active) return;
+      var idx = Array.from(tabs).indexOf(active);
+      if (e.key === "ArrowLeft" && idx > 0) tabs[idx - 1].click();
+      if (e.key === "ArrowRight" && idx < tabs.length - 1) tabs[idx + 1].click();
+    }
+    if (e.key === "Escape") { closePreview(); }
   }
-  if (e.key === "Escape") { closePreview(); }
+  var video = document.getElementById("video-modal");
+  if (video && !video.classList.contains("hidden") && e.key === "Escape") {
+    closeVideoModal();
+  }
 });
 // ===== 复制链接 =====
 function copyWorkLink(id) {
@@ -705,15 +710,34 @@ function renderVideos() {
     return;
   }
   videoList.innerHTML = videos.map(v => `
-    <div class="video-item">
+    <div class="video-item" onclick="openVideoModal('${escapeAttr(v.url)}', '${escapeAttr(v.name)}')" style="cursor:pointer">
       <div class="video-icon">🎬</div>
       <div class="video-info">
         <div class="video-name">${escapeHtml(v.name)}</div>
         <div class="video-meta">${escapeHtml(v.date)}</div>
       </div>
-      <button class="video-delete" onclick="deleteVideo('${v.id}')" title="删除">✕</button>
+      <button class="video-delete" onclick="event.stopPropagation();deleteVideo('${v.id}')" title="删除">✕</button>
     </div>
   `).join('');
+}
+
+function openVideoModal(url, name) {
+  var modal = document.getElementById('video-modal');
+  var player = document.getElementById('video-player');
+  var nameEl = document.getElementById('video-modal-name');
+  if (!modal || !player) return;
+  player.src = url;
+  nameEl.textContent = name;
+  modal.classList.remove('hidden');
+  player.play().catch(function(){});
+}
+function closeVideoModal() {
+  var modal = document.getElementById('video-modal');
+  var player = document.getElementById('video-player');
+  if (!modal || !player) return;
+  modal.classList.add('hidden');
+  player.pause();
+  player.src = '';
 }
 
 function updateVideoConfig() {
@@ -1318,7 +1342,46 @@ function switchPanel(name) {
   }
   if (name === 'settings') {
     loadCmsConfig();
+    // 同步裁剪开关状态
+    var el = document.getElementById('upload-crop-toggle');
+    if (el) el.checked = localStorage.getItem('upload_crop_enabled') !== 'false';
   }
+}
+
+// ===== 裁剪参数辅助函数 =====
+/** 在浏览器中读取图片的真实宽高 */
+function getImageDimensions(file) {
+  return new Promise(function(resolve) {
+    if (!file || !file.type.startsWith('image/')) { resolve(null); return; }
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function() {
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = function() { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+/** 根据图片尺寸计算设计卡（102×152mm）裁剪参数 */
+function calcCropParams(w, h) {
+  return {
+    cropX: Math.round(w * 8 / 102),
+    cropY: Math.round(h * 8 / 152),
+    cropWidth: Math.round(w * (102 - 8 - 8) / 102),
+    cropHeight: Math.round(h * (152 - 8 - 32) / 152),
+    naturalWidth: w,
+    naturalHeight: h
+  };
+}
+/** 加载裁剪开关设置（默认开启，从 localStorage 读取） */
+function loadCropSetting() {
+  return localStorage.getItem('upload_crop_enabled') !== 'false';
+}
+/** 保存裁剪开关设置 */
+function saveCropSetting() {
+  var el = document.getElementById('upload-crop-toggle');
+  if (el) localStorage.setItem('upload_crop_enabled', el.checked);
 }
 
 // ================================================
@@ -1341,6 +1404,7 @@ function submitBatchUpload() {
   let completed = 0, errors = [];
   progress.textContent = '正在上传 0/' + pendingFiles.length;
 
+  var isCropEnabled = loadCropSetting();
   Promise.all(pendingFiles.map((file, i) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -1348,10 +1412,15 @@ function submitBatchUpload() {
       .then(r => r.json())
       .then(async d => {
         if (d.success) {
+          var body = { mediaUrl: d.url, sourceUrl: d.url, mediaName: names[i] || '匿名小画家' };
+          if (isCropEnabled) {
+            var dims = await getImageDimensions(file);
+            if (dims) Object.assign(body, calcCropParams(dims.width, dims.height));
+          }
           const r2 = await fetch('/api/cms/albums/' + selectedAlbumId + '/media/add-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mediaUrl: d.url, sourceUrl: d.url, mediaName: names[i] || '匿名小画家' })
+            body: JSON.stringify(body)
           }).then(r => r.json());
           if (!r2.success) errors.push(names[i] + ': ' + (r2.error || '添加到相册失败'));
         } else errors.push(names[i] + ': ' + (d.error || '上传失败'));
@@ -1395,6 +1464,7 @@ function uploadAlbumMedias(files) {
   progress.className = 'upload-progress';
   progress.textContent = '正在上传 0/' + files.length + ' 到相册...';
   progress.classList.remove('hidden');
+  var isCropEnabled = loadCropSetting();
   Promise.all(files.map((file, i) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -1402,10 +1472,15 @@ function uploadAlbumMedias(files) {
       .then(r => r.json())
       .then(async d => {
         if (d.success) {
+          var body = { mediaUrl: d.url, sourceUrl: d.url, mediaName: file.name.replace(/\.[^.]+$/, '') };
+          if (isCropEnabled) {
+            var dims = await getImageDimensions(file);
+            if (dims) Object.assign(body, calcCropParams(dims.width, dims.height));
+          }
           const r2 = await fetch('/api/cms/albums/' + currentAlbumId + '/media/add-url', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mediaUrl: d.url, sourceUrl: d.url, mediaName: file.name.replace(/\.[^.]+$/, '') })
+            body: JSON.stringify(body)
           }).then(r => r.json());
           if (!r2.success) errors.push((d.mediaName || '') + ': ' + (r2.error || '添加到相册失败'));
           // 服务器端 add-url 已自动触发抠图，无需重复处理
