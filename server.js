@@ -687,8 +687,35 @@ app.get('/',(req,res)=>res.redirect('/admin'));
 // 画廊 SPA（同时支持独立部署到 PageFire）
 app.use('/gallery', express.static(path.join(ROOT_DIR, 'web-gallery'), { redirect: false, index: 'index.html' }));
 app.get('/gallery*', (req, res) => res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'index.html')));
-// 手机作品分享页模板（work.html?work=xxx）
-app.get('/work.html', (req, res) => res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'work.html')));
+// 手机作品分享页 SSR（work.html?work=xxx → 服务端渲染 OG 标签）
+app.get('/work.html', async (req, res) => {
+  const workId = req.query.work;
+  if (!workId) return res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'work.html'));
+  try {
+    const mediaId = workId.replace(/^cms_/, '');
+    const info = await cmsRequest('/activity-albums/media/' + mediaId);
+    const name = info.mediaName || '';
+    const imgUrl = info.cutoutUrl || info.mediaUrl || '';
+    const date = info.createTime ? info.createTime.slice(0, 10).replace(/-/g, '/') : '';
+    const title = name + ' · 敦煌AIGC艺术作品';
+    const desc = '大象智绘 AI 科创 · 孩子们用 AI 创作的敦煌风格艺术作品';
+    const html = fs.readFileSync(path.join(ROOT_DIR, 'web-gallery', 'work.html'), 'utf8')
+      .replace('<title>AI 艺术作品 · 敦煌 AIGC 艺术展</title>',
+        '<title>' + title + '</title>' +
+        '<meta property="og:title" content="' + title.replace(/"/g, '&quot;') + '">' +
+        '<meta property="og:description" content="' + desc + '">' +
+        '<meta property="og:image" content="' + imgUrl.replace(/"/g, '&quot;') + '">' +
+        '<meta property="og:url" content="' + 'https://art.hkting.com/work.html?work=' + workId + '">' +
+        '<meta name="twitter:card" content="summary_large_image">' +
+        '<meta name="twitter:title" content="' + title.replace(/"/g, '&quot;') + '">' +
+        '<meta name="twitter:description" content="' + desc + '">' +
+        '<meta name="twitter:image" content="' + imgUrl.replace(/"/g, '&quot;') + '">')
+      .replace('var workData = null;', 'var workData = ' + JSON.stringify({ id: workId, name, url: imgUrl, date }) + ';');
+    res.send(html);
+  } catch (e) {
+    res.sendFile(path.join(ROOT_DIR, 'web-gallery', 'work.html'));
+  }
+});
 
 app.get('/api/artworks',(req,res)=>res.json(getAllArtworks(true)));
 app.get('/api/artworks/all',(req,res)=>res.json(getAllArtworks(false)));
